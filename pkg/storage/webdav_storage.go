@@ -112,7 +112,7 @@ func (s *WebDAVObjectStorage) Read(ctx core.Context, path string) (ObjectInStora
 		return nil, false, errs.ErrSystemError
 	}
 
-	return newByteSliceObject(body), true, nil
+	return NewByteSliceObject(body), true, nil
 }
 
 // Save returns whether save the object instance successfully

@@ -145,7 +145,7 @@ func (s *S3ObjectStorage) Read(ctx core.Context, path string) (ObjectInStorage, 
 		return nil, false, err
 	}
 
-	return newByteSliceObject(data), true, nil
+	return NewByteSliceObject(data), true, nil
 }
 
 // Save returns whether save the object instance successfully

@@ -14,8 +14,8 @@ func (b *bytesSliceObject) Close() error {
 	return nil
 }
 
-// newByteSliceObject creates a new byte slice object from the specified byte slice
-func newByteSliceObject(data []byte) ObjectInStorage {
+// NewByteSliceObject creates a new byte slice object from the specified byte slice
+func NewByteSliceObject(data []byte) ObjectInStorage {
 	return &bytesSliceObject{
 		Reader: bytes.NewReader(data),
 	}

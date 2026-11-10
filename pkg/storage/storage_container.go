@@ -9,12 +9,14 @@ import (
 const avatarPathPrefix = "avatar"
 const userCustomIconPathPrefix = "icon"
 const transactionPicturePathPrefix = "transaction"
+const creditCardPicturePathPrefix = "credit_card_picture"
 
 // StorageContainer contains the current object storage
 type StorageContainer struct {
 	avatarCurrentStorage             ObjectStorage
 	userCustomIconCurrentStorage     ObjectStorage
 	transactionPictureCurrentStorage ObjectStorage
+	creditCardPictureCurrentStorage  ObjectStorage
 }
 
 // Initialize a object storage container singleton instance
@@ -53,6 +55,14 @@ func InitializeStorageContainer(config *settings.Config) error {
 
 		Container.transactionPictureCurrentStorage = transactionPictureStorage
 	}
+
+	creditCardPictureStorage, err := newObjectStorage(config, creditCardPicturePathPrefix)
+
+	if err != nil {
+		return err
+	}
+
+	Container.creditCardPictureCurrentStorage = creditCardPictureStorage
 
 	return nil
 }
@@ -163,6 +173,42 @@ func (s *StorageContainer) DeleteTransactionPicture(ctx core.Context, path strin
 	}
 
 	return s.transactionPictureCurrentStorage.Delete(ctx, path)
+}
+
+// ExistsCreditCardPicture returns whether the credit card picture file exists from the current credit card picture object storage
+func (s *StorageContainer) ExistsCreditCardPicture(ctx core.Context, path string) (bool, error) {
+	if s.creditCardPictureCurrentStorage == nil {
+		return false, errs.ErrSystemError
+	}
+
+	return s.creditCardPictureCurrentStorage.Exists(ctx, path)
+}
+
+// ReadCreditCardPicture returns the credit card picture file from the current credit card picture object storage
+func (s *StorageContainer) ReadCreditCardPicture(ctx core.Context, path string) (ObjectInStorage, bool, error) {
+	if s.creditCardPictureCurrentStorage == nil {
+		return nil, false, errs.ErrSystemError
+	}
+
+	return s.creditCardPictureCurrentStorage.Read(ctx, path)
+}
+
+// SaveCreditCardPicture returns whether save the credit card picture file into the current credit card picture object storage successfully
+func (s *StorageContainer) SaveCreditCardPicture(ctx core.Context, path string, object ObjectInStorage) error {
+	if s.creditCardPictureCurrentStorage == nil {
+		return errs.ErrSystemError
+	}
+
+	return s.creditCardPictureCurrentStorage.Save(ctx, path, object)
+}
+
+// DeleteCreditCardPicture returns whether delete the credit card picture file from the current credit card picture object storage successfully
+func (s *StorageContainer) DeleteCreditCardPicture(ctx core.Context, path string) error {
+	if s.creditCardPictureCurrentStorage == nil {
+		return errs.ErrSystemError
+	}
+
+	return s.creditCardPictureCurrentStorage.Delete(ctx, path)
 }
 
 func newObjectStorage(config *settings.Config, pathPrefix string) (ObjectStorage, error) {
