@@ -34,4 +34,5 @@ var (
 	ErrInvalidUserAvatarTokenExpiredTime              = NewSystemError(SystemSubcategorySetting, 27, http.StatusInternalServerError, "invalid user avatar token expired time")
 	ErrInvalidUserCustomIconTokenExpiredTime          = NewSystemError(SystemSubcategorySetting, 28, http.StatusInternalServerError, "invalid user custom icon token expired time")
 	ErrInvalidTransactionPictureTokenExpiredTime      = NewSystemError(SystemSubcategorySetting, 29, http.StatusInternalServerError, "invalid transaction picture token expired time")
+	ErrInvalidCreditCardPictureTokenExpiredTime       = NewSystemError(SystemSubcategorySetting, 30, http.StatusInternalServerError, "invalid credit card picture token expired time")
 )

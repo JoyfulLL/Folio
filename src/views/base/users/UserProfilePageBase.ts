@@ -41,6 +41,7 @@ export function useUserProfilePageBase() {
         getAllExpenseAmountColors,
         getAllIncomeAmountColors,
         getAllTransactionEditScopeTypes,
+        getAllCreditCardNotificationIntervals,
         getLocaleDefaultDateDisplayType,
         getLocaleDefaultNumeralSystemType,
         getLocaleDefaultDecimalSeparator,
@@ -89,6 +90,7 @@ export function useUserProfilePageBase() {
     const allIncomeAmountColorTypes = computed<TypeAndDisplayName[]>(() => getAllIncomeAmountColors());
     const allTransactionEditScopeTypes = computed<TypeAndDisplayName[]>(() => getAllTransactionEditScopeTypes(newProfile.value.useLastReconciledTime || (TransactionEditScopeType.valueOf(newProfile.value.transactionEditScope)?.needLastReconciledTime ?? false)));
     const enableDisableOptions = computed<LocalizedSwitchOption[]>(() => getAllEnableDisableOptions());
+    const allCreditCardNotificationIntervals = computed<TypeAndDisplayName[]>(() => getAllCreditCardNotificationIntervals());
 
     const languageTitle = computed<string>(() => {
         const languageInCurrentLanguage = tt('Language');
@@ -137,7 +139,8 @@ export function useUserProfilePageBase() {
             newProfile.value.digitGrouping === oldProfile.value.digitGrouping &&
             newProfile.value.coordinateDisplayType === oldProfile.value.coordinateDisplayType &&
             newProfile.value.expenseAmountColor === oldProfile.value.expenseAmountColor &&
-            newProfile.value.incomeAmountColor === oldProfile.value.incomeAmountColor) {
+            newProfile.value.incomeAmountColor === oldProfile.value.incomeAmountColor &&
+            newProfile.value.creditCardNotificationInterval === oldProfile.value.creditCardNotificationInterval) {
             return 'Nothing has been modified';
         } else if (!newProfile.value.password && newProfile.value.confirmPassword) {
             return 'Password cannot be blank';
@@ -234,6 +237,7 @@ export function useUserProfilePageBase() {
         allIncomeAmountColorTypes,
         allTransactionEditScopeTypes,
         enableDisableOptions,
+        allCreditCardNotificationIntervals,
         languageTitle,
         supportDigitGroupingSymbol,
         inputIsNotChangedProblemMessage,

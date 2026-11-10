@@ -78,6 +78,7 @@ export function useReconciliationStatementPageBase() {
     const currentAccount = computed(() => allAccountsMap.value[accountId.value]);
     const currentAccountCurrency = computed<string>(() => currentAccount.value?.currency ?? defaultCurrency.value);
     const currentAccountStatementDate = computed<number | undefined>(() => accountsStore.getAccountStatementDate(accountId.value) || undefined);
+    const currentAccountStatementDateIncludeTransaction = computed<boolean>(() => accountsStore.getAccountStatementDateIncludeTransaction(accountId.value));
     const currentAccountLastReconciledTime = computed<number | undefined>(() => currentAccount.value?.lastReconciledTime);
     const isCurrentLiabilityAccount = computed<boolean>(() => currentAccount.value?.isLiability ?? false);
     const canUpdateAccountCloseBalance = computed<boolean>(() => reconciliationStatements.value?.closingBalance.between(TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT) ?? false);
@@ -386,6 +387,7 @@ export function useReconciliationStatementPageBase() {
         currentAccount,
         currentAccountCurrency,
         currentAccountStatementDate,
+        currentAccountStatementDateIncludeTransaction,
         currentAccountLastReconciledTime,
         isCurrentLiabilityAccount,
         canUpdateAccountCloseBalance,

@@ -115,6 +115,10 @@ import type {
     TransactionPictureInfoBasicResponse
 } from '@/models/transaction_picture_info.ts';
 import type {
+    CreditCardPictureUnusedDeleteRequest,
+    CreditCardPictureInfoBasicResponse
+} from '@/models/credit_card_picture_info.ts';
+import type {
     TransactionTagGroupCreateRequest,
     TransactionTagGroupModifyRequest,
     TransactionTagGroupMoveRequest,
@@ -358,12 +362,9 @@ export default {
         return axios.post<ApiResponse<RegisterResponse>>('register.json', req);
     },
     verifyEmail: (token: string): ApiResponsePromise<boolean> => {
-        return axios.post<ApiResponse<boolean>>('verify_email/by_token.json', {}, {
+        return axios.post<ApiResponse<boolean>>('verify_email/by_token.json?token=' + token, {}, {
             noAuth: true,
-            ignoreError: true,
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            ignoreError: true
         } as ApiRequestConfig);
     },
     resendVerifyEmailByUnloginUser: (req: UserResendVerifyEmailRequest): ApiResponsePromise<boolean> => {
@@ -373,15 +374,12 @@ export default {
         return axios.post<ApiResponse<boolean>>('forget_password/request.json', req);
     },
     resetPassword: ({ email, token, password }: { email: string, token: string, password: string }): ApiResponsePromise<boolean> => {
-        return axios.post<ApiResponse<boolean>>('forget_password/reset/by_token.json', {
+        return axios.post<ApiResponse<boolean>>('forget_password/reset/by_token.json?token=' + token, {
             email: email,
             password: password
         }, {
             noAuth: true,
-            ignoreError: true,
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            ignoreError: true
         } as ApiRequestConfig);
     },
     logout: (): ApiResponsePromise<boolean> => {
@@ -545,6 +543,17 @@ export default {
     },
     modifyAccount: (req: AccountModifyRequest): ApiResponsePromise<AccountInfoResponse> => {
         return axios.post<ApiResponse<AccountInfoResponse>>('v1/accounts/modify.json', req);
+    },
+    uploadCreditCardPicture: ({ pictureFile, clientSessionId }: { pictureFile: File, clientSessionId?: string }): ApiResponsePromise<CreditCardPictureInfoBasicResponse> => {
+        return axios.postForm<ApiResponse<CreditCardPictureInfoBasicResponse>>('v1/credit_card/pictures/upload.json', {
+            picture: pictureFile,
+            clientSessionId: clientSessionId
+        }, {
+            timeout: DEFAULT_UPLOAD_API_TIMEOUT
+        } as ApiRequestConfig);
+    },
+    removeUnusedCreditCardPicture: (req: CreditCardPictureUnusedDeleteRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/credit_card/pictures/remove_unused.json', req);
     },
     updateAccountLastReconciledTime: (req: AccountUpdateLastReconciledTimeRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/accounts/update/last_reconciled_time.json', req);
@@ -1009,7 +1018,8 @@ export default {
             `.*${BASE_PROXY_URL_PATH}/map/annotation/[^/]+/[^/]+/[^/]+\\.png\\?provider=[^&]+.*$`
         ];
     },
-    generateMapProxyTileImageUrl: (mapProvider: string, language: string, token: string): string => {
+    generateMapProxyTileImageUrl: (mapProvider: string, language: string): string => {
+        const token = getCurrentToken();
         let url = `${getBasePath()}${BASE_PROXY_URL_PATH}/map/tile/{z}/{x}/{y}.png?provider=${mapProvider}&token=${token}`;
 
         if (language) {
@@ -1018,7 +1028,8 @@ export default {
 
         return url;
     },
-    generateMapProxyAnnotationImageUrl: (mapProvider: string, language: string, token: string): string => {
+    generateMapProxyAnnotationImageUrl: (mapProvider: string, language: string): string => {
+        const token = getCurrentToken();
         let url = `${getBasePath()}${BASE_PROXY_URL_PATH}/map/annotation/{z}/{x}/{y}.png?provider=${mapProvider}&token=${token}`;
 
         if (language) {

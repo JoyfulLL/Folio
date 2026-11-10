@@ -30,3 +30,15 @@ var CreateScheduledTransactionJob = &CronJob{
 		return services.Transactions.CreateScheduledTransactions(c, time.Now().Unix(), c.GetInterval())
 	},
 }
+
+// CreditCardNotificationJob represents the cron job which periodically plans and sends credit card notifications by email
+var CreditCardNotificationJob = &CronJob{
+	Name:        "CreditCardNotification",
+	Description: "Periodically plan and send credit card statement and repayment date notifications by email.",
+	Period: CronJobEvery15MinutesPeriod{
+		Second: 0,
+	},
+	Run: func(c *core.CronContext) error {
+		return services.CreditCardNotifications.RunCreditCardNotifications(c, time.Now().Unix())
+	},
+}

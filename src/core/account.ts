@@ -120,6 +120,32 @@ export class CreditCardAmountDisplayType implements TypeAndName {
     }
 }
 
+export class CreditCardNotificationInterval implements TypeAndName {
+    private static readonly allInstances: CreditCardNotificationInterval[] = [];
+
+    public static readonly Every15Minutes = new CreditCardNotificationInterval(15, '15 Minutes');
+    public static readonly Every30Minutes = new CreditCardNotificationInterval(30, '30 Minutes');
+    public static readonly EveryHour = new CreditCardNotificationInterval(60, '1 Hour');
+    public static readonly Every3Hours = new CreditCardNotificationInterval(180, '3 Hours');
+    public static readonly Every6Hours = new CreditCardNotificationInterval(360, '6 Hours');
+    public static readonly Every12Hours = new CreditCardNotificationInterval(720, '12 Hours');
+
+    public static readonly Default = CreditCardNotificationInterval.Every15Minutes;
+
+    public readonly type: number;
+    public readonly name: string;
+
+    private constructor(type: number, name: string) {
+        this.type = type;
+        this.name = name;
+        CreditCardNotificationInterval.allInstances.push(this);
+    }
+
+    public static values(): CreditCardNotificationInterval[] {
+        return CreditCardNotificationInterval.allInstances;
+    }
+}
+
 export interface LocalizedAccountCategory extends TypeAndDisplayName {
     readonly type: number;
     readonly displayName: string;

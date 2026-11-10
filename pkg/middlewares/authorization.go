@@ -25,13 +25,13 @@ func TokenAuthorizationByHeader(config *settings.Config) core.MiddlewareHandlerF
 }
 
 // TokenAuthorizationByQueryString verifies whether current request is valid by token in query string
-func TokenAuthorizationByQueryString(config *settings.Config, allowedNormalTokenScopes core.NormalTokenScope) core.MiddlewareHandlerFunc {
-	return tokenAuthorization(config, TOKEN_SOURCE_TYPE_ARGUMENT, false, allowedNormalTokenScopes)
+func TokenAuthorizationByQueryString(config *settings.Config, allowedNormalTokenScopes ...core.NormalTokenScope) core.MiddlewareHandlerFunc {
+	return tokenAuthorization(config, TOKEN_SOURCE_TYPE_ARGUMENT, false, allowedNormalTokenScopes...)
 }
 
 // TokenAuthorizationByCookie verifies whether current request is valid by token in cookie
-func TokenAuthorizationByCookie(config *settings.Config, allowedNormalTokenScopes core.NormalTokenScope) core.MiddlewareHandlerFunc {
-	return tokenAuthorization(config, TOKEN_SOURCE_TYPE_COOKIE, false, allowedNormalTokenScopes)
+func TokenAuthorizationByCookie(config *settings.Config) core.MiddlewareHandlerFunc {
+	return tokenAuthorization(config, TOKEN_SOURCE_TYPE_COOKIE, false)
 }
 
 // TokenTwoFactorAuthorization verifies whether current request is valid by 2fa passcode
@@ -59,7 +59,7 @@ func TokenTwoFactorAuthorization(config *settings.Config) core.MiddlewareHandler
 // TokenEmailVerifyAuthorization verifies whether current request is email verification
 func TokenEmailVerifyAuthorization(config *settings.Config) core.MiddlewareHandlerFunc {
 	return func(c *core.WebContext) {
-		claims, tokenRecord, err := getTokenClaims(c, TOKEN_SOURCE_TYPE_HEADER)
+		claims, tokenRecord, err := getTokenClaims(c, TOKEN_SOURCE_TYPE_ARGUMENT)
 
 		if err != nil {
 			utils.PrintJsonErrorResult(c, errs.ErrEmailVerifyTokenIsInvalidOrExpired)
@@ -81,7 +81,7 @@ func TokenEmailVerifyAuthorization(config *settings.Config) core.MiddlewareHandl
 // TokenResetPasswordAuthorization verifies whether current request is password reset
 func TokenResetPasswordAuthorization(config *settings.Config) core.MiddlewareHandlerFunc {
 	return func(c *core.WebContext) {
-		claims, tokenRecord, err := getTokenClaims(c, TOKEN_SOURCE_TYPE_HEADER)
+		claims, tokenRecord, err := getTokenClaims(c, TOKEN_SOURCE_TYPE_ARGUMENT)
 
 		if err != nil {
 			utils.PrintJsonErrorResult(c, errs.ErrPasswordResetTokenIsInvalidOrExpired)

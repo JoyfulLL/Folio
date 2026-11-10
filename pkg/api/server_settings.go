@@ -85,7 +85,16 @@ func (a *ServerSettingsApi) ServerSettingsJavascriptHandler(c *core.WebContext) 
 
 	a.appendStringSetting(builder, "m", config.MapProvider)
 
-	if config.EnableMapDataFetchProxy && config.SupportMapDataFetchProxy {
+	if config.EnableMapDataFetchProxy &&
+		(config.MapProvider == settings.OpenStreetMapProvider ||
+			config.MapProvider == settings.OpenStreetMapHumanitarianStyleProvider ||
+			config.MapProvider == settings.OpenTopoMapProvider ||
+			config.MapProvider == settings.OPNVKarteMapProvider ||
+			config.MapProvider == settings.CyclOSMMapProvider ||
+			config.MapProvider == settings.CartoDBMapProvider ||
+			config.MapProvider == settings.TomTomMapProvider ||
+			config.MapProvider == settings.TianDiTuProvider ||
+			config.MapProvider == settings.CustomProvider) {
 		a.appendBooleanSetting(builder, "mp", config.EnableMapDataFetchProxy)
 	}
 

@@ -6,6 +6,7 @@ import { CoordinateDisplayType } from '@/core/coordinate.ts';
 import { PresetAmountColor } from '@/core/color.ts';
 import type { LocalizedPresetCategory } from '@/core/category.ts';
 import { TransactionEditScopeType } from '@/core/transaction.ts';
+import { CreditCardNotificationInterval } from '@/core/account.ts';
 import { FiscalYearFormat, FiscalYearStart } from '@/core/fiscalyear';
 
 export class User {
@@ -37,6 +38,7 @@ export class User {
     public coordinateDisplayType: number = EMPTY_USER_BASIC_INFO.coordinateDisplayType;
     public expenseAmountColor: number = EMPTY_USER_BASIC_INFO.expenseAmountColor;
     public incomeAmountColor: number = EMPTY_USER_BASIC_INFO.incomeAmountColor;
+    public creditCardNotificationInterval: number = EMPTY_USER_BASIC_INFO.creditCardNotificationInterval;
 
     private constructor(language: string, defaultCurrency: string, firstDayOfWeek: number, preferredExpenseAmountColor?: number, preferredIncomeAmountColor?: number) {
         this.language = language;
@@ -78,6 +80,7 @@ export class User {
         this.coordinateDisplayType = user.coordinateDisplayType;
         this.expenseAmountColor = user.expenseAmountColor;
         this.incomeAmountColor = user.incomeAmountColor;
+        this.creditCardNotificationInterval = user.creditCardNotificationInterval;
     }
 
     public toRegisterRequest(categories?: LocalizedPresetCategory[]): UserRegisterRequest {
@@ -122,7 +125,8 @@ export class User {
             digitGrouping: this.digitGrouping,
             coordinateDisplayType: this.coordinateDisplayType,
             expenseAmountColor: this.expenseAmountColor,
-            incomeAmountColor: this.incomeAmountColor
+            incomeAmountColor: this.incomeAmountColor,
+            creditCardNotificationInterval: this.creditCardNotificationInterval
         };
     }
 
@@ -147,6 +151,7 @@ export class User {
         user.coordinateDisplayType = userInfo.coordinateDisplayType;
         user.expenseAmountColor = userInfo.expenseAmountColor;
         user.incomeAmountColor = userInfo.incomeAmountColor;
+        user.creditCardNotificationInterval = userInfo.creditCardNotificationInterval;
 
         return user;
     }
@@ -184,6 +189,7 @@ export interface UserBasicInfo {
     readonly coordinateDisplayType: number;
     readonly expenseAmountColor: number;
     readonly incomeAmountColor: number;
+    readonly creditCardNotificationInterval: number;
     readonly emailVerified: boolean;
 }
 
@@ -237,12 +243,12 @@ export interface UserProfileUpdateRequest {
     readonly coordinateDisplayType?: number;
     readonly expenseAmountColor?: number;
     readonly incomeAmountColor?: number;
+    readonly creditCardNotificationInterval?: number;
 }
 
 export interface UserProfileUpdateResponse {
     readonly user: UserBasicInfo;
     readonly newToken?: string;
-    readonly newMapProxyToken?: string;
 }
 
 export interface UserProfileResponse extends UserBasicInfo {
@@ -278,5 +284,6 @@ export const EMPTY_USER_BASIC_INFO: UserBasicInfo = {
     coordinateDisplayType: CoordinateDisplayType.Default.type,
     expenseAmountColor: PresetAmountColor.DefaultExpenseColor.type,
     incomeAmountColor: PresetAmountColor.DefaultIncomeColor.type,
+    creditCardNotificationInterval: CreditCardNotificationInterval.Default.type,
     emailVerified: false
 }

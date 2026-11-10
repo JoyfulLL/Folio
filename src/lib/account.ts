@@ -6,7 +6,6 @@ import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
 
 import { type AccountBalance, type CategorizedAccount, Account } from '@/models/account.ts';
 
-import { isDefined } from '@/lib/common.ts';
 import { parseBigDecimal } from '@/lib/numeral.ts';
 
 export function getCategorizedAccountsMap(allAccounts: Account[]): Record<number, CategorizedAccount> {
@@ -140,6 +139,10 @@ export function filterCategorizedAccounts(categorizedAccountsMap: Record<number,
     return ret;
 }
 
+// Returns the balances of all filtered accounts for balance totals (net assets, total assets,
+// total liabilities and category balance totals). Credit card limits are intentionally NOT
+// attached here: the limit of a shared pool belongs to the pool itself and must be counted
+// once, so available credit is computed separately by the accounts store
 export function getAllFilteredAccountsBalance(categorizedAccounts: Record<number, CategorizedAccount>, customAccountCategoryOrder: string, accountFilter: (account: Account) => boolean): AccountBalance[] {
     const allAccountCategories = AccountCategory.values(customAccountCategoryOrder);
     const ret: AccountBalance[] = [];
@@ -156,21 +159,10 @@ export function getAllFilteredAccountsBalance(categorizedAccounts: Record<number
                 continue;
             }
 
-            const creditCardLimit = account.category === AccountCategory.CreditCard.type && account.numericCreditCardLimit && account.numericCreditCardLimit > 0 ? {
-                amount: parseBigDecimal(account.creditCardLimit),
-                currency: account.currency,
-                shareByCount: 0
-            } : undefined;
-
             if (account.type === AccountType.SingleAccount.type) {
-                if (isDefined(creditCardLimit)) {
-                    creditCardLimit.shareByCount = 1;
-                }
-
                 ret.push({
                     balance: parseBigDecimal(account.balance),
                     category: account.category,
-                    creditCardLimit: creditCardLimit,
                     isAsset: !!account.isAsset,
                     isLiability: !!account.isLiability,
                     currency: account.currency
@@ -181,14 +173,9 @@ export function getAllFilteredAccountsBalance(categorizedAccounts: Record<number
                         continue;
                     }
 
-                    if (isDefined(creditCardLimit)) {
-                        creditCardLimit.shareByCount++;
-                    }
-
                     ret.push({
                         balance: parseBigDecimal(subAccount.balance),
                         category: account.category,
-                        creditCardLimit: creditCardLimit,
                         isAsset: !!subAccount.isAsset,
                         isLiability: !!subAccount.isLiability,
                         currency: subAccount.currency

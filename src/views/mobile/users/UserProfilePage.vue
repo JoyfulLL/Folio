@@ -55,6 +55,10 @@
             <f7-list-item class="list-item-with-header-and-title list-item-no-item-after" header="Income Amount Color" title="Amount Color" link="#"></f7-list-item>
         </f7-list>
 
+        <f7-list strong inset dividers class="margin-vertical skeleton-text" v-if="loading">
+            <f7-list-item class="list-item-with-header-and-title list-item-no-item-after" header="Credit Card Notification Check Interval" title="15 Minutes" link="#"></f7-list-item>
+        </f7-list>
+
         <f7-list form strong inset dividers class="margin-vertical-half" v-if="!loading">
             <f7-list-input
                 type="password"
@@ -558,6 +562,25 @@
             <f7-list-item class="ebk-list-item-error-info" v-if="langAndRegionInputIsInvalid" :footer="tt(langAndRegionInputInvalidProblemMessage || '')"></f7-list-item>
         </f7-list>
 
+        <f7-list form strong inset dividers class="margin-vertical" v-if="!loading">
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Credit Card Notification Check Interval')"
+                :title="findDisplayNameByType(allCreditCardNotificationIntervals, newProfile.creditCardNotificationInterval)"
+                @click="showCreditCardNotificationIntervalPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Credit Card Notification Check Interval')"
+                                           :items="allCreditCardNotificationIntervals"
+                                           v-model:show="showCreditCardNotificationIntervalPopup"
+                                           v-model="newProfile.creditCardNotificationInterval">
+                </list-item-selection-popup>
+            </f7-list-item>
+        </f7-list>
+
         <f7-actions close-by-outside-click close-on-escape :opened="showMoreActionSheet" @actions:closed="showMoreActionSheet = false">
             <f7-actions-group>
                 <f7-actions-button :class="{ 'disabled': loading || resending }" @click="resendVerifyEmail"
@@ -647,6 +670,7 @@ const {
     allIncomeAmountColorTypes,
     allTransactionEditScopeTypes,
     enableDisableOptions,
+    allCreditCardNotificationIntervals,
     languageTitle,
     supportDigitGroupingSymbol,
     inputIsNotChangedProblemMessage,
@@ -690,6 +714,7 @@ const showDecimalSeparatorPopup = ref<boolean>(false);
 const showCoordinateDisplayTypePopup = ref<boolean>(false);
 const showExpenseAmountColorPopup = ref<boolean>(false);
 const showIncomeAmountColorPopup = ref<boolean>(false);
+const showCreditCardNotificationIntervalPopup = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
 
 const allLanguages = computed<LanguageOption[]>(() => getAllLanguageOptions(true));

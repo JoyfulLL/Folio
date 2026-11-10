@@ -126,6 +126,7 @@ func startWebServer(c *core.CliContext) error {
 		_ = v.RegisterValidation("validTransactionAmount", validators.ValidTransactionAmount)
 		_ = v.RegisterValidation("validTagFilter", validators.ValidTagFilter)
 		_ = v.RegisterValidation("validFiscalYearStart", validators.ValidateFiscalYearStart)
+		_ = v.RegisterValidation("validCreditCardNotificationInterval", validators.ValidateCreditCardNotificationInterval)
 	}
 
 	router.NoRoute(bindApi(api.Default.ApiNotFound, config))
@@ -210,13 +211,29 @@ func startWebServer(c *core.CliContext) error {
 		}
 	}
 
+	creditCardPictureRoute := router.Group("/credit_card_pictures")
+	creditCardPictureRoute.Use(bindMiddleware(middlewares.TokenAuthorizationByQueryString(config, core.NormalTokenScopeCreditCardPicture), config))
+	{
+		creditCardPictureRoute.GET("/:fileName", bindImage(api.CreditCardPictures.CreditCardPictureGetHandler, config))
+	}
+
 	router.GET("/healthz.json", bindApi(api.Healths.HealthStatusHandler, config))
 
 	proxyRoute := router.Group("/proxy")
-	proxyRoute.Use(bindMiddleware(middlewares.TokenAuthorizationByQueryString(config, core.NormalTokenScopeMapProxy), config))
+	proxyRoute.Use(bindMiddleware(middlewares.TokenAuthorizationByQueryString(config), config))
 	{
-		if config.EnableMapDataFetchProxy && config.SupportMapDataFetchProxy {
-			proxyRoute.GET("/map/tile/:zoomLevel/:coordinateX/:fileName", bindProxy(api.MapImages.MapTileImageProxyHandler, config))
+		if config.EnableMapDataFetchProxy {
+			if config.MapProvider == settings.OpenStreetMapProvider ||
+				config.MapProvider == settings.OpenStreetMapHumanitarianStyleProvider ||
+				config.MapProvider == settings.OpenTopoMapProvider ||
+				config.MapProvider == settings.OPNVKarteMapProvider ||
+				config.MapProvider == settings.CyclOSMMapProvider ||
+				config.MapProvider == settings.CartoDBMapProvider ||
+				config.MapProvider == settings.TomTomMapProvider ||
+				config.MapProvider == settings.TianDiTuProvider ||
+				config.MapProvider == settings.CustomProvider {
+				proxyRoute.GET("/map/tile/:zoomLevel/:coordinateX/:fileName", bindProxy(api.MapImages.MapTileImageProxyHandler, config))
+			}
 
 			if config.MapProvider == settings.TianDiTuProvider ||
 				(config.MapProvider == settings.CustomProvider && config.CustomMapTileServerAnnotationLayerUrl != "") {
@@ -227,7 +244,7 @@ func startWebServer(c *core.CliContext) error {
 
 	if config.MapProvider == settings.AmapProvider && config.AmapSecurityVerificationMethod == settings.AmapSecurityVerificationInternalProxyMethod {
 		amapApiProxyRoute := router.Group("/_AMapService")
-		amapApiProxyRoute.Use(bindMiddleware(middlewares.TokenAuthorizationByCookie(config, core.NormalTokenScopeMapProxy), config))
+		amapApiProxyRoute.Use(bindMiddleware(middlewares.TokenAuthorizationByCookie(config), config))
 		{
 			amapApiProxyRoute.GET("/*action", bindProxy(api.AmapApis.AmapApiProxyHandler, config))
 		}
@@ -390,6 +407,10 @@ func startWebServer(c *core.CliContext) error {
 			apiV1Route.POST("/accounts/move.json", bindApi(api.Accounts.AccountMoveHandler, config))
 			apiV1Route.POST("/accounts/delete.json", bindApi(api.Accounts.AccountDeleteHandler, config))
 			apiV1Route.POST("/accounts/sub_account/delete.json", bindApi(api.Accounts.SubAccountDeleteHandler, config))
+
+			// Credit Card Pictures
+			apiV1Route.POST("/credit_card/pictures/upload.json", bindApi(api.CreditCardPictures.CreditCardPictureUploadHandler, config))
+			apiV1Route.POST("/credit_card/pictures/remove_unused.json", bindApi(api.CreditCardPictures.CreditCardPictureRemoveUnusedHandler, config))
 
 			// Transactions
 			apiV1Route.GET("/transactions/count.json", bindApi(api.Transactions.TransactionCountHandler, config))
@@ -595,14 +616,9 @@ func bindApiWithTokenUpdate(fn core.ApiHandlerFunc, config *settings.Config, onl
 		}
 
 		result, err := fn(c)
-		claims := c.GetTokenClaims()
 
 		if err == nil && config.MapProvider == settings.AmapProvider && config.AmapSecurityVerificationMethod == settings.AmapSecurityVerificationInternalProxyMethod {
-			if claims != nil {
-				middlewares.AmapApiProxyAuthCookie(c, c.GetTextualMapProxyToken(), claims.ExpiresAt)
-			} else {
-				middlewares.AmapApiProxyAuthCookie(c, "", -1)
-			}
+			middlewares.AmapApiProxyAuthCookie(c, config)
 		}
 
 		if err != nil {

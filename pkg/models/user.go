@@ -117,46 +117,51 @@ type User struct {
 	CoordinateDisplayType core.CoordinateDisplayType `xorm:"TINYINT"`
 	ExpenseAmountColor    AmountColorType            `xorm:"TINYINT"`
 	IncomeAmountColor     AmountColorType            `xorm:"TINYINT"`
-	FeatureRestriction    core.UserFeatureRestrictions
-	Disabled              bool
-	Deleted               bool `xorm:"NOT NULL"`
-	EmailVerified         bool `xorm:"NOT NULL"`
-	CreatedUnixTime       int64
-	UpdatedUnixTime       int64
-	DeletedUnixTime       int64
-	LastLoginUnixTime     int64
+
+	CreditCardNotificationInterval         int16 `xorm:"SMALLINT NOT NULL"`
+	CreditCardNotificationLastScanUnixTime int64
+
+	FeatureRestriction core.UserFeatureRestrictions
+	Disabled           bool
+	Deleted            bool `xorm:"NOT NULL"`
+	EmailVerified      bool `xorm:"NOT NULL"`
+	CreatedUnixTime    int64
+	UpdatedUnixTime    int64
+	DeletedUnixTime    int64
+	LastLoginUnixTime  int64
 }
 
 // UserBasicInfo represents a view-object of user basic info
 type UserBasicInfo struct {
-	Username              string                     `json:"username"`
-	Email                 string                     `json:"email"`
-	Nickname              string                     `json:"nickname"`
-	AvatarUrl             string                     `json:"avatar"`
-	AvatarProvider        string                     `json:"avatarProvider,omitempty"`
-	DefaultAccountId      int64                      `json:"defaultAccountId,string"`
-	UseLastReconciledTime bool                       `json:"useLastReconciledTime"`
-	TransactionEditScope  TransactionEditScope       `json:"transactionEditScope"`
-	Language              string                     `json:"language"`
-	DefaultCurrency       string                     `json:"defaultCurrency"`
-	FirstDayOfWeek        core.WeekDay               `json:"firstDayOfWeek"`
-	FiscalYearStart       core.FiscalYearStart       `json:"fiscalYearStart"`
-	CalendarDisplayType   core.CalendarDisplayType   `json:"calendarDisplayType"`
-	DateDisplayType       core.DateDisplayType       `json:"dateDisplayType"`
-	LongDateFormat        core.LongDateFormat        `json:"longDateFormat"`
-	ShortDateFormat       core.ShortDateFormat       `json:"shortDateFormat"`
-	LongTimeFormat        core.LongTimeFormat        `json:"longTimeFormat"`
-	ShortTimeFormat       core.ShortTimeFormat       `json:"shortTimeFormat"`
-	FiscalYearFormat      core.FiscalYearFormat      `json:"fiscalYearFormat"`
-	CurrencyDisplayType   core.CurrencyDisplayType   `json:"currencyDisplayType"`
-	NumeralSystem         core.NumeralSystem         `json:"numeralSystem"`
-	DecimalSeparator      core.DecimalSeparator      `json:"decimalSeparator"`
-	DigitGroupingSymbol   core.DigitGroupingSymbol   `json:"digitGroupingSymbol"`
-	DigitGrouping         core.DigitGroupingType     `json:"digitGrouping"`
-	CoordinateDisplayType core.CoordinateDisplayType `json:"coordinateDisplayType"`
-	ExpenseAmountColor    AmountColorType            `json:"expenseAmountColor"`
-	IncomeAmountColor     AmountColorType            `json:"incomeAmountColor"`
-	EmailVerified         bool                       `json:"emailVerified"`
+	Username                       string                     `json:"username"`
+	Email                          string                     `json:"email"`
+	Nickname                       string                     `json:"nickname"`
+	AvatarUrl                      string                     `json:"avatar"`
+	AvatarProvider                 string                     `json:"avatarProvider,omitempty"`
+	DefaultAccountId               int64                      `json:"defaultAccountId,string"`
+	UseLastReconciledTime          bool                       `json:"useLastReconciledTime"`
+	TransactionEditScope           TransactionEditScope       `json:"transactionEditScope"`
+	Language                       string                     `json:"language"`
+	DefaultCurrency                string                     `json:"defaultCurrency"`
+	FirstDayOfWeek                 core.WeekDay               `json:"firstDayOfWeek"`
+	FiscalYearStart                core.FiscalYearStart       `json:"fiscalYearStart"`
+	CalendarDisplayType            core.CalendarDisplayType   `json:"calendarDisplayType"`
+	DateDisplayType                core.DateDisplayType       `json:"dateDisplayType"`
+	LongDateFormat                 core.LongDateFormat        `json:"longDateFormat"`
+	ShortDateFormat                core.ShortDateFormat       `json:"shortDateFormat"`
+	LongTimeFormat                 core.LongTimeFormat        `json:"longTimeFormat"`
+	ShortTimeFormat                core.ShortTimeFormat       `json:"shortTimeFormat"`
+	FiscalYearFormat               core.FiscalYearFormat      `json:"fiscalYearFormat"`
+	CurrencyDisplayType            core.CurrencyDisplayType   `json:"currencyDisplayType"`
+	NumeralSystem                  core.NumeralSystem         `json:"numeralSystem"`
+	DecimalSeparator               core.DecimalSeparator      `json:"decimalSeparator"`
+	DigitGroupingSymbol            core.DigitGroupingSymbol   `json:"digitGroupingSymbol"`
+	DigitGrouping                  core.DigitGroupingType     `json:"digitGrouping"`
+	CoordinateDisplayType          core.CoordinateDisplayType `json:"coordinateDisplayType"`
+	ExpenseAmountColor             AmountColorType            `json:"expenseAmountColor"`
+	IncomeAmountColor              AmountColorType            `json:"incomeAmountColor"`
+	CreditCardNotificationInterval int16                      `json:"creditCardNotificationInterval"`
+	EmailVerified                  bool                       `json:"emailVerified"`
 }
 
 // UserLoginRequest represents all parameters of user login request
@@ -187,39 +192,39 @@ type UserResendVerifyEmailRequest struct {
 
 // UserProfileUpdateRequest represents all parameters of user updating profile request
 type UserProfileUpdateRequest struct {
-	Email                 string                      `json:"email" binding:"omitempty,notBlank,max=100,validEmail"`
-	Nickname              string                      `json:"nickname" binding:"omitempty,notBlank,max=64,validNickname"`
-	Password              string                      `json:"password" binding:"omitempty,min=6,max=128"`
-	OldPassword           string                      `json:"oldPassword" binding:"omitempty,min=6,max=128"`
-	DefaultAccountId      int64                       `json:"defaultAccountId,string" binding:"omitempty,min=1"`
-	UseLastReconciledTime *bool                       `json:"useLastReconciledTime" binding:"omitempty"`
-	TransactionEditScope  *TransactionEditScope       `json:"transactionEditScope" binding:"omitempty,min=0,max=7"`
-	Language              string                      `json:"language" binding:"omitempty,min=2,max=16"`
-	DefaultCurrency       string                      `json:"defaultCurrency" binding:"omitempty,len=3,validCurrency"`
-	FirstDayOfWeek        *core.WeekDay               `json:"firstDayOfWeek" binding:"omitempty,min=0,max=6"`
-	FiscalYearStart       *core.FiscalYearStart       `json:"fiscalYearStart" binding:"omitempty,validFiscalYearStart"`
-	CalendarDisplayType   *core.CalendarDisplayType   `json:"calendarDisplayType" binding:"omitempty,min=0,max=4"`
-	DateDisplayType       *core.DateDisplayType       `json:"dateDisplayType" binding:"omitempty,min=0,max=3"`
-	LongDateFormat        *core.LongDateFormat        `json:"longDateFormat" binding:"omitempty,min=0,max=3"`
-	ShortDateFormat       *core.ShortDateFormat       `json:"shortDateFormat" binding:"omitempty,min=0,max=3"`
-	LongTimeFormat        *core.LongTimeFormat        `json:"longTimeFormat" binding:"omitempty,min=0,max=3"`
-	ShortTimeFormat       *core.ShortTimeFormat       `json:"shortTimeFormat" binding:"omitempty,min=0,max=3"`
-	FiscalYearFormat      *core.FiscalYearFormat      `json:"fiscalYearFormat" binding:"omitempty,min=0,max=5"`
-	CurrencyDisplayType   *core.CurrencyDisplayType   `json:"currencyDisplayType" binding:"omitempty,min=0,max=11"`
-	NumeralSystem         *core.NumeralSystem         `json:"numeralSystem" binding:"omitempty,min=0,max=5"`
-	DecimalSeparator      *core.DecimalSeparator      `json:"decimalSeparator" binding:"omitempty,min=0,max=3"`
-	DigitGroupingSymbol   *core.DigitGroupingSymbol   `json:"digitGroupingSymbol" binding:"omitempty,min=0,max=4"`
-	DigitGrouping         *core.DigitGroupingType     `json:"digitGrouping" binding:"omitempty,min=0,max=3"`
-	CoordinateDisplayType *core.CoordinateDisplayType `json:"coordinateDisplayType" binding:"omitempty,min=0,max=6"`
-	ExpenseAmountColor    *AmountColorType            `json:"expenseAmountColor" binding:"omitempty,min=0,max=5"`
-	IncomeAmountColor     *AmountColorType            `json:"incomeAmountColor" binding:"omitempty,min=0,max=5"`
+	Email                          string                      `json:"email" binding:"omitempty,notBlank,max=100,validEmail"`
+	Nickname                       string                      `json:"nickname" binding:"omitempty,notBlank,max=64,validNickname"`
+	Password                       string                      `json:"password" binding:"omitempty,min=6,max=128"`
+	OldPassword                    string                      `json:"oldPassword" binding:"omitempty,min=6,max=128"`
+	DefaultAccountId               int64                       `json:"defaultAccountId,string" binding:"omitempty,min=1"`
+	UseLastReconciledTime          *bool                       `json:"useLastReconciledTime" binding:"omitempty"`
+	TransactionEditScope           *TransactionEditScope       `json:"transactionEditScope" binding:"omitempty,min=0,max=7"`
+	Language                       string                      `json:"language" binding:"omitempty,min=2,max=16"`
+	DefaultCurrency                string                      `json:"defaultCurrency" binding:"omitempty,len=3,validCurrency"`
+	FirstDayOfWeek                 *core.WeekDay               `json:"firstDayOfWeek" binding:"omitempty,min=0,max=6"`
+	FiscalYearStart                *core.FiscalYearStart       `json:"fiscalYearStart" binding:"omitempty,validFiscalYearStart"`
+	CalendarDisplayType            *core.CalendarDisplayType   `json:"calendarDisplayType" binding:"omitempty,min=0,max=4"`
+	DateDisplayType                *core.DateDisplayType       `json:"dateDisplayType" binding:"omitempty,min=0,max=3"`
+	LongDateFormat                 *core.LongDateFormat        `json:"longDateFormat" binding:"omitempty,min=0,max=3"`
+	ShortDateFormat                *core.ShortDateFormat       `json:"shortDateFormat" binding:"omitempty,min=0,max=3"`
+	LongTimeFormat                 *core.LongTimeFormat        `json:"longTimeFormat" binding:"omitempty,min=0,max=3"`
+	ShortTimeFormat                *core.ShortTimeFormat       `json:"shortTimeFormat" binding:"omitempty,min=0,max=3"`
+	FiscalYearFormat               *core.FiscalYearFormat      `json:"fiscalYearFormat" binding:"omitempty,min=0,max=5"`
+	CurrencyDisplayType            *core.CurrencyDisplayType   `json:"currencyDisplayType" binding:"omitempty,min=0,max=11"`
+	NumeralSystem                  *core.NumeralSystem         `json:"numeralSystem" binding:"omitempty,min=0,max=5"`
+	DecimalSeparator               *core.DecimalSeparator      `json:"decimalSeparator" binding:"omitempty,min=0,max=3"`
+	DigitGroupingSymbol            *core.DigitGroupingSymbol   `json:"digitGroupingSymbol" binding:"omitempty,min=0,max=4"`
+	DigitGrouping                  *core.DigitGroupingType     `json:"digitGrouping" binding:"omitempty,min=0,max=3"`
+	CoordinateDisplayType          *core.CoordinateDisplayType `json:"coordinateDisplayType" binding:"omitempty,min=0,max=6"`
+	ExpenseAmountColor             *AmountColorType            `json:"expenseAmountColor" binding:"omitempty,min=0,max=5"`
+	IncomeAmountColor              *AmountColorType            `json:"incomeAmountColor" binding:"omitempty,min=0,max=5"`
+	CreditCardNotificationInterval *int16                      `json:"creditCardNotificationInterval" binding:"omitempty,validCreditCardNotificationInterval"`
 }
 
 // UserProfileUpdateResponse represents the data returns to frontend after updating profile
 type UserProfileUpdateResponse struct {
-	User             *UserBasicInfo `json:"user"`
-	NewToken         string         `json:"newToken,omitempty"`
-	NewMapProxyToken string         `json:"newMapProxyToken,omitempty"`
+	User     *UserBasicInfo `json:"user"`
+	NewToken string         `json:"newToken,omitempty"`
 }
 
 // UserProfileResponse represents a view-object of user profile
@@ -286,6 +291,14 @@ func (u *User) CanEditTransactionByTransactionTime(transactionTime int64, client
 	return false
 }
 
+// NeedCreditCardNotificationScan returns whether the credit card accounts of this user should be
+// scanned at the given time. The cron job ticks every 15 minutes, but the accounts are only scanned
+// once the interval chosen by the user has elapsed since the last scan
+func (u *User) NeedCreditCardNotificationScan(currentUnixTime int64) bool {
+	intervalSeconds := int64(GetValidCreditCardNotificationInterval(u.CreditCardNotificationInterval)) * 60
+	return currentUnixTime-u.CreditCardNotificationLastScanUnixTime >= intervalSeconds
+}
+
 // ToUserBasicInfo returns a user basic view-object according to database model
 func (u *User) ToUserBasicInfo(avatarProvider core.UserAvatarProviderType, avatarUrl string) *UserBasicInfo {
 	fiscalYearStart := u.FiscalYearStart
@@ -295,34 +308,35 @@ func (u *User) ToUserBasicInfo(avatarProvider core.UserAvatarProviderType, avata
 	}
 
 	return &UserBasicInfo{
-		Username:              u.Username,
-		Email:                 u.Email,
-		Nickname:              u.Nickname,
-		AvatarUrl:             avatarUrl,
-		AvatarProvider:        string(avatarProvider),
-		DefaultAccountId:      u.DefaultAccountId,
-		UseLastReconciledTime: u.UseLastReconciledTime,
-		TransactionEditScope:  u.TransactionEditScope,
-		Language:              u.Language,
-		DefaultCurrency:       u.DefaultCurrency,
-		FirstDayOfWeek:        u.FirstDayOfWeek,
-		FiscalYearStart:       fiscalYearStart,
-		CalendarDisplayType:   u.CalendarDisplayType,
-		DateDisplayType:       u.DateDisplayType,
-		LongDateFormat:        u.LongDateFormat,
-		ShortDateFormat:       u.ShortDateFormat,
-		LongTimeFormat:        u.LongTimeFormat,
-		ShortTimeFormat:       u.ShortTimeFormat,
-		DecimalSeparator:      u.DecimalSeparator,
-		FiscalYearFormat:      u.FiscalYearFormat,
-		CurrencyDisplayType:   u.CurrencyDisplayType,
-		NumeralSystem:         u.NumeralSystem,
-		DigitGroupingSymbol:   u.DigitGroupingSymbol,
-		DigitGrouping:         u.DigitGrouping,
-		CoordinateDisplayType: u.CoordinateDisplayType,
-		ExpenseAmountColor:    u.ExpenseAmountColor,
-		IncomeAmountColor:     u.IncomeAmountColor,
-		EmailVerified:         u.EmailVerified,
+		Username:                       u.Username,
+		Email:                          u.Email,
+		Nickname:                       u.Nickname,
+		AvatarUrl:                      avatarUrl,
+		AvatarProvider:                 string(avatarProvider),
+		DefaultAccountId:               u.DefaultAccountId,
+		UseLastReconciledTime:          u.UseLastReconciledTime,
+		TransactionEditScope:           u.TransactionEditScope,
+		Language:                       u.Language,
+		DefaultCurrency:                u.DefaultCurrency,
+		FirstDayOfWeek:                 u.FirstDayOfWeek,
+		FiscalYearStart:                fiscalYearStart,
+		CalendarDisplayType:            u.CalendarDisplayType,
+		DateDisplayType:                u.DateDisplayType,
+		LongDateFormat:                 u.LongDateFormat,
+		ShortDateFormat:                u.ShortDateFormat,
+		LongTimeFormat:                 u.LongTimeFormat,
+		ShortTimeFormat:                u.ShortTimeFormat,
+		DecimalSeparator:               u.DecimalSeparator,
+		FiscalYearFormat:               u.FiscalYearFormat,
+		CurrencyDisplayType:            u.CurrencyDisplayType,
+		NumeralSystem:                  u.NumeralSystem,
+		DigitGroupingSymbol:            u.DigitGroupingSymbol,
+		DigitGrouping:                  u.DigitGrouping,
+		CoordinateDisplayType:          u.CoordinateDisplayType,
+		ExpenseAmountColor:             u.ExpenseAmountColor,
+		IncomeAmountColor:              u.IncomeAmountColor,
+		CreditCardNotificationInterval: GetValidCreditCardNotificationInterval(u.CreditCardNotificationInterval),
+		EmailVerified:                  u.EmailVerified,
 	}
 }
 

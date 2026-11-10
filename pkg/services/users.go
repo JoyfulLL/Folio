@@ -358,6 +358,10 @@ func (s *UserService) UpdateUser(c core.Context, user *models.User, modifyUserLa
 		updateCols = append(updateCols, "income_amount_color")
 	}
 
+	if models.IsValidCreditCardNotificationInterval(user.CreditCardNotificationInterval) {
+		updateCols = append(updateCols, "credit_card_notification_interval")
+	}
+
 	user.UpdatedUnixTime = now
 	updateCols = append(updateCols, "updated_unix_time")
 
@@ -482,6 +486,61 @@ func (s *UserService) UpdateUserLastLoginTime(c core.Context, uid int64) error {
 		_, err := sess.ID(uid).Cols("last_login_unix_time").Where("deleted=?", false).Update(&models.User{LastLoginUnixTime: time.Now().Unix()})
 		return err
 	})
+}
+
+// GetUserIdsNeedCreditCardNotificationScan returns the ids of the users whose credit card accounts
+// should be scanned at the given time
+func (s *UserService) GetUserIdsNeedCreditCardNotificationScan(c core.Context, currentUnixTime int64) ([]int64, error) {
+	var users []*models.User
+
+	err := s.UserDB().NewSession(c).Cols("uid", "credit_card_notification_interval", "credit_card_notification_last_scan_unix_time").Where("deleted=? AND disabled=?", false, false).Find(&users)
+
+	if err != nil {
+		return nil, err
+	}
+
+	uids := make([]int64, 0, len(users))
+
+	for i := 0; i < len(users); i++ {
+		if users[i].NeedCreditCardNotificationScan(currentUnixTime) {
+			uids = append(uids, users[i].Uid)
+		}
+	}
+
+	return uids, nil
+}
+
+// UpdateUsersCreditCardNotificationLastScanTime records when the credit card accounts of the given
+// users have been scanned
+func (s *UserService) UpdateUsersCreditCardNotificationLastScanTime(c core.Context, uids []int64, currentUnixTime int64) error {
+	if len(uids) < 1 {
+		return nil
+	}
+
+	updateModel := &models.User{
+		CreditCardNotificationLastScanUnixTime: currentUnixTime,
+	}
+
+	_, err := s.UserDB().NewSession(c).Cols("credit_card_notification_last_scan_unix_time").In("uid", uids).Where("deleted=?", false).Update(updateModel)
+
+	return err
+}
+
+// ResetUserCreditCardNotificationLastScanTime makes the credit card accounts of the user scanned on
+// the next cron tick, so a corrected statement date or reminder time is picked up without waiting
+// for the whole scan interval chosen by the user
+func (s *UserService) ResetUserCreditCardNotificationLastScanTime(c core.Context, uid int64) error {
+	if uid <= 0 {
+		return errs.ErrUserIdInvalid
+	}
+
+	updateModel := &models.User{
+		CreditCardNotificationLastScanUnixTime: 0,
+	}
+
+	_, err := s.UserDB().NewSession(c).ID(uid).Cols("credit_card_notification_last_scan_unix_time").Where("deleted=?", false).Update(updateModel)
+
+	return err
 }
 
 // EnableUser sets user enabled

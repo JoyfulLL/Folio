@@ -10,11 +10,21 @@
         </f7-navbar>
 
         <f7-list strong inset dividers class="margin-vertical-half skeleton-text" v-if="loading">
+            <f7-list-input label="Account Name" placeholder="Your account name"></f7-list-input>
             <f7-list-item class="list-item-with-header-and-title" header="Account Category" title="Category"></f7-list-item>
             <f7-list-item class="list-item-with-header-and-title" header="Account Type" title="Account Type"></f7-list-item>
         </f7-list>
 
         <f7-list form strong inset dividers class="margin-vertical-half" v-else-if="!loading">
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :label="tt('Account Name')"
+                :placeholder="tt('Your account name')"
+                v-model:value="account.name"
+            ></f7-list-input>
+
             <f7-list-item
                 link="#" no-chevron
                 class="list-item-with-header-and-title"
@@ -49,7 +59,6 @@
         </f7-list>
 
         <f7-list strong inset dividers class="margin-vertical skeleton-text" v-if="loading">
-            <f7-list-input label="Account Name" placeholder="Your account name"></f7-list-input>
             <f7-list-item class="list-item-with-header-and-title list-item-with-multi-item">
                 <template #default>
                     <div class="grid grid-cols-2">
@@ -95,15 +104,7 @@
         </f7-list>
 
         <f7-list form strong inset dividers class="margin-vertical" v-else-if="!loading && account.type === AccountType.SingleAccount.type">
-            <f7-list-input
-                type="text"
-                autocomplete="off"
-                clear-button
-                :label="tt('Account Name')"
-                :placeholder="tt('Your account name')"
-                v-model:value="account.name"
-            ></f7-list-input>
-
+            <!-- Basic information -->
             <f7-list-item class="list-item-with-header-and-title list-item-with-multi-item">
                 <template #default>
                     <div class="grid grid-cols-2">
@@ -185,44 +186,6 @@
             <f7-list-item
                 link="#" no-chevron
                 class="list-item-with-header-and-title"
-                :class="{ 'disabled': account.currency === '' || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE }"
-                :header="tt('Credit Limit')"
-                :title="getAccountCreditCardCreditLimitDisplayValue(account.numericCreditCardLimit, account.currency)"
-                v-if="account.category === AccountCategory.CreditCard.type"
-                @click="showCreditCardLimitSheet = true"
-            >
-                <number-pad-sheet :min-value="0"
-                                  :max-value="TRANSACTION_MAX_AMOUNT"
-                                  :currency="account.currency"
-                                  v-model:show="showCreditCardLimitSheet"
-                                  v-model="account.numericCreditCardLimit"
-                ></number-pad-sheet>
-            </f7-list-item>
-
-            <f7-list-item
-                link="#"
-                class="list-item-with-header-and-title list-item-no-item-after"
-                :header="tt('Statement Date')"
-                :title="getAccountCreditCardStatementDate(account.creditCardStatementDate)"
-                v-if="account.category === AccountCategory.CreditCard.type"
-                @click="accountContext.showCreditCardStatementDatePopup = true"
-            >
-                <list-item-selection-popup value-type="item"
-                                           key-field="type" value-field="type"
-                                           title-field="displayName"
-                                           :title="tt('Statement Date')"
-                                           :enable-filter="true"
-                                           :filter-placeholder="tt('Statement Date')"
-                                           :filter-no-items-text="tt('No results')"
-                                           :items="allAvailableMonthDays"
-                                           v-model:show="accountContext.showCreditCardStatementDatePopup"
-                                           v-model="account.creditCardStatementDate">
-                </list-item-selection-popup>
-            </f7-list-item>
-
-            <f7-list-item
-                link="#" no-chevron
-                class="list-item-with-header-and-title"
                 :class="{ 'disabled': editAccountId }"
                 :header="account.isLiability ? tt('Account Outstanding Balance') : tt('Account Balance')"
                 :title="formatAccountDisplayBalance(account)"
@@ -285,6 +248,315 @@
                 </date-time-selection-sheet>
             </f7-list-item>
 
+            <!-- Credit card profile -->
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="64"
+                :label="tt('Bank Name')"
+                :placeholder="tt('Bank Name')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="account.creditCardBankName"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="64"
+                :label="tt('Card Name')"
+                :placeholder="tt('Card Name')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="account.creditCardCardName"
+            ></f7-list-input>
+
+            <f7-list-item accordion-item :title="tt('Advanced Card Details')" v-if="account.category === AccountCategory.CreditCard.type">
+                <f7-accordion-content>
+                    <f7-list>
+                <f7-list-input
+                    type="text"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    clear-button
+                    :maxlength="4"
+                    :label="tt('Last Four Digits')"
+                    :placeholder="tt('Last Four Digits')"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    v-model:value="account.creditCardLastFourDigits"
+                ></f7-list-input>
+
+                <f7-list-input
+                    type="text"
+                    autocomplete="off"
+                    clear-button
+                    :maxlength="64"
+                    :label="tt('Cardholder Name')"
+                    :placeholder="tt('Cardholder Name')"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    v-model:value="account.creditCardCardholderName"
+                ></f7-list-input>
+
+                <f7-list-item
+                    link="#"
+                    class="list-item-with-header-and-title list-item-no-item-after"
+                    :header="tt('Expiration Month')"
+                    :title="getAccountCreditCardExpireMonth(account.creditCardExpireMonth)"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    @click="accountContext.showCreditCardExpireMonthPopup = true"
+                >
+                    <list-item-selection-popup value-type="item"
+                                               key-field="type" value-field="type"
+                                               title-field="displayName"
+                                               :title="tt('Expiration Month')"
+                                               :enable-filter="true"
+                                               :filter-placeholder="tt('Expiration Month')"
+                                               :filter-no-items-text="tt('No results')"
+                                               :items="allAvailableExpireMonths"
+                                               v-model:show="accountContext.showCreditCardExpireMonthPopup"
+                                               v-model="account.creditCardExpireMonth">
+                    </list-item-selection-popup>
+                </f7-list-item>
+
+                <f7-list-item
+                    link="#"
+                    class="list-item-with-header-and-title list-item-no-item-after"
+                    :header="tt('Expiration Year')"
+                    :title="getAccountCreditCardExpireYear(account.creditCardExpireYear)"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    @click="accountContext.showCreditCardExpireYearPopup = true"
+                >
+                    <list-item-selection-popup value-type="item"
+                                               key-field="type" value-field="type"
+                                               title-field="displayName"
+                                               :title="tt('Expiration Year')"
+                                               :enable-filter="true"
+                                               :filter-placeholder="tt('Expiration Year')"
+                                               :filter-no-items-text="tt('No results')"
+                                               :items="allAvailableExpireYears"
+                                               v-model:show="accountContext.showCreditCardExpireYearPopup"
+                                               v-model="account.creditCardExpireYear">
+                    </list-item-selection-popup>
+                </f7-list-item>
+                    </f7-list>
+                </f7-accordion-content>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title"
+                :header="tt('Card Picture')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="showOpenCreditCardPictureDialog"
+            >
+                <template #title>
+                    <img v-if="account.creditCardPictureUrl" :src="account.creditCardPictureUrl" style="max-width: 100%; max-height: 160px" />
+                    <span v-else>{{ tt('Not set') }}</span>
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                :title="tt('Remove Picture')"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardPictureUrl"
+                @click="removeAccountCreditCardPicture"
+            ></f7-list-item>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :label="tt('Bank limit in this card currency')"
+                :placeholder="tt('Bank limit in this card currency')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="account.creditCardCurrencyLimit"
+            ></f7-list-input>
+
+            <!-- Credit limit and billing cycle -->
+            <f7-list-item
+                link="#" no-chevron
+                class="list-item-with-header-and-title"
+                :class="{ 'disabled': account.currency === '' || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE }"
+                :header="tt('Credit Limit')"
+                :title="getAccountCreditCardCreditLimitDisplayValue(account.numericCreditCardLimit, account.currency)"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="showCreditCardLimitSheet = true"
+            >
+                <number-pad-sheet :min-value="0"
+                                  :max-value="TRANSACTION_MAX_AMOUNT"
+                                  :currency="account.currency"
+                                  v-model:show="showCreditCardLimitSheet"
+                                  v-model="account.numericCreditCardLimit"
+                ></number-pad-sheet>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Statement Date')"
+                :title="getAccountCreditCardStatementDate(account.creditCardStatementDate)"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="accountContext.showCreditCardStatementDatePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Statement Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Statement Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="accountContext.showCreditCardStatementDatePopup"
+                                           v-model="account.creditCardStatementDate">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Include Statement Date Transactions')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardStatementDateIncludeTransaction" @toggle:change="account.creditCardStatementDateIncludeTransaction = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Final Repayment Date')"
+                :title="getAccountCreditCardRepaymentDateType(account.creditCardRepaymentDateType)"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="accountContext.showCreditCardRepaymentDateTypePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Final Repayment Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Final Repayment Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentDateTypes"
+                                           v-model:show="accountContext.showCreditCardRepaymentDateTypePopup"
+                                           v-model="account.creditCardRepaymentDateType">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Days After Statement Date')"
+                :title="getAccountCreditCardRepaymentDaysAfterStatement(account.creditCardRepaymentDaysAfterStatement)"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentDateType === 1"
+                @click="accountContext.showCreditCardRepaymentDaysPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Days After Statement Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Days After Statement Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentDays"
+                                           v-model:show="accountContext.showCreditCardRepaymentDaysPopup"
+                                           v-model="account.creditCardRepaymentDaysAfterStatement">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Repayment Day of Month')"
+                :title="getAccountCreditCardRepaymentDayOfMonth(account.creditCardRepaymentDayOfMonth)"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentDateType === 2"
+                @click="accountContext.showCreditCardRepaymentDayOfMonthPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Repayment Day of Month')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Repayment Day of Month')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="accountContext.showCreditCardRepaymentDayOfMonthPopup"
+                                           v-model="account.creditCardRepaymentDayOfMonth">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <!-- Credit card email notifications -->
+            <f7-list-item :title="tt('Statement Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardStatementReminderEnabled" @toggle:change="account.creditCardStatementReminderEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email on each statement date') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Statement Email')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardStatementEmailEnabled" @toggle:change="account.creditCardStatementEmailEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email containing all transactions of the just-ended billing cycle') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Repayment Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardRepaymentReminderEnabled" @toggle:change="account.creditCardRepaymentReminderEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email before and on each repayment date') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Days Before Repayment Date')"
+                :title="notificationRepaymentDaysBefore ? notificationRepaymentDaysBefore.toString(10) : tt('None')"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentReminderEnabled"
+                @click="accountContext.showCreditCardRepaymentReminderDaysPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Days Before Repayment Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Days Before Repayment Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentReminderDaysBefore"
+                                           v-model:show="accountContext.showCreditCardRepaymentReminderDaysPopup"
+                                           v-model="notificationRepaymentDaysBefore">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Notification Time')"
+                :title="getAccountCreditCardNotificationTime(account.creditCardNotificationMinutesOfDay)"
+                v-if="hasCreditCardNotificationEnabled"
+                @click="accountContext.showCreditCardNotificationTimePopup = true"
+            >
+                <template #footer>
+                    {{ tt('Notifications are sent at this time in your timezone') + ' (' + notificationTimezoneName + ')' }}
+                </template>
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Notification Time')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Notification Time')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableNotificationTimes"
+                                           v-model:show="accountContext.showCreditCardNotificationTimePopup"
+                                           v-model="notificationMinutesOfDay">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <!-- Other -->
             <f7-list-item :title="tt('Visible')" v-if="editAccountId">
                 <template #after>
                     <f7-toggle :checked="account.visible" @toggle:change="account.visible = $event"></f7-toggle>
@@ -303,15 +575,7 @@
         </f7-list>
 
         <f7-list form strong inset dividers class="margin-vertical" v-else-if="!loading && account.type === AccountType.MultiSubAccounts.type">
-            <f7-list-input
-                type="text"
-                autocomplete="off"
-                clear-button
-                :label="tt('Account Name')"
-                :placeholder="tt('Your account name')"
-                v-model:value="account.name"
-            ></f7-list-input>
-
+            <!-- Basic information -->
             <f7-list-item class="list-item-with-header-and-title list-item-with-multi-item">
                 <template #default>
                     <div class="grid grid-cols-2">
@@ -389,6 +653,141 @@
                 </list-item-selection-popup>
             </f7-list-item>
 
+            <!-- Credit card profile -->
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="64"
+                :label="tt('Bank Name')"
+                :placeholder="tt('Bank Name')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="account.creditCardBankName"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="64"
+                :label="tt('Card Name')"
+                :placeholder="tt('Card Name')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="account.creditCardCardName"
+            ></f7-list-input>
+
+            <f7-list-item accordion-item :title="tt('Advanced Card Details')" v-if="account.category === AccountCategory.CreditCard.type">
+                <f7-accordion-content>
+                    <f7-list>
+                <f7-list-input
+                    type="text"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    clear-button
+                    :maxlength="4"
+                    :label="tt('Last Four Digits')"
+                    :placeholder="tt('Last Four Digits')"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    v-model:value="account.creditCardLastFourDigits"
+                ></f7-list-input>
+
+                <f7-list-input
+                    type="text"
+                    autocomplete="off"
+                    clear-button
+                    :maxlength="64"
+                    :label="tt('Cardholder Name')"
+                    :placeholder="tt('Cardholder Name')"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    v-model:value="account.creditCardCardholderName"
+                ></f7-list-input>
+
+                <f7-list-item
+                    link="#"
+                    class="list-item-with-header-and-title list-item-no-item-after"
+                    :header="tt('Expiration Month')"
+                    :title="getAccountCreditCardExpireMonth(account.creditCardExpireMonth)"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    @click="accountContext.showCreditCardExpireMonthPopup = true"
+                >
+                    <list-item-selection-popup value-type="item"
+                                               key-field="type" value-field="type"
+                                               title-field="displayName"
+                                               :title="tt('Expiration Month')"
+                                               :enable-filter="true"
+                                               :filter-placeholder="tt('Expiration Month')"
+                                               :filter-no-items-text="tt('No results')"
+                                               :items="allAvailableExpireMonths"
+                                               v-model:show="accountContext.showCreditCardExpireMonthPopup"
+                                               v-model="account.creditCardExpireMonth">
+                    </list-item-selection-popup>
+                </f7-list-item>
+
+                <f7-list-item
+                    link="#"
+                    class="list-item-with-header-and-title list-item-no-item-after"
+                    :header="tt('Expiration Year')"
+                    :title="getAccountCreditCardExpireYear(account.creditCardExpireYear)"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    @click="accountContext.showCreditCardExpireYearPopup = true"
+                >
+                    <list-item-selection-popup value-type="item"
+                                               key-field="type" value-field="type"
+                                               title-field="displayName"
+                                               :title="tt('Expiration Year')"
+                                               :enable-filter="true"
+                                               :filter-placeholder="tt('Expiration Year')"
+                                               :filter-no-items-text="tt('No results')"
+                                               :items="allAvailableExpireYears"
+                                               v-model:show="accountContext.showCreditCardExpireYearPopup"
+                                               v-model="account.creditCardExpireYear">
+                    </list-item-selection-popup>
+                </f7-list-item>
+                    </f7-list>
+                </f7-accordion-content>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title"
+                :header="tt('Card Picture')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="showOpenCreditCardPictureDialog"
+            >
+                <template #title>
+                    <img v-if="account.creditCardPictureUrl" :src="account.creditCardPictureUrl" style="max-width: 100%; max-height: 160px" />
+                    <span v-else>{{ tt('Not set') }}</span>
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                :title="tt('Remove Picture')"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardPictureUrl"
+                @click="removeAccountCreditCardPicture"
+            ></f7-list-item>
+
+            <!-- Card identity -->
+            <f7-list-item :title="tt('Physical Card')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardIsEntityCard !== false" @toggle:change="account.creditCardIsEntityCard = $event !== false"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Turn off if this account is only a shared credit limit container') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :label="tt('Bank limit in this card currency')"
+                :placeholder="tt('Bank limit in this card currency')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="account.creditCardCurrencyLimit"
+            ></f7-list-input>
+
+            <!-- Credit limit and billing cycle -->
             <f7-list-item
                 link="#" no-chevron
                 class="list-item-with-header-and-title"
@@ -427,6 +826,152 @@
                 </list-item-selection-popup>
             </f7-list-item>
 
+            <f7-list-item :title="tt('Include Statement Date Transactions')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardStatementDateIncludeTransaction" @toggle:change="account.creditCardStatementDateIncludeTransaction = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Final Repayment Date')"
+                :title="getAccountCreditCardRepaymentDateType(account.creditCardRepaymentDateType)"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="accountContext.showCreditCardRepaymentDateTypePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Final Repayment Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Final Repayment Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentDateTypes"
+                                           v-model:show="accountContext.showCreditCardRepaymentDateTypePopup"
+                                           v-model="account.creditCardRepaymentDateType">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Days After Statement Date')"
+                :title="getAccountCreditCardRepaymentDaysAfterStatement(account.creditCardRepaymentDaysAfterStatement)"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentDateType === 1"
+                @click="accountContext.showCreditCardRepaymentDaysPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Days After Statement Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Days After Statement Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentDays"
+                                           v-model:show="accountContext.showCreditCardRepaymentDaysPopup"
+                                           v-model="account.creditCardRepaymentDaysAfterStatement">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Repayment Day of Month')"
+                :title="getAccountCreditCardRepaymentDayOfMonth(account.creditCardRepaymentDayOfMonth)"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentDateType === 2"
+                @click="accountContext.showCreditCardRepaymentDayOfMonthPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Repayment Day of Month')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Repayment Day of Month')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="accountContext.showCreditCardRepaymentDayOfMonthPopup"
+                                           v-model="account.creditCardRepaymentDayOfMonth">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <!-- Credit card email notifications -->
+            <f7-list-item :title="tt('Statement Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardStatementReminderEnabled" @toggle:change="account.creditCardStatementReminderEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email on each statement date') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Statement Email')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardStatementEmailEnabled" @toggle:change="account.creditCardStatementEmailEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email containing all transactions of the just-ended billing cycle') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Repayment Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="account.creditCardRepaymentReminderEnabled" @toggle:change="account.creditCardRepaymentReminderEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email before and on each repayment date') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Days Before Repayment Date')"
+                :title="notificationRepaymentDaysBefore ? notificationRepaymentDaysBefore.toString(10) : tt('None')"
+                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentReminderEnabled"
+                @click="accountContext.showCreditCardRepaymentReminderDaysPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Days Before Repayment Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Days Before Repayment Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentReminderDaysBefore"
+                                           v-model:show="accountContext.showCreditCardRepaymentReminderDaysPopup"
+                                           v-model="notificationRepaymentDaysBefore">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Notification Time')"
+                :title="getAccountCreditCardNotificationTime(account.creditCardNotificationMinutesOfDay)"
+                v-if="hasCreditCardNotificationEnabled"
+                @click="accountContext.showCreditCardNotificationTimePopup = true"
+            >
+                <template #footer>
+                    {{ tt('Notifications are sent at this time in your timezone') + ' (' + notificationTimezoneName + ')' }}
+                </template>
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Notification Time')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Notification Time')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableNotificationTimes"
+                                           v-model:show="accountContext.showCreditCardNotificationTimePopup"
+                                           v-model="notificationMinutesOfDay">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <!-- Other -->
             <f7-list-item :title="tt('Visible')" v-if="editAccountId">
                 <template #after>
                     <f7-toggle :checked="account.visible" @toggle:change="account.visible = $event"></f7-toggle>
@@ -608,6 +1153,310 @@
                     </date-time-selection-sheet>
                 </f7-list-item>
 
+            <!-- Credit card profile (this card) -->
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="64"
+                :label="tt('Bank Name')"
+                :placeholder="tt('Bank Name')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="subAccount.creditCardBankName"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="64"
+                :label="tt('Card Name')"
+                :placeholder="tt('Card Name')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="subAccount.creditCardCardName"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                inputmode="numeric"
+                clear-button
+                :maxlength="4"
+                :label="tt('Last Four Digits')"
+                :placeholder="tt('Last Four Digits')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="subAccount.creditCardLastFourDigits"
+            ></f7-list-input>
+
+            <f7-list-item accordion-item :title="tt('Advanced Card Details')" v-if="account.category === AccountCategory.CreditCard.type">
+                <f7-accordion-content>
+                    <f7-list>
+                <f7-list-input
+                    type="text"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    clear-button
+                    :maxlength="4"
+                    :label="tt('Last Four Digits')"
+                    :placeholder="tt('Last Four Digits')"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    v-model:value="subAccount.creditCardLastFourDigits"
+                ></f7-list-input>
+                <f7-list-input
+                    type="text"
+                    autocomplete="off"
+                    clear-button
+                    :maxlength="64"
+                    :label="tt('Cardholder Name')"
+                    :placeholder="tt('Cardholder Name')"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    v-model:value="subAccount.creditCardCardholderName"
+                ></f7-list-input>
+
+                <f7-list-item
+                    link="#"
+                    class="list-item-with-header-and-title list-item-no-item-after"
+                    :header="tt('Expiration Month')"
+                    :title="getAccountCreditCardExpireMonth(subAccount.creditCardExpireMonth)"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    @click="subAccountContexts[idx]!.showCreditCardExpireMonthPopup = true"
+                >
+                    <list-item-selection-popup value-type="item"
+                                               key-field="type" value-field="type"
+                                               title-field="displayName"
+                                               :title="tt('Expiration Month')"
+                                               :enable-filter="true"
+                                               :filter-placeholder="tt('Expiration Month')"
+                                               :filter-no-items-text="tt('No results')"
+                                               :items="allAvailableExpireMonths"
+                                               v-model:show="subAccountContexts[idx]!.showCreditCardExpireMonthPopup"
+                                               v-model="subAccount.creditCardExpireMonth">
+                    </list-item-selection-popup>
+                </f7-list-item>
+
+                <f7-list-item
+                    link="#"
+                    class="list-item-with-header-and-title list-item-no-item-after"
+                    :header="tt('Expiration Year')"
+                    :title="getAccountCreditCardExpireYear(subAccount.creditCardExpireYear)"
+                    v-if="account.category === AccountCategory.CreditCard.type"
+                    @click="subAccountContexts[idx]!.showCreditCardExpireYearPopup = true"
+                >
+                    <list-item-selection-popup value-type="item"
+                                               key-field="type" value-field="type"
+                                               title-field="displayName"
+                                               :title="tt('Expiration Year')"
+                                               :enable-filter="true"
+                                               :filter-placeholder="tt('Expiration Year')"
+                                               :filter-no-items-text="tt('No results')"
+                                               :items="allAvailableExpireYears"
+                                               v-model:show="subAccountContexts[idx]!.showCreditCardExpireYearPopup"
+                                               v-model="subAccount.creditCardExpireYear">
+                    </list-item-selection-popup>
+                </f7-list-item>
+                    </f7-list>
+                </f7-accordion-content>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title"
+                :header="tt('Card Picture')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="showOpenCreditCardPictureDialog(subAccount)"
+            >
+                <template #title>
+                    <img v-if="subAccount.creditCardPictureUrl" :src="subAccount.creditCardPictureUrl" style="max-width: 100%; max-height: 160px" />
+                    <span v-else>{{ tt('Not set') }}</span>
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                :title="tt('Remove Picture')"
+                v-if="account.category === AccountCategory.CreditCard.type && subAccount.creditCardPictureUrl"
+                @click="removeAccountCreditCardPicture(subAccount)"
+            ></f7-list-item>
+
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Statement Date')"
+                :title="getAccountCreditCardStatementDate(subAccount.creditCardStatementDate)"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="subAccountContexts[idx]!.showCreditCardStatementDatePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Statement Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Statement Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="subAccountContexts[idx]!.showCreditCardStatementDatePopup"
+                                           v-model="subAccount.creditCardStatementDate">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Include Statement Date Transactions')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="subAccount.creditCardStatementDateIncludeTransaction" @toggle:change="subAccount.creditCardStatementDateIncludeTransaction = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Final Repayment Date')"
+                :title="getAccountCreditCardRepaymentDateType(subAccount.creditCardRepaymentDateType)"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                @click="subAccountContexts[idx]!.showCreditCardRepaymentDateTypePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Final Repayment Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Final Repayment Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentDateTypes"
+                                           v-model:show="subAccountContexts[idx]!.showCreditCardRepaymentDateTypePopup"
+                                           v-model="subAccount.creditCardRepaymentDateType">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Days After Statement Date')"
+                :title="getAccountCreditCardRepaymentDaysAfterStatement(subAccount.creditCardRepaymentDaysAfterStatement)"
+                v-if="account.category === AccountCategory.CreditCard.type && subAccount.creditCardRepaymentDateType === 1"
+                @click="subAccountContexts[idx]!.showCreditCardRepaymentDaysPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Days After Statement Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Days After Statement Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentDays"
+                                           v-model:show="subAccountContexts[idx]!.showCreditCardRepaymentDaysPopup"
+                                           v-model="subAccount.creditCardRepaymentDaysAfterStatement">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Repayment Day of Month')"
+                :title="getAccountCreditCardRepaymentDayOfMonth(subAccount.creditCardRepaymentDayOfMonth)"
+                v-if="account.category === AccountCategory.CreditCard.type && subAccount.creditCardRepaymentDateType === 2"
+                @click="subAccountContexts[idx]!.showCreditCardRepaymentDayOfMonthPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Repayment Day of Month')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Repayment Day of Month')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="subAccountContexts[idx]!.showCreditCardRepaymentDayOfMonthPopup"
+                                           v-model="subAccount.creditCardRepaymentDayOfMonth">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <!-- Credit card email notifications -->
+            <f7-list-item :title="tt('Statement Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="subAccount.creditCardStatementReminderEnabled" @toggle:change="subAccount.creditCardStatementReminderEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email on each statement date') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Statement Email')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="subAccount.creditCardStatementEmailEnabled" @toggle:change="subAccount.creditCardStatementEmailEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email containing all transactions of the just-ended billing cycle') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item :title="tt('Repayment Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+                <template #after>
+                    <f7-toggle :checked="subAccount.creditCardRepaymentReminderEnabled" @toggle:change="subAccount.creditCardRepaymentReminderEnabled = $event"></f7-toggle>
+                </template>
+                <template #footer>
+                    {{ tt('Send an email before and on each repayment date') }}
+                </template>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Days Before Repayment Date')"
+                :title="getAccountRepaymentReminderDaysBefore(subAccount) ? getAccountRepaymentReminderDaysBefore(subAccount).toString(10) : tt('None')"
+                v-if="account.category === AccountCategory.CreditCard.type && subAccount.creditCardRepaymentReminderEnabled"
+                @click="subAccountContexts[idx]!.showCreditCardRepaymentReminderDaysPopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Days Before Repayment Date')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Days Before Repayment Date')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableRepaymentReminderDaysBefore"
+                                           v-model:show="subAccountContexts[idx]!.showCreditCardRepaymentReminderDaysPopup"
+                                           :model-value="getAccountRepaymentReminderDaysBefore(subAccount)"
+                                           @update:model-value="setAccountRepaymentReminderDaysBefore(subAccount, $event)">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Notification Time')"
+                :title="getAccountCreditCardNotificationTime(subAccount.creditCardNotificationMinutesOfDay)"
+                v-if="hasAccountCreditCardNotificationEnabled(subAccount)"
+                @click="subAccountContexts[idx]!.showCreditCardNotificationTimePopup = true"
+            >
+                <template #footer>
+                    {{ tt('Notifications are sent at this time in your timezone') + ' (' + notificationTimezoneName + ')' }}
+                </template>
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Notification Time')"
+                                           :enable-filter="true"
+                                           :filter-placeholder="tt('Notification Time')"
+                                           :filter-no-items-text="tt('No results')"
+                                           :items="allAvailableNotificationTimes"
+                                           v-model:show="subAccountContexts[idx]!.showCreditCardNotificationTimePopup"
+                                           :model-value="getAccountNotificationMinutesOfDay(subAccount)"
+                                           @update:model-value="setAccountNotificationMinutesOfDay(subAccount, $event)">
+                </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :label="tt('Bank limit in this card currency')"
+                :placeholder="tt('Bank limit in this card currency')"
+                v-if="account.category === AccountCategory.CreditCard.type"
+                v-model:value="subAccount.creditCardCurrencyLimit"
+            ></f7-list-input>
+
                 <f7-list-item :title="tt('Visible')" v-if="editAccountId && !isNewAccount(subAccount)">
                     <template #after>
                         <f7-toggle :checked="subAccount.visible" @toggle:change="subAccount.visible = $event"></f7-toggle>
@@ -644,11 +1493,13 @@
                 <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
             </f7-actions-group>
         </f7-actions>
+
+        <input ref="creditCardPictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="onUploadCreditCardPicture($event)" />
     </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted, useTemplateRef } from 'vue';
 import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -663,6 +1514,7 @@ import { AccountCategory, AccountType } from '@/core/account.ts';
 import { ALL_ACCOUNT_ICONS } from '@/consts/icon.ts';
 import { ALL_ACCOUNT_COLORS } from '@/consts/color.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
+import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 import { TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT } from '@/consts/transaction.ts';
 import type { Account } from '@/models/account.ts';
 
@@ -681,6 +1533,13 @@ interface AccountContext {
     showColorSelectionSheet: boolean;
     showCurrencyPopup: boolean;
     showCreditCardStatementDatePopup: boolean;
+    showCreditCardRepaymentDateTypePopup: boolean;
+    showCreditCardRepaymentDaysPopup: boolean;
+    showCreditCardRepaymentDayOfMonthPopup: boolean;
+    showCreditCardRepaymentReminderDaysPopup: boolean;
+    showCreditCardNotificationTimePopup: boolean;
+    showCreditCardExpireMonthPopup: boolean;
+    showCreditCardExpireYearPopup: boolean;
     showBalanceSheet: boolean;
     showBalanceDateTimeSheet: boolean;
     showLastReconciledTimeSheet: boolean;
@@ -718,11 +1577,37 @@ const {
     allAccountCategories,
     allAccountTypes,
     allAvailableMonthDays,
+    allAvailableExpireMonths,
+    allAvailableExpireYears,
+    allAvailableRepaymentDateTypes,
+    allAvailableRepaymentDays,
+    allAvailableRepaymentReminderDaysBefore,
+    allAvailableNotificationTimes,
+    notificationMinutesOfDay,
+    notificationRepaymentDaysBefore,
+    hasCreditCardNotificationEnabled,
+    hasAccountCreditCardNotificationEnabled,
+    getAccountNotificationMinutesOfDay,
+    setAccountNotificationMinutesOfDay,
+    getAccountRepaymentReminderDaysBefore,
+    setAccountRepaymentReminderDaysBefore,
+    notificationTimezoneName,
     getDefaultTimezoneOffsetMinutes,
     getAccountCreditCardStatementDate,
+    getAccountCreditCardExpireMonth,
+    getAccountCreditCardExpireYear,
+    getAccountCreditCardRepaymentDateType,
+    getAccountCreditCardRepaymentDaysAfterStatement,
+    getAccountCreditCardRepaymentDayOfMonth,
+    getAccountCreditCardNotificationTime,
     getAccountCreditCardCreditLimitDisplayValue,
     updateAccountBalanceTime,
     updateAccountLastReconciledTime,
+    fillCreditCardNotificationSettings,
+    updateAccountCreditCardPicture,
+    removeAccountCreditCardPicture,
+    discardUploadedUnboundCreditCardPicture,
+    confirmUploadedCreditCardPicture,
     isNewAccount,
     addSubAccount,
     setAccount
@@ -735,6 +1620,13 @@ const DEFAULT_ACCOUNT_CONTEXT: AccountContext = {
     showColorSelectionSheet: false,
     showCurrencyPopup: false,
     showCreditCardStatementDatePopup: false,
+    showCreditCardRepaymentDateTypePopup: false,
+    showCreditCardRepaymentDaysPopup: false,
+    showCreditCardRepaymentDayOfMonthPopup: false,
+    showCreditCardRepaymentReminderDaysPopup: false,
+    showCreditCardNotificationTimePopup: false,
+    showCreditCardExpireMonthPopup: false,
+    showCreditCardExpireYearPopup: false,
     showBalanceSheet: false,
     showBalanceDateTimeSheet: false,
     showLastReconciledTimeSheet: false,
@@ -751,6 +1643,8 @@ const showAccountTypeSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
 const showDeleteActionSheet = ref<boolean>(false);
 const showCreditCardLimitSheet = ref<boolean>(false);
+const creditCardPictureInput = useTemplateRef<HTMLInputElement>('creditCardPictureInput');
+const pictureTargetAccount = ref<Account | null>(null);
 
 const allCurrencies = computed<LocalizedCurrencyInfo[]>(() => getAllCurrencies());
 const allCurrenciesWithNotSet = computed<LocalizedCurrencyInfo[]>(() => getAllCurrencies(true));
@@ -776,6 +1670,34 @@ function formatTime(unixTime?: number): string {
 
     const dateTime = parseDateTimeFromUnixTimeWithTimezoneOffset(unixTime, getTimezoneOffsetMinutes(unixTime));
     return formatDateTimeToLongTime(dateTime);
+}
+
+function showOpenCreditCardPictureDialog(targetAccount?: Account): void {
+    if (loading.value || submitting.value) {
+        return;
+    }
+
+    pictureTargetAccount.value = targetAccount || account.value;
+    creditCardPictureInput.value?.click();
+}
+
+function onUploadCreditCardPicture(event: Event): void {
+    if (!event || !event.target) {
+        return;
+    }
+
+    const el = event.target as HTMLInputElement;
+
+    if (!el.files || !el.files.length || !el.files[0]) {
+        return;
+    }
+
+    const pictureFile = el.files[0] as File;
+
+    el.value = '';
+    updateAccountCreditCardPicture(pictureFile, pictureTargetAccount.value || account.value).catch(error => {
+        showToast(error.message || error);
+    });
 }
 
 function init(): void {
@@ -822,6 +1744,7 @@ function save(): void {
 
     submitting.value = true;
     showLoading(() => submitting.value);
+    fillCreditCardNotificationSettings();
 
     accountsStore.saveAccount({
         account: account.value,
@@ -831,6 +1754,7 @@ function save(): void {
     }).then(() => {
         submitting.value = false;
         hideLoading();
+        confirmUploadedCreditCardPicture();
 
         if (!editAccountId.value) {
             showToast('You have added a new account');
@@ -896,6 +1820,10 @@ watch(() => account.value.type, () => {
     if (subAccounts.value.length < 1) {
         addSubAccountAndContext();
     }
+});
+
+onUnmounted(() => {
+    discardUploadedUnboundCreditCardPicture();
 });
 
 init();

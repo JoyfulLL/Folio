@@ -118,26 +118,63 @@ export function useAccountListPageBase() {
                 return null;
             }
         } else if (account.type === AccountType.MultiSubAccounts.type) {
-            const balanceResult = accountsStore.getAccountSubAccountBalance(showBalance, showHidden.value, account, undefined, undefined);
+            // the available credit of a shared-limit pool is the remaining credit of the whole
+            // pool, counted once in the pool's currency (foreign-currency card debts excluded
+            // and marked incomplete)
+            const remainingCreditResult = accountsStore.getCreditCardPoolRemainingCredit(showBalance, account);
 
-            if (!isObject(balanceResult)) {
+            if (!isObject(remainingCreditResult)) {
                 return null;
             }
 
-            const balance: BigDecimal | HiddenAmount | BigDecimalWithSuffix = balanceResult.balance;
-
-            if (isBigDecimal(balance)) {
-                return formatAmountToLocalizedNumeralsWithCurrency(creditCardLimit.subtract(balance), balanceResult.currency);
-            } else if (isObject(balance) && !balance.suffix) {
-                return formatAmountToLocalizedNumeralsWithCurrency(creditCardLimit.subtract(balance.value), balanceResult.currency);
-            } else if (isString(balance)) {
-                return formatAmountToLocalizedNumeralsWithCurrency(balance, balanceResult.currency);
-            } else {
-                return null;
-            }
+            return formatAmountToLocalizedNumeralsWithCurrency(remainingCreditResult.balance, remainingCreditResult.currency);
         } else {
             return null;
         }
+    }
+
+    // Returns the remaining credit of the shared pool expressed in the currency of one of its
+    // cards. All cards of a pool share one limit, so a purchase on any card reduces the available
+    // credit shown on every card. Returns null when no limit is stated in the card's currency
+    function poolCardAvailableCredit(account: Account, subAccount: Account, showBalance: boolean): string | null {
+        const remainingCreditResult = accountsStore.getCreditCardPoolCardRemainingCredit(showBalance, account, subAccount);
+
+        if (!isObject(remainingCreditResult)) {
+            return null;
+        }
+
+        return formatAmountToLocalizedNumeralsWithCurrency(remainingCreditResult.balance, remainingCreditResult.currency);
+    }
+
+    // Returns the available credit displayed on a card row of a shared-limit pool: the shared
+    // remaining credit in the card's own currency, or the remaining credit of the whole pool
+    // when no limit is stated in that currency
+    function subAccountAvailableCredit(account: Account, subAccount: Account, showBalance: boolean): string | null {
+        const cardRemainingCredit = poolCardAvailableCredit(account, subAccount, showBalance);
+
+        if (cardRemainingCredit !== null) {
+            return cardRemainingCredit;
+        }
+
+        return accountAvailableCredit(account, showBalance);
+    }
+
+    // Returns the available credit displayed on a pool account row: the shared remaining credit
+    // in the currency of the selected card, or the remaining credit of the whole pool
+    function accountOrSubAccountAvailableCredit(account: Account, currentSubAccountId: string | undefined, showBalance: boolean): string | null {
+        if (currentSubAccountId && account.subAccounts) {
+            const subAccount = account.getSubAccount(currentSubAccountId);
+
+            if (subAccount) {
+                const cardRemainingCredit = poolCardAvailableCredit(account, subAccount, showBalance);
+
+                if (cardRemainingCredit !== null) {
+                    return cardRemainingCredit;
+                }
+            }
+        }
+
+        return accountAvailableCredit(account, showBalance);
     }
 
     function accountBalanceOrAvailableCredit(account: Account, currentSubAccountId: string | undefined, showAvailableCreditForCreditCard: boolean, showBalance: boolean, onlyShowSelectedAccountIds?: string[]): string | null {
@@ -173,6 +210,8 @@ export function useAccountListPageBase() {
         accountCategoryTotalBalance,
         accountBalance,
         accountAvailableCredit,
+        subAccountAvailableCredit,
+        accountOrSubAccountAvailableCredit,
         accountBalanceOrAvailableCredit
     };
 }

@@ -19,9 +19,10 @@ import {
     type AccountShowingIds,
     Account
 } from '@/models/account.ts';
+import type { CreditCardPictureInfoBasicResponse } from '@/models/credit_card_picture_info.ts';
 
-import { isDefined, isArray, isEquals, arrayItemToObjectField } from '@/lib/common.ts';
-import { BIG_DECIMAL_ZERO, isBigDecimal, parseBigDecimal } from '@/lib/numeral.ts';
+import { isArray, isEquals, arrayItemToObjectField } from '@/lib/common.ts';
+import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
 import { getCategorizedAccountsMap, getAllFilteredAccountsBalance } from '@/lib/account.ts';
 import services from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
@@ -430,7 +431,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         return ret;
     }
 
-    function getAccountStatementDate(accountId?: string): number | undefined | null {
+    function getMainCreditCardAccount(accountId?: string): Account | null {
         if (!accountId) {
             return null;
         }
@@ -464,15 +465,45 @@ export const useAccountsStore = defineStore('accounts', () => {
             mainAccount = account;
         }
 
+        if (mainAccount && mainAccount.category === AccountCategory.CreditCard.type) {
+            return mainAccount;
+        }
+
+        return null;
+    }
+
+    // Returns the statement date used for billing cycle date ranges of the given account(s).
+    // A card with its own statement date (a sub-account card of a shared-limit pool) follows
+    // its own billing cycle, so its own statement date takes precedence over the pool's one
+    function getAccountStatementDate(accountId?: string): number | undefined | null {
+        if (accountId && !accountId.includes(',')) {
+            const account = allAccountsMap.value[accountId];
+
+            if (account && account.parentId !== '0' && account.creditCardStatementDate) {
+                return account.creditCardStatementDate;
+            }
+        }
+
+        const mainAccount = getMainCreditCardAccount(accountId);
+
         if (!mainAccount) {
             return null;
         }
 
-        if (mainAccount.category === AccountCategory.CreditCard.type) {
-            return mainAccount.creditCardStatementDate;
+        return mainAccount.creditCardStatementDate;
+    }
+
+    function getAccountStatementDateIncludeTransaction(accountId?: string): boolean {
+        if (accountId && !accountId.includes(',')) {
+            const account = allAccountsMap.value[accountId];
+
+            if (account && account.parentId !== '0' && account.creditCardStatementDate) {
+                return !!account.creditCardStatementDateIncludeTransaction;
+            }
         }
 
-        return null;
+        const mainAccount = getMainCreditCardAccount(accountId);
+        return !!mainAccount && !!mainAccount.creditCardStatementDateIncludeTransaction;
     }
 
     function getNetAssets(showAccountBalance: boolean, excludedAccountIds: Record<string, boolean>): BigDecimal | HiddenAmount | BigDecimalWithSuffix {
@@ -583,6 +614,151 @@ export const useAccountsStore = defineStore('accounts', () => {
         }
     }
 
+    // The bank states one shared limit in every currency of the pool (for example CNY 30000
+    // and USD 4615 on the same pool), so the ratio of two stated limits is the bank's own
+    // conversion rate between those currencies. The pool limit wins for the pool currency and
+    // the first stated card limit wins for a card currency
+    function getCreditCardPoolLimitsByCurrency(account: Account): Record<string, BigDecimal> {
+        const limits: Record<string, BigDecimal> = {};
+
+        if (account.currency && account.currency !== ACCOUNT_CURRENCY_NOT_SET_VALUE && account.numericCreditCardLimit > 0) {
+            limits[account.currency] = parseBigDecimal(account.creditCardLimit);
+        }
+
+        if (account.subAccounts) {
+            for (const subAccount of account.subAccounts) {
+                if (!subAccount.currency || subAccount.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE || limits[subAccount.currency]) {
+                    continue;
+                }
+
+                if (subAccount.numericCreditCardCurrencyLimit > 0) {
+                    limits[subAccount.currency] = parseBigDecimal(subAccount.numericCreditCardCurrencyLimit);
+                }
+            }
+        }
+
+        return limits;
+    }
+
+    // Returns the rate converting one unit of fromCurrency into toCurrency inside a shared
+    // limit pool, or null when neither the limits stated by the bank nor the exchange rates
+    // can provide it
+    function getCreditCardPoolCurrencyRate(limits: Record<string, BigDecimal>, fromCurrency: string, toCurrency: string): BigDecimal | null {
+        if (fromCurrency === toCurrency) {
+            return parseBigDecimal(1);
+        }
+
+        const fromLimit = limits[fromCurrency];
+        const toLimit = limits[toCurrency];
+
+        if (fromLimit && toLimit && fromLimit.isPositive()) {
+            return toLimit.divide(fromLimit);
+        }
+
+        return exchangeRatesStore.getExchangedAmount(parseBigDecimal(1), fromCurrency, toCurrency);
+    }
+
+    // Returns the debt of all cards of a shared limit pool converted into the specified
+    // currency, so a purchase on any card occupies the limit of every card. Hidden cards still
+    // occupy the shared limit, so they are always counted. Debts which cannot be converted are
+    // excluded and reported, so the caller can mark the result as incomplete
+    function getCreditCardPoolUsedAmount(account: Account, limits: Record<string, BigDecimal>, currency: string): { usedAmount: BigDecimal; hasUnconvertibleDebt: boolean } {
+        let usedAmount: BigDecimal = BIG_DECIMAL_ZERO;
+        let hasUnconvertibleDebt = false;
+
+        if (account.subAccounts) {
+            for (const subAccount of account.subAccounts) {
+                // sub-account balances are negative for debts, so negate them to get the used amount
+                const debt = parseBigDecimal(subAccount.balance).negate();
+
+                if (debt.isZero()) {
+                    continue;
+                }
+
+                const rate = getCreditCardPoolCurrencyRate(limits, subAccount.currency, currency);
+
+                if (rate === null) {
+                    hasUnconvertibleDebt = true;
+                    continue;
+                }
+
+                usedAmount = usedAmount.add(debt.multiply(rate));
+            }
+        }
+
+        return { usedAmount, hasUnconvertibleDebt };
+    }
+
+    function getCreditCardPoolBalance(account: Account): { limitAmount: BigDecimal; usedAmount: BigDecimal; hasUnconvertibleDebt: boolean } | null {
+        if (account.type !== AccountType.MultiSubAccounts.type || account.category !== AccountCategory.CreditCard.type) {
+            return null;
+        }
+
+        const limits = getCreditCardPoolLimitsByCurrency(account);
+        const used = getCreditCardPoolUsedAmount(account, limits, account.currency);
+
+        return {
+            limitAmount: parseBigDecimal(account.creditCardLimit),
+            usedAmount: used.usedAmount,
+            hasUnconvertibleDebt: used.hasUnconvertibleDebt
+        };
+    }
+
+    // Returns the remaining credit of a shared-limit pool, counted once in the pool's currency.
+    // Debts of member cards are converted by the limits stated by the bank, and those which
+    // cannot be converted are excluded and marked with an incomplete suffix
+    function getCreditCardPoolRemainingCredit(showAccountBalance: boolean, account: Account): AccountDisplayBalance | null {
+        const pool = getCreditCardPoolBalance(account);
+
+        if (!pool || !account.currency || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE || account.numericCreditCardLimit <= 0) {
+            return null;
+        }
+
+        const remainingCredit = pool.limitAmount.subtract(pool.usedAmount);
+        const balance: BigDecimal | BigDecimalWithSuffix = pool.hasUnconvertibleDebt ? {
+            value: remainingCredit,
+            suffix: INCOMPLETE_AMOUNT_SUFFIX
+        } : remainingCredit;
+
+        return {
+            balance: showAccountBalance ? balance : DISPLAY_HIDDEN_AMOUNT,
+            currency: account.currency
+        };
+    }
+
+    // Returns the remaining credit of the shared pool expressed in the currency of one of its
+    // cards, so every card of the pool shows the same shared remaining credit. The limit stated
+    // for that currency is used directly instead of converting the pool result back, which keeps
+    // the amount exact. Returns null when no limit is stated in the card's currency
+    function getCreditCardPoolCardRemainingCredit(showAccountBalance: boolean, account: Account, subAccount: Account): AccountDisplayBalance | null {
+        if (account.type !== AccountType.MultiSubAccounts.type || account.category !== AccountCategory.CreditCard.type) {
+            return null;
+        }
+
+        if (!subAccount.currency || subAccount.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE) {
+            return null;
+        }
+
+        const limits = getCreditCardPoolLimitsByCurrency(account);
+        const limitAmount = limits[subAccount.currency];
+
+        if (!limitAmount || !limitAmount.isPositive()) {
+            return null;
+        }
+
+        const used = getCreditCardPoolUsedAmount(account, limits, subAccount.currency);
+        const remainingCredit = limitAmount.subtract(used.usedAmount);
+        const balance: BigDecimal | BigDecimalWithSuffix = used.hasUnconvertibleDebt ? {
+            value: remainingCredit,
+            suffix: INCOMPLETE_AMOUNT_SUFFIX
+        } : remainingCredit;
+
+        return {
+            balance: showAccountBalance ? balance : DISPLAY_HIDDEN_AMOUNT,
+            currency: subAccount.currency
+        };
+    }
+
     function getAccountCategoryTotalBalance(showAccountBalance: boolean, accountCategory: AccountCategory, showAvailableCreditForCreditCard: boolean): BigDecimal | HiddenAmount | BigDecimalWithSuffix | undefined {
         if (!showAccountBalance) {
             return DISPLAY_HIDDEN_AMOUNT;
@@ -591,10 +767,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         const accountsBalance = getAllFilteredAccountsBalance(allCategorizedAccountsMap.value, settingsStore.appSettings.accountCategoryOrders,
             account => account.category === accountCategory.type);
         let totalBalance: BigDecimal = BIG_DECIMAL_ZERO;
-        let totalCreditCardAvailableCredit: BigDecimal = BIG_DECIMAL_ZERO;
         let hasUnCalculatedAmount = false;
-        let hasUnCalculatedAvailableCredit = false;
-        let hasCalculatedAvailableCredit = false;
 
         for (const accountBalance of accountsBalance) {
             let balance: BigDecimal | null = null;
@@ -617,42 +790,9 @@ export const useAccountsStore = defineStore('accounts', () => {
             } else {
                 totalBalance = totalBalance.add(balance);
             }
-
-            if (accountBalance.category === AccountCategory.CreditCard.type && showAvailableCreditForCreditCard) {
-                if (isDefined(accountBalance.creditCardLimit) && isBigDecimal(accountBalance.creditCardLimit.amount) && accountBalance.creditCardLimit.shareByCount > 0) {
-                    const amount = accountBalance.creditCardLimit.amount.divide(accountBalance.creditCardLimit.shareByCount);
-
-                    if (accountBalance.creditCardLimit.currency === userStore.currentUserDefaultCurrency) {
-                        totalCreditCardAvailableCredit = totalCreditCardAvailableCredit.add(amount).add(balance);
-                        hasCalculatedAvailableCredit = true;
-                    } else {
-                        const limit = exchangeRatesStore.getExchangedAmount(amount, accountBalance.creditCardLimit.currency, userStore.currentUserDefaultCurrency);
-
-                        if (limit) {
-                            totalCreditCardAvailableCredit = totalCreditCardAvailableCredit.add(limit).add(balance);
-                            hasCalculatedAvailableCredit = true;
-                        } else {
-                            hasUnCalculatedAvailableCredit = true;
-                        }
-                    }
-                } else {
-                    hasUnCalculatedAvailableCredit = true;
-                }
-            }
         }
 
-        if (accountCategory.type === AccountCategory.CreditCard.type && showAvailableCreditForCreditCard) {
-            if (hasUnCalculatedAmount || !hasCalculatedAvailableCredit) {
-                return undefined;
-            } else if (hasUnCalculatedAvailableCredit) {
-                return {
-                    value: totalCreditCardAvailableCredit,
-                    suffix: INCOMPLETE_AMOUNT_SUFFIX
-                };
-            } else {
-                return totalCreditCardAvailableCredit;
-            }
-        } else {
+        if (accountCategory.type !== AccountCategory.CreditCard.type || !showAvailableCreditForCreditCard) {
             if (hasUnCalculatedAmount) {
                 return {
                     value: totalBalance,
@@ -661,6 +801,80 @@ export const useAccountsStore = defineStore('accounts', () => {
             } else {
                 return totalBalance;
             }
+        }
+
+        // Available credit of credit cards is NOT computed from per-card balance entries: the
+        // limit of a shared pool is counted once for the whole pool, and the debts of all its
+        // cards are subtracted from it after being converted by the limits stated by the bank.
+        // Debts which cannot be converted are excluded and marked incomplete
+        let totalCreditCardAvailableCredit: BigDecimal = BIG_DECIMAL_ZERO;
+        let hasUnCalculatedAvailableCredit = false;
+        let hasCalculatedAvailableCredit = false;
+        let hasUnconvertiblePoolDebt = false;
+
+        const addAvailableCredit = function (amount: BigDecimal, currency: string): void {
+            if (currency === userStore.currentUserDefaultCurrency) {
+                totalCreditCardAvailableCredit = totalCreditCardAvailableCredit.add(amount);
+                hasCalculatedAvailableCredit = true;
+            } else {
+                const exchangedAmount = exchangeRatesStore.getExchangedAmount(amount, currency, userStore.currentUserDefaultCurrency);
+
+                if (exchangedAmount) {
+                    totalCreditCardAvailableCredit = totalCreditCardAvailableCredit.add(exchangedAmount.truncate());
+                    hasCalculatedAvailableCredit = true;
+                } else {
+                    hasUnCalculatedAvailableCredit = true;
+                }
+            }
+        };
+
+        const creditCardAccounts = allCategorizedAccountsMap.value[AccountCategory.CreditCard.type]?.accounts;
+
+        if (creditCardAccounts) {
+            for (const account of creditCardAccounts) {
+                if (account.hidden) {
+                    continue;
+                }
+
+                if (account.type === AccountType.SingleAccount.type) {
+                    // an entity card owns its whole limit
+                    if (account.numericCreditCardLimit <= 0 || !account.currency || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE) {
+                        hasUnCalculatedAvailableCredit = true;
+                        continue;
+                    }
+
+                    addAvailableCredit(parseBigDecimal(account.creditCardLimit).add(parseBigDecimal(account.balance)), account.currency);
+                } else if (account.type === AccountType.MultiSubAccounts.type) {
+                    const pool = getCreditCardPoolBalance(account);
+
+                    if (!pool) {
+                        continue;
+                    }
+
+                    if (account.numericCreditCardLimit <= 0 || !account.currency || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE) {
+                        // a pool without a limit cannot provide available credit
+                        hasUnCalculatedAvailableCredit = true;
+                        continue;
+                    }
+
+                    if (pool.hasUnconvertibleDebt) {
+                        hasUnconvertiblePoolDebt = true;
+                    }
+
+                    addAvailableCredit(pool.limitAmount.subtract(pool.usedAmount), account.currency);
+                }
+            }
+        }
+
+        if (!hasCalculatedAvailableCredit) {
+            return undefined;
+        } else if (hasUnCalculatedAvailableCredit || hasUnconvertiblePoolDebt) {
+            return {
+                value: totalCreditCardAvailableCredit,
+                suffix: INCOMPLETE_AMOUNT_SUFFIX
+            };
+        } else {
+            return totalCreditCardAvailableCredit;
         }
     }
 
@@ -687,10 +901,16 @@ export const useAccountsStore = defineStore('accounts', () => {
             return null;
         }
 
+        // the balance of a credit card limit pool is displayed in the pool's currency: the debt
+        // of every card (hidden cards included, because they still occupy the shared limit) is
+        // converted by the limits stated by the bank, so the displayed debt always matches the
+        // remaining credit of the pool
+        const isCreditCardPool = account.category === AccountCategory.CreditCard.type;
+        const poolLimits = isCreditCardPool ? getCreditCardPoolLimitsByCurrency(account) : {};
         let resultCurrency = userStore.currentUserDefaultCurrency;
         let parentHasSetCurrency = false;
 
-        if (account.category === AccountCategory.CreditCard.type && account.currency && account.currency !== ACCOUNT_CURRENCY_NOT_SET_VALUE) {
+        if (isCreditCardPool && account.currency && account.currency !== ACCOUNT_CURRENCY_NOT_SET_VALUE) {
             resultCurrency = account.currency;
             parentHasSetCurrency = true;
         }
@@ -708,7 +928,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         let totalBalance: BigDecimal = BIG_DECIMAL_ZERO;
 
         for (const subAccount of account.subAccounts) {
-            if (!showHidden && subAccount.hidden) {
+            if (!isCreditCardPool && !showHidden && subAccount.hidden) {
                 continue;
             }
 
@@ -732,10 +952,6 @@ export const useAccountsStore = defineStore('accounts', () => {
         let hasUnCalculatedAmount = false;
 
         for (const subAccount of account.subAccounts) {
-            if (!showHidden && subAccount.hidden) {
-                continue;
-            }
-
             if (subAccountId) {
                 if (subAccountId === subAccount.id) {
                     return {
@@ -749,6 +965,10 @@ export const useAccountsStore = defineStore('accounts', () => {
                 continue;
             }
 
+            if (!isCreditCardPool && !showHidden && subAccount.hidden) {
+                continue;
+            }
+
             if (subAccount.currency === resultCurrency) {
                 if (subAccount.isAsset) {
                     totalBalance = totalBalance.add(parseBigDecimal(subAccount.balance));
@@ -758,7 +978,10 @@ export const useAccountsStore = defineStore('accounts', () => {
                     totalBalance = totalBalance.add(parseBigDecimal(subAccount.balance));
                 }
             } else {
-                const balance = exchangeRatesStore.getExchangedAmount(parseBigDecimal(subAccount.balance), subAccount.currency, resultCurrency);
+                // inside a shared limit pool the limits stated by the bank define the conversion
+                // rate, and the exchange rates are only a fallback for cards without a stated limit
+                const poolRate = isCreditCardPool ? getCreditCardPoolCurrencyRate(poolLimits, subAccount.currency, resultCurrency) : null;
+                const balance = poolRate !== null ? parseBigDecimal(subAccount.balance).multiply(poolRate) : exchangeRatesStore.getExchangedAmount(parseBigDecimal(subAccount.balance), subAccount.currency, resultCurrency);
 
                 if (!balance) {
                     hasUnCalculatedAmount = true;
@@ -1048,6 +1271,56 @@ export const useAccountsStore = defineStore('accounts', () => {
         });
     }
 
+    function uploadCreditCardPicture({ pictureFile, clientSessionId }: { pictureFile: File, clientSessionId?: string }): Promise<CreditCardPictureInfoBasicResponse> {
+        return new Promise((resolve, reject) => {
+            services.uploadCreditCardPicture({ pictureFile, clientSessionId }).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'Unable to upload credit card picture' });
+                    return;
+                }
+
+                resolve(data.result);
+            }).catch(error => {
+                logger.error('failed to upload credit card picture', error);
+
+                if (error.response && error.response.data && error.response.data.errorMessage) {
+                    reject({ error: error.response.data });
+                } else if (!error.processed) {
+                    reject({ message: 'Unable to upload credit card picture' });
+                } else {
+                    reject(error);
+                }
+            });
+        });
+    }
+
+    function removeUnusedCreditCardPicture({ pictureId }: { pictureId: string }): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            services.removeUnusedCreditCardPicture({ id: pictureId }).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'Unable to remove credit card picture' });
+                    return;
+                }
+
+                resolve(data.result);
+            }).catch(error => {
+                logger.error('failed to remove credit card picture', error);
+
+                if (error.response && error.response.data && error.response.data.errorMessage) {
+                    reject({ error: error.response.data });
+                } else if (!error.processed) {
+                    reject({ message: 'Unable to remove credit card picture' });
+                } else {
+                    reject(error);
+                }
+            });
+        });
+    }
+
     function updateAccountLastReconciledTime(accountId: string, lastReconciledTime: number): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const account = allAccountsMap.value[accountId];
@@ -1284,18 +1557,24 @@ export const useAccountsStore = defineStore('accounts', () => {
         getFirstShowingIds,
         getLastShowingIds,
         getAccountStatementDate,
+        getAccountStatementDateIncludeTransaction,
         getNetAssets,
         getTotalAssets,
         getTotalLiabilities,
         getAccountCategoryTotalBalance,
         getAccountBalance,
         getAccountSubAccountBalance,
+        getCreditCardPoolRemainingCredit,
+        getCreditCardPoolCardRemainingCredit,
         getSortedAccounts,
         hasAccount,
         hasVisibleSubAccount,
+        loadAccountList,
         loadAllAccounts,
         getAccount,
         saveAccount,
+        uploadCreditCardPicture,
+        removeUnusedCreditCardPicture,
         updateAccountLastReconciledTime,
         changeAccountDisplayOrder,
         updateAccountDisplayOrders,

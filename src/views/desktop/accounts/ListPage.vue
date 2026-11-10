@@ -294,11 +294,11 @@
                                                                 <span class="text-medium-emphasis me-3 pt-h1">{{ tt('pageSpecific.accountListPage.outstandingBalance') }}</span>
                                                                 <span class="account-balance">{{ accountBalance(element, activeSubAccount[element.id], showAccountBalance) }}</span>
                                                             </div>
-                                                            <template v-if="!activeSubAccount[element.id] && canShowAvailableCredit(element) && accountAvailableCredit(element, showAccountBalance)">
+                                                            <template v-if="canShowAvailableCredit(element) && accountOrSubAccountAvailableCredit(element, activeSubAccount[element.id], showAccountBalance)">
                                                                 <v-divider vertical class="mx-3 my-1"/>
                                                                 <div class="d-flex align-center">
                                                                     <span class="text-medium-emphasis me-3 pt-h1">{{ tt('pageSpecific.accountListPage.availableBalance') }}</span>
-                                                                    <span class="account-balance">{{ accountAvailableCredit(element, showAccountBalance) }}</span>
+                                                                    <span class="account-balance">{{ accountOrSubAccountAvailableCredit(element, activeSubAccount[element.id], showAccountBalance) }}</span>
                                                                 </div>
                                                             </template>
                                                         </div>
@@ -417,7 +417,7 @@ const {
     canShowAvailableCredit,
     accountCategoryTotalBalance,
     accountBalance,
-    accountAvailableCredit
+    accountOrSubAccountAvailableCredit
 } = useAccountListPageBase();
 
 const settingsStore = useSettingsStore();
@@ -586,7 +586,7 @@ function showReconciliationStatementDialog(account: Account, dateRangeType?: num
     let dateRange: TimeRangeAndDateType | null = null;
 
     if (DateRange.isBillingCycle(dateRangeType)) {
-        dateRange = getDateRangeByBillingCycleDateType(dateRangeType, firstDayOfWeek.value, fiscalYearStart.value, accountsStore.getAccountStatementDate(account.id));
+        dateRange = getDateRangeByBillingCycleDateType(dateRangeType, firstDayOfWeek.value, fiscalYearStart.value, accountsStore.getAccountStatementDate(account.id), accountsStore.getAccountStatementDateIncludeTransaction(account.id));
     } else if (DateRange.isLastReconciledTimeRange(dateRangeType)) {
         dateRange = getDateRangeByLastReconciledTimeRangeDateType(dateRangeType, account.lastReconciledTime);
     } else {

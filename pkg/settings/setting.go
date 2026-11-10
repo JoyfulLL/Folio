@@ -202,6 +202,7 @@ const (
 	defaultUserAvatarTokenExpiredTime         uint32 = 3600    // 60 minutes
 	defaultUserCustomIconTokenExpiredTime     uint32 = 3600    // 60 minutes
 	defaultTransactionPictureTokenExpiredTime uint32 = 3600    // 60 minutes
+	defaultCreditCardPictureTokenExpiredTime  uint32 = 3600    // 60 minutes
 	defaultPasswordResetTokenExpiredTime      uint32 = 3600    // 60 minutes
 	defaultMaxFailuresPerIpPerMinute          uint32 = 5
 	defaultMaxFailuresPerUserPerMinute        uint32 = 5
@@ -211,6 +212,7 @@ const (
 
 	defaultUserCustomIconFileMaxSize     uint32 = 1048576  // 1MB
 	defaultTransactionPictureFileMaxSize uint32 = 10485760 // 10MB
+	defaultCreditCardPictureFileMaxSize  uint32 = 1048576  // 1MB
 	defaultUserAvatarFileMaxSize         uint32 = 1048576  // 1MB
 
 	defaultImportFileMaxSize uint32 = 10485760 // 10MB
@@ -410,6 +412,7 @@ type Config struct {
 	// Cron
 	EnableRemoveExpiredTokens        bool
 	EnableCreateScheduledTransaction bool
+	EnableCreditCardNotification     bool
 
 	// Secret
 	SecretKeyNoSet                             bool
@@ -431,6 +434,8 @@ type Config struct {
 	UserCustomIconTokenExpiredTimeDuration     time.Duration
 	TransactionPictureTokenExpiredTime         uint32
 	TransactionPictureTokenExpiredTimeDuration time.Duration
+	CreditCardPictureTokenExpiredTime          uint32
+	CreditCardPictureTokenExpiredTimeDuration  time.Duration
 	EnableAPIToken                             bool
 	APITokenAllowedRemoteIPs                   []*core.IPPattern
 	MaxFailuresPerIpPerMinute                  uint32
@@ -467,6 +472,7 @@ type Config struct {
 	MaxUserCustomIconFileSize     uint32
 	EnableTransactionPictures     bool
 	MaxTransactionPictureFileSize uint32
+	MaxCreditCardPictureFileSize  uint32
 	EnableScheduledTransaction    bool
 	AvatarProvider                core.UserAvatarProviderType
 	MaxAvatarFileSize             uint32
@@ -488,7 +494,6 @@ type Config struct {
 	// Map
 	MapProvider                           string
 	EnableMapDataFetchProxy               bool
-	SupportMapDataFetchProxy              bool
 	MapProxy                              string
 	TomTomMapAPIKey                       string
 	TianDiTuAPIKey                        string
@@ -1083,6 +1088,7 @@ func loadDuplicateCheckerConfiguration(config *Config, configFile *ini.File, sec
 func loadCronConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.EnableRemoveExpiredTokens = getConfigItemBoolValue(configFile, sectionName, "enable_remove_expired_tokens", false)
 	config.EnableCreateScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_create_scheduled_transaction", false)
+	config.EnableCreditCardNotification = getConfigItemBoolValue(configFile, sectionName, "enable_credit_card_notification", false)
 
 	return nil
 }
@@ -1159,6 +1165,14 @@ func loadSecurityConfiguration(config *Config, configFile *ini.File, sectionName
 	}
 
 	config.TransactionPictureTokenExpiredTimeDuration = time.Duration(config.TransactionPictureTokenExpiredTime) * time.Second
+
+	config.CreditCardPictureTokenExpiredTime = getConfigItemUint32Value(configFile, sectionName, "credit_card_picture_token_expired_time", defaultCreditCardPictureTokenExpiredTime)
+
+	if config.CreditCardPictureTokenExpiredTime < 60 {
+		return errs.ErrInvalidCreditCardPictureTokenExpiredTime
+	}
+
+	config.CreditCardPictureTokenExpiredTimeDuration = time.Duration(config.CreditCardPictureTokenExpiredTime) * time.Second
 
 	config.EnableAPIToken = getConfigItemBoolValue(configFile, sectionName, "enable_api_token", false)
 	config.APITokenAllowedRemoteIPs, err = getIPPatterns(configFile, sectionName, "api_token_allowed_remote_ips", "")
@@ -1240,6 +1254,7 @@ func loadUserConfiguration(config *Config, configFile *ini.File, sectionName str
 	config.MaxUserCustomIconFileSize = getConfigItemUint32Value(configFile, sectionName, "max_user_custom_icon_size", defaultUserCustomIconFileMaxSize)
 	config.EnableTransactionPictures = getConfigItemBoolValue(configFile, sectionName, "enable_transaction_picture", false)
 	config.MaxTransactionPictureFileSize = getConfigItemUint32Value(configFile, sectionName, "max_transaction_picture_size", defaultTransactionPictureFileMaxSize)
+	config.MaxCreditCardPictureFileSize = getConfigItemUint32Value(configFile, sectionName, "max_credit_card_picture_size", defaultCreditCardPictureFileMaxSize)
 	config.EnableScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_scheduled_transaction", false)
 
 	if getConfigItemStringValue(configFile, sectionName, "avatar_provider") == string(core.USER_AVATAR_PROVIDER_INTERNAL) {
@@ -1314,21 +1329,6 @@ func loadMapConfiguration(config *Config, configFile *ini.File, sectionName stri
 	}
 
 	config.EnableMapDataFetchProxy = getConfigItemBoolValue(configFile, sectionName, "map_data_fetch_proxy", false)
-
-	if config.MapProvider == OpenStreetMapProvider ||
-		config.MapProvider == OpenStreetMapHumanitarianStyleProvider ||
-		config.MapProvider == OpenTopoMapProvider ||
-		config.MapProvider == OPNVKarteMapProvider ||
-		config.MapProvider == CyclOSMMapProvider ||
-		config.MapProvider == CartoDBMapProvider ||
-		config.MapProvider == TomTomMapProvider ||
-		config.MapProvider == TianDiTuProvider ||
-		config.MapProvider == CustomProvider {
-		config.SupportMapDataFetchProxy = true
-	} else {
-		config.SupportMapDataFetchProxy = false
-	}
-
 	config.MapProxy = getConfigItemStringValue(configFile, sectionName, "proxy", "system")
 	config.TomTomMapAPIKey = getConfigItemStringValue(configFile, sectionName, "tomtom_map_api_key")
 	config.TianDiTuAPIKey = getConfigItemStringValue(configFile, sectionName, "tianditu_map_app_key")

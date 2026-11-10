@@ -896,24 +896,32 @@ export function getDayLastDateTimeBySpecifiedUnixTime(unixTime: number, utcOffse
     return getDayFirstDateTimeBySpecifiedUnixTime(unixTime, utcOffset).add(1, 'days').subtract(1, 'seconds');
 }
 
-export function getBillingCycleFirstUnixTimeBySpecifiedUnixTime(unixTime: number, statementDate: number, utcOffset?: number): DateTime {
+export function getBillingCycleFirstUnixTimeBySpecifiedUnixTime(unixTime: number, statementDate: number, utcOffset?: number, includeStatementDate?: boolean): DateTime {
     let date = moment.unix(unixTime);
 
     if (isNumber(utcOffset)) {
         date = date.tz(getFixedTimezoneName(utcOffset));
     }
 
-    if (date.date() > statementDate) {
-        date = date.set({ date: statementDate + 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
+    if (includeStatementDate) {
+        if (date.date() > statementDate) {
+            date = date.set({ date: statementDate + 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
+        } else {
+            date = date.set({ date: statementDate, hour: 0, minute: 0, second: 0, millisecond: 0 }).add(-1, 'months').add(1, 'days');
+        }
     } else {
-        date = date.set({ date: statementDate, hour: 0, minute: 0, second: 0, millisecond: 0 }).add(-1, 'months').add(1, 'days');
+        if (date.date() >= statementDate) {
+            date = date.set({ date: statementDate, hour: 0, minute: 0, second: 0, millisecond: 0 });
+        } else {
+            date = date.set({ date: statementDate, hour: 0, minute: 0, second: 0, millisecond: 0 }).add(-1, 'months');
+        }
     }
 
     return MomentDateTime.of(date);
 }
 
-export function getBillingCycleLastUnixTimeBySpecifiedUnixTime(unixTime: number, statementDate: number, utcOffset?: number): DateTime {
-    return getBillingCycleFirstUnixTimeBySpecifiedUnixTime(unixTime, statementDate, utcOffset).add(1, 'months').subtract(1, 'seconds');
+export function getBillingCycleLastUnixTimeBySpecifiedUnixTime(unixTime: number, statementDate: number, utcOffset?: number, includeStatementDate?: boolean): DateTime {
+    return getBillingCycleFirstUnixTimeBySpecifiedUnixTime(unixTime, statementDate, utcOffset, includeStatementDate).add(1, 'months').subtract(1, 'seconds');
 }
 
 export function getYearFirstUnixTime(year: number): number {
@@ -1132,7 +1140,7 @@ export function getAllMonthsStartAndEndUnixTimes(startYearMonth: Year0BasedMonth
     return allYearMonthTimes;
 }
 
-export function getAllBillingCyclesStartAndEndUnixTimes(startUnixTime: number, endUnixTime: number, statementDate: number): YearMonthUnixTime[] {
+export function getAllBillingCyclesStartAndEndUnixTimes(startUnixTime: number, endUnixTime: number, statementDate: number, includeStatementDate?: boolean): YearMonthUnixTime[] {
     const allYearMonthTimes: YearMonthUnixTime[] = [];
 
     if (!startUnixTime || !endUnixTime) {
@@ -1152,6 +1160,10 @@ export function getAllBillingCyclesStartAndEndUnixTimes(startUnixTime: number, e
             const currentMonthMinDateTime = getMonthFirstDateTimeBySpecifiedUnixTime(unixTime);
             const previousMonthMinDateTime = currentMonthMinDateTime.add(-1, 'months');
             currentBillingCycleMinDateTime = previousMonthMinDateTime.add(statementDate, 'days');
+        }
+
+        if (includeStatementDate) {
+            currentBillingCycleMinDateTime = currentBillingCycleMinDateTime.add(1, 'days');
         }
 
         const currentBillingCycleMaxDateTime = currentBillingCycleMinDateTime.add(1, 'months').subtract(1, 'seconds');
@@ -1293,13 +1305,13 @@ export function getShiftedDateRangeAndDateType(minTime: number, maxTime: number,
     };
 }
 
-export function getShiftedDateRangeAndDateTypeForBillingCycle(minTime: number, maxTime: number, scale: number, firstDayOfWeek: WeekDayValue, fiscalYearStart: number, scene: number, statementDate: number | undefined | null): TimeRangeAndDateType | null {
+export function getShiftedDateRangeAndDateTypeForBillingCycle(minTime: number, maxTime: number, scale: number, firstDayOfWeek: WeekDayValue, fiscalYearStart: number, scene: number, statementDate: number | undefined | null, includeStatementDate?: boolean): TimeRangeAndDateType | null {
     if (!statementDate || !DateRange.PreviousBillingCycle.isAvailableForScene(scene) || !DateRange.CurrentBillingCycle.isAvailableForScene(scene)) {
         return null;
     }
 
-    const previousBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.PreviousBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate);
-    const currentBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.CurrentBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate);
+    const previousBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.PreviousBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate, includeStatementDate);
+    const currentBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.CurrentBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate, includeStatementDate);
 
     if (previousBillingCycleRange && getUnixTimeBeforeUnixTime(previousBillingCycleRange.maxTime, 1, 'months') === maxTime && getUnixTimeBeforeUnixTime(previousBillingCycleRange.minTime, 1, 'months') === minTime && scale === 1) {
         return previousBillingCycleRange;
@@ -1334,13 +1346,13 @@ export function getDateTypeByDateRange(minTime: number, maxTime: number, firstDa
     return newDateType;
 }
 
-export function getDateTypeByBillingCycleDateRange(minTime: number, maxTime: number, firstDayOfWeek: WeekDayValue, fiscalYearStart: number, scene: DateRangeScene, statementDate: number | undefined | null): number | null {
+export function getDateTypeByBillingCycleDateRange(minTime: number, maxTime: number, firstDayOfWeek: WeekDayValue, fiscalYearStart: number, scene: DateRangeScene, statementDate: number | undefined | null, includeStatementDate?: boolean): number | null {
     if (!statementDate || !DateRange.PreviousBillingCycle.isAvailableForScene(scene) || !DateRange.CurrentBillingCycle.isAvailableForScene(scene)) {
         return null;
     }
 
-    const previousBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.PreviousBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate);
-    const currentBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.CurrentBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate);
+    const previousBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.PreviousBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate, includeStatementDate);
+    const currentBillingCycleRange = getDateRangeByBillingCycleDateType(DateRange.CurrentBillingCycle.type, firstDayOfWeek, fiscalYearStart, statementDate, includeStatementDate);
 
     if (previousBillingCycleRange && previousBillingCycleRange.maxTime === maxTime && previousBillingCycleRange.minTime === minTime) {
         return previousBillingCycleRange.dateType;
@@ -1423,18 +1435,28 @@ export function getDateRangeByDateType(dateType: number | undefined, firstDayOfW
     };
 }
 
-export function getDateRangeByBillingCycleDateType(dateType: number, firstDayOfWeek: WeekDayValue, fiscalYearStart: number, statementDate: number | undefined | null): TimeRangeAndDateType | null {
+export function getDateRangeByBillingCycleDateType(dateType: number, firstDayOfWeek: WeekDayValue, fiscalYearStart: number, statementDate: number | undefined | null, includeStatementDate?: boolean): TimeRangeAndDateType | null {
     let maxTime = 0;
     let minTime = 0;
 
     if (dateType === DateRange.PreviousBillingCycle.type || dateType === DateRange.CurrentBillingCycle.type) { // Previous Billing Cycle | Current Billing Cycle
         if (statementDate) {
-            if (getCurrentDateTime().getGregorianCalendarDay() <= statementDate) {
-                maxTime = getThisMonthSpecifiedDayLastUnixTime(statementDate);
-                minTime = getUnixTimeBeforeUnixTime(getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'days'), 1, 'months');
+            if (includeStatementDate) {
+                if (getCurrentDateTime().getGregorianCalendarDay() <= statementDate) {
+                    maxTime = getThisMonthSpecifiedDayLastUnixTime(statementDate);
+                    minTime = getUnixTimeBeforeUnixTime(getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'days'), 1, 'months');
+                } else {
+                    maxTime = getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayLastUnixTime(statementDate), 1, 'months');
+                    minTime = getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'days');
+                }
             } else {
-                maxTime = getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayLastUnixTime(statementDate), 1, 'months');
-                minTime = getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'days');
+                if (getCurrentDateTime().getGregorianCalendarDay() < statementDate) {
+                    maxTime = getUnixTimeBeforeUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'seconds');
+                    minTime = getUnixTimeBeforeUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'months');
+                } else {
+                    maxTime = getUnixTimeBeforeUnixTime(getUnixTimeAfterUnixTime(getThisMonthSpecifiedDayFirstUnixTime(statementDate), 1, 'months'), 1, 'seconds');
+                    minTime = getThisMonthSpecifiedDayFirstUnixTime(statementDate);
+                }
             }
 
             if (dateType === DateRange.PreviousBillingCycle.type) {

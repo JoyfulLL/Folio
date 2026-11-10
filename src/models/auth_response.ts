@@ -4,7 +4,6 @@ import type { UserBasicInfo } from './user.ts';
 
 export interface AuthResponse {
     readonly token: string;
-    readonly mapProxyToken?: string;
     readonly need2FA: boolean;
     readonly user?: UserBasicInfo;
     readonly applicationCloudSettings?: ApplicationCloudSetting[];

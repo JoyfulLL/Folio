@@ -34,7 +34,6 @@ export interface MapInstanceInitOptions {
         readonly zoomIn: string;
         readonly zoomOut: string;
     };
-    readonly getCurrentToken?: () => string | null;
     readonly onClick?: (position: Coordinate) => void;
     readonly onZoomChange?: (level: number) => void;
 }

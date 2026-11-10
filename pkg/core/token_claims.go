@@ -64,18 +64,18 @@ type TextualDerivedTokenType string
 // Textual derived token types
 const (
 	NONE_DERIVED_TOKEN                       TextualDerivedTokenType = ""
-	MAP_PROXY_DERIVED_NORMAL_TOKEN           TextualDerivedTokenType = "m"
 	USER_AVATAR_DERIVED_NORMAL_TOKEN         TextualDerivedTokenType = "a"
 	USER_CUSTOM_ICON_DERIVED_NORMAL_TOKEN    TextualDerivedTokenType = "i"
 	TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN TextualDerivedTokenType = "p"
+	CREDIT_CARD_PICTURE_DERIVED_NORMAL_TOKEN TextualDerivedTokenType = "c"
 )
 
 // ValidTextualDerivedTokenTypes contains all supported textual derived token types
 var ValidTextualDerivedTokenTypes = map[TextualDerivedTokenType]bool{
-	MAP_PROXY_DERIVED_NORMAL_TOKEN:           true,
 	USER_AVATAR_DERIVED_NORMAL_TOKEN:         true,
 	USER_CUSTOM_ICON_DERIVED_NORMAL_TOKEN:    true,
 	TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN: true,
+	CREDIT_CARD_PICTURE_DERIVED_NORMAL_TOKEN: true,
 }
 
 // UserTokenClaims represents user token
@@ -101,21 +101,21 @@ type NormalTokenScope byte
 const (
 	NormalTokenScopeInvalid            NormalTokenScope = 0
 	NormalTokenScopeAll                NormalTokenScope = 1
-	NormalTokenScopeMapProxy           NormalTokenScope = 2
-	NormalTokenScopeUserAvatar         NormalTokenScope = 3
-	NormalTokenScopeUserCustomIcon     NormalTokenScope = 4
-	NormalTokenScopeTransactionPicture NormalTokenScope = 5
+	NormalTokenScopeUserAvatar         NormalTokenScope = 2
+	NormalTokenScopeUserCustomIcon     NormalTokenScope = 3
+	NormalTokenScopeTransactionPicture NormalTokenScope = 4
+	NormalTokenScopeCreditCardPicture  NormalTokenScope = 5
 
 	NormalTokenScopeMinValue NormalTokenScope = NormalTokenScopeAll
-	NormalTokenScopeMaxValue NormalTokenScope = NormalTokenScopeTransactionPicture
+	NormalTokenScopeMaxValue NormalTokenScope = NormalTokenScopeCreditCardPicture
 )
 
 // NormalTokenScopeDerivedTokenTypeMap maps normal token scopes to their corresponding derived token types
 var NormalTokenScopeDerivedTokenTypeMap = map[NormalTokenScope]TextualDerivedTokenType{
-	NormalTokenScopeMapProxy:           MAP_PROXY_DERIVED_NORMAL_TOKEN,
 	NormalTokenScopeUserAvatar:         USER_AVATAR_DERIVED_NORMAL_TOKEN,
 	NormalTokenScopeUserCustomIcon:     USER_CUSTOM_ICON_DERIVED_NORMAL_TOKEN,
 	NormalTokenScopeTransactionPicture: TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN,
+	NormalTokenScopeCreditCardPicture:  CREDIT_CARD_PICTURE_DERIVED_NORMAL_TOKEN,
 }
 
 // String returns a textual representation of the token type enum

@@ -107,7 +107,7 @@
                                               :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id] }"
                                               :id="getAccountDomId(subAccount)"
                                               :title="subAccount.name" :footer="subAccount.comment"
-                                              :after="!showAvailableCreditForCreditCard || account.category !== AccountCategory.CreditCard.type ? accountBalance(account, subAccount.id, showAccountBalance) : ''"
+                                              :after="showAvailableCreditForCreditCard && account.category === AccountCategory.CreditCard.type ? subAccountAvailableCredit(account, subAccount, showAccountBalance) : accountBalance(account, subAccount.id, showAccountBalance)"
                                               :link="!sortable ? '/transaction/list?accountIds=' + subAccount.id : null"
                                               :key="subAccount.id"
                                               v-for="subAccount in account.subAccounts"
@@ -270,6 +270,7 @@ const {
     maxCategoryAccountCount,
     accountCategoryTotalBalance,
     accountBalance,
+    subAccountAvailableCredit,
     accountBalanceOrAvailableCredit
 } = useAccountListPageBase();
 

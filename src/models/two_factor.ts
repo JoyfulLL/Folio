@@ -10,7 +10,6 @@ export interface TwoFactorEnableResponse {
 
 export interface TwoFactorEnableConfirmResponse {
     readonly token?: string;
-    readonly mapProxyToken?: string;
     readonly recoveryCodes: string[];
 }
 

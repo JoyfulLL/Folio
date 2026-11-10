@@ -7,6 +7,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
 	"github.com/mayswind/ezbookkeeping/pkg/log"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
+	"github.com/mayswind/ezbookkeeping/pkg/services"
 )
 
 // Database represents the database command
@@ -188,6 +189,30 @@ func updateAllDatabaseTablesStructure(c *core.CliContext) error {
 	}
 
 	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] insights explorer table maintained successfully")
+
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.CreditCardNotificationLog))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] credit card notification log table maintained successfully")
+
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.CreditCardPictureInfo))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] credit card picture table maintained successfully")
+
+	err = services.CreditCardPictures.MigrateBase64Pictures(c)
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] credit card pictures converted to picture files successfully")
 
 	return nil
 }

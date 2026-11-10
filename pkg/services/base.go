@@ -168,11 +168,35 @@ func (s *ServiceUsingStorage) DeleteTransactionPicture(ctx core.Context, uid int
 	return s.container.DeleteTransactionPicture(ctx, s.getTransactionPicturePath(uid, pictureId, fileExtension))
 }
 
+// ExistsCreditCardPicture returns whether the credit card picture exists from the current credit card picture object storage
+func (s *ServiceUsingStorage) ExistsCreditCardPicture(ctx core.Context, uid int64, pictureId int64, fileExtension string) (bool, error) {
+	return s.container.ExistsCreditCardPicture(ctx, s.getCreditCardPicturePath(uid, pictureId, fileExtension))
+}
+
+// ReadCreditCardPicture returns the credit card picture from the current credit card picture object storage
+func (s *ServiceUsingStorage) ReadCreditCardPicture(ctx core.Context, uid int64, pictureId int64, fileExtension string) (storage.ObjectInStorage, bool, error) {
+	return s.container.ReadCreditCardPicture(ctx, s.getCreditCardPicturePath(uid, pictureId, fileExtension))
+}
+
+// SaveCreditCardPicture returns whether save the credit card picture into the current credit card picture object storage successfully
+func (s *ServiceUsingStorage) SaveCreditCardPicture(ctx core.Context, uid int64, pictureId int64, object storage.ObjectInStorage, fileExtension string) error {
+	return s.container.SaveCreditCardPicture(ctx, s.getCreditCardPicturePath(uid, pictureId, fileExtension), object)
+}
+
+// DeleteCreditCardPicture returns whether delete the credit card picture from the current credit card picture object storage successfully
+func (s *ServiceUsingStorage) DeleteCreditCardPicture(ctx core.Context, uid int64, pictureId int64, fileExtension string) error {
+	return s.container.DeleteCreditCardPicture(ctx, s.getCreditCardPicturePath(uid, pictureId, fileExtension))
+}
+
 func (s *ServiceUsingStorage) getUserAvatarPath(uid int64, fileExtension string) string {
 	return fmt.Sprintf("%d.%s", uid, fileExtension)
 }
 
 func (s *ServiceUsingStorage) getTransactionPicturePath(uid int64, pictureId int64, fileExtension string) string {
+	return filepath.Join(utils.Int64ToString(uid), fmt.Sprintf("%d.%s", pictureId, fileExtension))
+}
+
+func (s *ServiceUsingStorage) getCreditCardPicturePath(uid int64, pictureId int64, fileExtension string) string {
 	return filepath.Join(utils.Int64ToString(uid), fmt.Sprintf("%d.%s", pictureId, fileExtension))
 }
 

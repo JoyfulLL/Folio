@@ -1348,7 +1348,7 @@ function changeDateFilter(dateRange: TimeRangeAndDateType | number | null): void
 
     if (isNumber(dateRange)) {
         if (DateRange.isBillingCycle(dateRange)) {
-            dateRange = getDateRangeByBillingCycleDateType(dateRange, firstDayOfWeek.value, fiscalYearStart.value, accountsStore.getAccountStatementDate(query.value.accountIds));
+            dateRange = getDateRangeByBillingCycleDateType(dateRange, firstDayOfWeek.value, fiscalYearStart.value, accountsStore.getAccountStatementDate(query.value.accountIds), accountsStore.getAccountStatementDateIncludeTransaction(query.value.accountIds));
         } else if (DateRange.isLastReconciledTimeRange(dateRange)) {
             dateRange = getDateRangeByLastReconciledTimeRangeDateType(dateRange, allAccountsMap.value[query.value.accountIds]?.lastReconciledTime);
         } else {
@@ -1388,7 +1388,7 @@ function changeCustomDateFilter(minTime: number, maxTime: number): void {
         return;
     }
 
-    let dateType: number | null = getDateTypeByBillingCycleDateRange(minTime, maxTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal, accountsStore.getAccountStatementDate(query.value.accountIds));
+    let dateType: number | null = getDateTypeByBillingCycleDateRange(minTime, maxTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal, accountsStore.getAccountStatementDate(query.value.accountIds), accountsStore.getAccountStatementDateIncludeTransaction(query.value.accountIds));
 
     if (!dateType) {
         dateType = getDateTypeByDateRange(minTime, maxTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal);
@@ -1457,7 +1457,7 @@ function shiftDateRange(startTime: number, endTime: number, scale: number): void
     let newDateRange: TimeRangeAndDateType | null = null;
 
     if (DateRange.isBillingCycle(query.value.dateType) || query.value.dateType === DateRange.Custom.type) {
-        newDateRange = getShiftedDateRangeAndDateTypeForBillingCycle(startTime, endTime, scale, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal, accountsStore.getAccountStatementDate(query.value.accountIds));
+        newDateRange = getShiftedDateRangeAndDateTypeForBillingCycle(startTime, endTime, scale, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal, accountsStore.getAccountStatementDate(query.value.accountIds), accountsStore.getAccountStatementDateIncludeTransaction(query.value.accountIds));
     }
 
     if (!newDateRange) {

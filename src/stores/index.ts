@@ -3,7 +3,6 @@ import { defineStore } from 'pinia';
 
 import { useSettingsStore } from './setting.ts';
 import { useUserStore } from './user.ts';
-import { useTokensStore } from './token.ts';
 import { useAccountsStore } from './account.ts';
 import { useTransactionCategoriesStore } from './transactionCategory.ts';
 import { useTransactionTagsStore } from './transactionTag.ts';
@@ -46,7 +45,6 @@ import logger from '@/lib/logger.ts';
 export const useRootStore = defineStore('root', () => {
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
-    const tokensStore = useTokensStore();
     const accountsStore = useAccountsStore();
     const transactionCategoriesStore = useTransactionCategoriesStore();
     const transactionTagsStore = useTransactionTagsStore();
@@ -78,7 +76,6 @@ export const useRootStore = defineStore('root', () => {
         transactionCategoriesStore.resetTransactionCategories();
         transactionTemplatesStore.resetTransactionTemplates();
         accountsStore.resetAccounts();
-        tokensStore.resetMapProxyToken();
 
         if (resetUserInfoAndSettings) {
             userStore.resetUserBasicInfo();
@@ -122,7 +119,6 @@ export const useRootStore = defineStore('root', () => {
                 settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
 
                 updateCurrentToken(data.result.token);
-                tokensStore.updateMapProxyToken(data.result.mapProxyToken);
 
                 if (data.result.user && isObject(data.result.user)) {
                     userStore.storeUserBasicInfo(data.result.user);
@@ -184,7 +180,6 @@ export const useRootStore = defineStore('root', () => {
                 settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
 
                 updateCurrentToken(data.result.token);
-                tokensStore.updateMapProxyToken(data.result.mapProxyToken);
 
                 if (data.result.user && isObject(data.result.user)) {
                     userStore.storeUserBasicInfo(data.result.user);
@@ -233,7 +228,6 @@ export const useRootStore = defineStore('root', () => {
                 settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
 
                 updateCurrentToken(data.result.token);
-                tokensStore.updateMapProxyToken(data.result.mapProxyToken);
 
                 if (data.result.user && isObject(data.result.user)) {
                     userStore.storeUserBasicInfo(data.result.user);
@@ -272,7 +266,6 @@ export const useRootStore = defineStore('root', () => {
 
                 if (data.result.token && isString(data.result.token)) {
                     updateCurrentToken(data.result.token);
-                    tokensStore.updateMapProxyToken(data.result.mapProxyToken);
                 }
 
                 if (data.result.user && isObject(data.result.user)) {
@@ -452,7 +445,6 @@ export const useRootStore = defineStore('root', () => {
 
                 if (data.result.newToken && isString(data.result.newToken)) {
                     updateCurrentToken(data.result.newToken);
-                    tokensStore.updateMapProxyToken(data.result.newMapProxyToken);
 
                     if (!userCustomIconsStore.customIconListStateInvalid) {
                         userCustomIconsStore.updateCustomIconListInvalidState(true);

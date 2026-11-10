@@ -476,6 +476,27 @@
 
                     <v-divider />
 
+                    <v-card-text class="my-1 pa-0 text-body-medium">
+                        <div class="setting-item">
+                            <span>{{ tt('Credit Card Notification Check Interval') }}</span>
+                            <v-spacer/>
+                            <v-select
+                                class="ms-4"
+                                density="compact"
+                                item-title="displayName"
+                                item-value="type"
+                                persistent-placeholder
+                                max-width="400px"
+                                :disabled="loading || saving"
+                                :placeholder="tt('Credit Card Notification Check Interval')"
+                                :items="allCreditCardNotificationIntervals"
+                                v-model="newProfile.creditCardNotificationInterval"
+                            />
+                        </div>
+                    </v-card-text>
+
+                    <v-divider />
+
                     <v-card-text class="d-flex flex-wrap gap-4">
                         <v-btn :disabled="inputIsNotChanged || inputIsInvalid || saving" @click="save">
                             {{ tt('Save Changes') }}
@@ -554,6 +575,7 @@ const {
     allIncomeAmountColorTypes,
     allTransactionEditScopeTypes,
     enableDisableOptions,
+    allCreditCardNotificationIntervals,
     languageTitle,
     supportDigitGroupingSymbol,
     inputIsNotChangedProblemMessage,

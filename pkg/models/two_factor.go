@@ -27,7 +27,6 @@ type TwoFactorEnableResponse struct {
 // TwoFactorEnableConfirmResponse represents all response parameters after user have enabled 2fa
 type TwoFactorEnableConfirmResponse struct {
 	Token         string   `json:"token,omitempty"`
-	MapProxyToken string   `json:"mapProxyToken,omitempty"`
 	RecoveryCodes []string `json:"recoveryCodes"`
 }
 

@@ -4,6 +4,7 @@ import { IconType } from '@/core/icon.ts';
 import { AccountType, AccountCategory } from '@/core/account.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
 import { DEFAULT_ACCOUNT_COLOR } from '@/consts/color.ts';
+import { AMOUNT_FACTOR } from '@/consts/numeral.ts';
 
 export class Account implements AccountInfoResponse {
     public id: string;
@@ -19,6 +20,27 @@ export class Account implements AccountInfoResponse {
     public lastReconciledTime?: number;
     public comment: string;
     public creditCardStatementDate?: number;
+    public creditCardBankName?: string;
+    public creditCardCardName?: string;
+    public creditCardLastFourDigits?: string;
+    public creditCardExpireMonth?: number;
+    public creditCardExpireYear?: number;
+    public creditCardCardholderName?: string;
+    public creditCardPictureId?: string;
+    public creditCardPictureUrl?: string;
+    public creditCardStatementDateIncludeTransaction?: boolean;
+    public creditCardRepaymentDateType?: number;
+    public creditCardRepaymentDaysAfterStatement?: number;
+    public creditCardRepaymentDayOfMonth?: number;
+    public creditCardStatementReminderEnabled?: boolean;
+    public creditCardStatementEmailEnabled?: boolean;
+    public creditCardRepaymentReminderEnabled?: boolean;
+    public creditCardRepaymentReminderDaysBefore?: number;
+    public creditCardNotificationMinutesOfDay?: number;
+    public creditCardNotificationTimezoneName?: string;
+    public creditCardNotificationTimezoneUtcOffset?: number;
+    public creditCardIsEntityCard?: boolean;
+    public creditCardCurrencyLimit?: string;
     public displayOrder: number;
     public visible: boolean;
     public subAccounts?: Account[];
@@ -31,7 +53,7 @@ export class Account implements AccountInfoResponse {
     private readonly _isAsset?: boolean;
     private readonly _isLiability?: boolean;
 
-    protected constructor(id: string, name: string, parentId: string, category: number, type: number, icon: string, iconType: number, color: string, currency: string, initialBalance: string, comment: string, displayOrder: number, visible: boolean, balanceTime?: number, lastReconciledTime?: number, creditCardStatementDate?: number, initialCreditCardLimit?: string, isAsset?: boolean, isLiability?: boolean, subAccounts?: Account[]) {
+    protected constructor(id: string, name: string, parentId: string, category: number, type: number, icon: string, iconType: number, color: string, currency: string, initialBalance: string, comment: string, displayOrder: number, visible: boolean, balanceTime?: number, lastReconciledTime?: number, creditCardStatementDate?: number, initialCreditCardLimit?: string, isAsset?: boolean, isLiability?: boolean, subAccounts?: Account[], creditCardBankName?: string, creditCardCardName?: string, creditCardLastFourDigits?: string, creditCardExpireMonth?: number, creditCardExpireYear?: number, creditCardCardholderName?: string, creditCardPictureId?: string, creditCardPictureUrl?: string, creditCardStatementDateIncludeTransaction?: boolean, creditCardRepaymentDateType?: number, creditCardRepaymentDaysAfterStatement?: number, creditCardRepaymentDayOfMonth?: number, creditCardStatementReminderEnabled?: boolean, creditCardStatementEmailEnabled?: boolean, creditCardRepaymentReminderEnabled?: boolean, creditCardRepaymentReminderDaysBefore?: number, creditCardNotificationMinutesOfDay?: number, creditCardNotificationTimezoneName?: string, creditCardNotificationTimezoneUtcOffset?: number, creditCardIsEntityCard?: boolean, creditCardCurrencyLimit?: string) {
         this.id = id;
         this.name = name;
         this.parentId = parentId;
@@ -47,6 +69,27 @@ export class Account implements AccountInfoResponse {
         this.displayOrder = displayOrder;
         this.visible = visible;
         this.creditCardStatementDate = creditCardStatementDate;
+        this.creditCardBankName = creditCardBankName;
+        this.creditCardCardName = creditCardCardName;
+        this.creditCardLastFourDigits = creditCardLastFourDigits;
+        this.creditCardExpireMonth = creditCardExpireMonth;
+        this.creditCardExpireYear = creditCardExpireYear;
+        this.creditCardCardholderName = creditCardCardholderName;
+        this.creditCardPictureId = creditCardPictureId;
+        this.creditCardPictureUrl = creditCardPictureUrl;
+        this.creditCardStatementDateIncludeTransaction = creditCardStatementDateIncludeTransaction;
+        this.creditCardRepaymentDateType = creditCardRepaymentDateType;
+        this.creditCardRepaymentDaysAfterStatement = creditCardRepaymentDaysAfterStatement;
+        this.creditCardRepaymentDayOfMonth = creditCardRepaymentDayOfMonth;
+        this.creditCardStatementReminderEnabled = creditCardStatementReminderEnabled;
+        this.creditCardStatementEmailEnabled = creditCardStatementEmailEnabled;
+        this.creditCardRepaymentReminderEnabled = creditCardRepaymentReminderEnabled;
+        this.creditCardRepaymentReminderDaysBefore = creditCardRepaymentReminderDaysBefore;
+        this.creditCardNotificationMinutesOfDay = creditCardNotificationMinutesOfDay;
+        this.creditCardNotificationTimezoneName = creditCardNotificationTimezoneName;
+        this.creditCardNotificationTimezoneUtcOffset = creditCardNotificationTimezoneUtcOffset;
+        this.creditCardIsEntityCard = creditCardIsEntityCard;
+        this.creditCardCurrencyLimit = creditCardCurrencyLimit;
 
         this._initialBalance = initialBalance;
         this._numericBalance = undefined;
@@ -127,6 +170,30 @@ export class Account implements AccountInfoResponse {
         }
     }
 
+    // Returns the limit the bank states for this card's own currency, converted from the display
+    // units entered by the user into the stored amount unit. It is the same shared pool limit
+    // expressed in another currency, so the ratio of two stated limits converts debts between
+    // the cards of a pool. All amounts are stored with two decimal places regardless of the
+    // currency (the currency fraction only controls how many decimals are displayed), so the
+    // display value is always multiplied by the amount factor. Returns 0 when no limit is stated
+    public get numericCreditCardCurrencyLimit(): number {
+        if (!this.creditCardCurrencyLimit) {
+            return 0;
+        }
+
+        // tolerate separators, spaces and full-width digits typed with a Chinese input method
+        const normalized = this.creditCardCurrencyLimit
+            .replace(/[,，、\s]/g, '')
+            .replace(/[０-９]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xFEE0));
+        const parsed = parseInt(normalized, 10);
+
+        if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+            return 0;
+        }
+
+        return parsed * AMOUNT_FACTOR;
+    }
+
     public get isAsset(): boolean {
         if (typeof(this._isAsset) !== 'undefined') {
             return this._isAsset;
@@ -178,7 +245,27 @@ export class Account implements AccountInfoResponse {
             this.visible === other.visible &&
             this.creditCardStatementDate === other.creditCardStatementDate &&
             this.creditCardLimit === other.creditCardLimit &&
-            this.numericCreditCardLimit === other.numericCreditCardLimit;
+            this.numericCreditCardLimit === other.numericCreditCardLimit &&
+            this.creditCardBankName === other.creditCardBankName &&
+            this.creditCardCardName === other.creditCardCardName &&
+            this.creditCardLastFourDigits === other.creditCardLastFourDigits &&
+            this.creditCardExpireMonth === other.creditCardExpireMonth &&
+            this.creditCardExpireYear === other.creditCardExpireYear &&
+            this.creditCardCardholderName === other.creditCardCardholderName &&
+            this.creditCardPictureId === other.creditCardPictureId &&
+            this.creditCardStatementDateIncludeTransaction === other.creditCardStatementDateIncludeTransaction &&
+            this.creditCardRepaymentDateType === other.creditCardRepaymentDateType &&
+            this.creditCardRepaymentDaysAfterStatement === other.creditCardRepaymentDaysAfterStatement &&
+            this.creditCardRepaymentDayOfMonth === other.creditCardRepaymentDayOfMonth &&
+            this.creditCardStatementReminderEnabled === other.creditCardStatementReminderEnabled &&
+            this.creditCardStatementEmailEnabled === other.creditCardStatementEmailEnabled &&
+            this.creditCardRepaymentReminderEnabled === other.creditCardRepaymentReminderEnabled &&
+            this.creditCardRepaymentReminderDaysBefore === other.creditCardRepaymentReminderDaysBefore &&
+            this.creditCardNotificationMinutesOfDay === other.creditCardNotificationMinutesOfDay &&
+            this.creditCardNotificationTimezoneName === other.creditCardNotificationTimezoneName &&
+            this.creditCardNotificationTimezoneUtcOffset === other.creditCardNotificationTimezoneUtcOffset &&
+            this.creditCardIsEntityCard === other.creditCardIsEntityCard &&
+            this.creditCardCurrencyLimit === other.creditCardCurrencyLimit;
 
         if (!isEqual) {
             return false;
@@ -266,6 +353,27 @@ export class Account implements AccountInfoResponse {
         this.lastReconciledTime = other.lastReconciledTime;
         this.comment = other.comment;
         this.creditCardStatementDate = other.creditCardStatementDate;
+        this.creditCardBankName = other.creditCardBankName;
+        this.creditCardCardName = other.creditCardCardName;
+        this.creditCardLastFourDigits = other.creditCardLastFourDigits;
+        this.creditCardExpireMonth = other.creditCardExpireMonth;
+        this.creditCardExpireYear = other.creditCardExpireYear;
+        this.creditCardCardholderName = other.creditCardCardholderName;
+        this.creditCardPictureId = other.creditCardPictureId;
+        this.creditCardPictureUrl = other.creditCardPictureUrl;
+        this.creditCardStatementDateIncludeTransaction = other.creditCardStatementDateIncludeTransaction;
+        this.creditCardRepaymentDateType = other.creditCardRepaymentDateType;
+        this.creditCardRepaymentDaysAfterStatement = other.creditCardRepaymentDaysAfterStatement;
+        this.creditCardRepaymentDayOfMonth = other.creditCardRepaymentDayOfMonth;
+        this.creditCardStatementReminderEnabled = other.creditCardStatementReminderEnabled;
+        this.creditCardStatementEmailEnabled = other.creditCardStatementEmailEnabled;
+        this.creditCardRepaymentReminderEnabled = other.creditCardRepaymentReminderEnabled;
+        this.creditCardRepaymentReminderDaysBefore = other.creditCardRepaymentReminderDaysBefore;
+        this.creditCardNotificationMinutesOfDay = other.creditCardNotificationMinutesOfDay;
+        this.creditCardNotificationTimezoneName = other.creditCardNotificationTimezoneName;
+        this.creditCardNotificationTimezoneUtcOffset = other.creditCardNotificationTimezoneUtcOffset;
+        this.creditCardIsEntityCard = other.creditCardIsEntityCard;
+        this.creditCardCurrencyLimit = other.creditCardCurrencyLimit;
         this.visible = other.visible;
 
         this._initialBalance = other._initialBalance;
@@ -296,6 +404,7 @@ export class Account implements AccountInfoResponse {
     }
 
     public toCreateRequest(clientSessionId: string, subAccounts?: Account[], parentAccount?: Account): AccountCreateRequest {
+        const isCreditCard = (parentAccount ? parentAccount.category : this.category) === AccountCategory.CreditCard.type;
         let subAccountCreateRequests: AccountCreateRequest[] | undefined = undefined;
 
         if (this.type === AccountType.MultiSubAccounts.type) {
@@ -323,14 +432,35 @@ export class Account implements AccountInfoResponse {
             balance: parentAccount || this.type === AccountType.SingleAccount.type ? this.balance : '0',
             balanceTime: (parentAccount || this.type === AccountType.SingleAccount.type) && this.balanceTime ? this.balanceTime : 0,
             comment: this.comment,
-            creditCardStatementDate: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardStatementDate : undefined,
-            creditCardLimit: !parentAccount && this.category === AccountCategory.CreditCard.type && this.numericCreditCardLimit > 0 ? this.creditCardLimit : undefined,
+            creditCardStatementDate: isCreditCard ? this.creditCardStatementDate : undefined,
+            creditCardLimit: isCreditCard && !parentAccount && this.numericCreditCardLimit > 0 ? this.creditCardLimit : undefined,
+            creditCardBankName: isCreditCard ? this.creditCardBankName || undefined : undefined,
+            creditCardCardName: isCreditCard ? this.creditCardCardName || undefined : undefined,
+            creditCardLastFourDigits: isCreditCard ? this.creditCardLastFourDigits || undefined : undefined,
+            creditCardExpireMonth: isCreditCard ? this.creditCardExpireMonth || undefined : undefined,
+            creditCardExpireYear: isCreditCard ? this.creditCardExpireYear || undefined : undefined,
+            creditCardCardholderName: isCreditCard ? this.creditCardCardholderName || undefined : undefined,
+            creditCardPictureId: isCreditCard ? this.creditCardPictureId || '0' : undefined,
+            creditCardStatementDateIncludeTransaction: isCreditCard ? this.creditCardStatementDateIncludeTransaction : undefined,
+            creditCardRepaymentDateType: isCreditCard ? this.creditCardRepaymentDateType || undefined : undefined,
+            creditCardRepaymentDaysAfterStatement: isCreditCard ? this.creditCardRepaymentDaysAfterStatement || undefined : undefined,
+            creditCardRepaymentDayOfMonth: isCreditCard ? this.creditCardRepaymentDayOfMonth || undefined : undefined,
+            creditCardStatementReminderEnabled: isCreditCard ? this.creditCardStatementReminderEnabled : undefined,
+            creditCardStatementEmailEnabled: isCreditCard ? this.creditCardStatementEmailEnabled : undefined,
+            creditCardRepaymentReminderEnabled: isCreditCard ? this.creditCardRepaymentReminderEnabled : undefined,
+            creditCardRepaymentReminderDaysBefore: isCreditCard ? this.creditCardRepaymentReminderDaysBefore : undefined,
+            creditCardNotificationMinutesOfDay: isCreditCard ? this.creditCardNotificationMinutesOfDay : undefined,
+            creditCardNotificationTimezoneName: isCreditCard ? this.creditCardNotificationTimezoneName || undefined : undefined,
+            creditCardNotificationTimezoneUtcOffset: isCreditCard ? this.creditCardNotificationTimezoneUtcOffset : undefined,
+            creditCardIsEntityCard: isCreditCard && !parentAccount ? this.creditCardIsEntityCard : undefined,
+            creditCardCurrencyLimit: isCreditCard ? this.creditCardCurrencyLimit || undefined : undefined,
             subAccounts: !parentAccount ? subAccountCreateRequests : undefined,
             clientSessionId: !parentAccount ? clientSessionId : undefined
         };
     }
 
     public toModifyRequest(clientSessionId: string, subAccounts?: Account[], parentAccount?: Account): AccountModifyRequest {
+        const isCreditCard = (parentAccount ? parentAccount.category : this.category) === AccountCategory.CreditCard.type;
         let subAccountModifyRequests: AccountModifyRequest[] | undefined = undefined;
 
         if (this.type === AccountType.MultiSubAccounts.type) {
@@ -354,13 +484,33 @@ export class Account implements AccountInfoResponse {
             icon: this.icon,
             iconType: this.iconType,
             color: this.color,
-            currency: (parentAccount && (!this.id || this.id === '0')) || (!parentAccount && this.category === AccountCategory.CreditCard.type) ? this.currency : undefined,
+            currency: (parentAccount && (!this.id || this.id === '0')) || (!parentAccount && isCreditCard) ? this.currency : undefined,
             balance: parentAccount && (!this.id || this.id === '0') ? this.balance : undefined,
             balanceTime: parentAccount && (!this.id || this.id === '0') ? this.balanceTime : undefined,
             lastReconciledTime: this.lastReconciledTime,
             comment: this.comment,
-            creditCardStatementDate: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardStatementDate : undefined,
-            creditCardLimit: !parentAccount && this.category === AccountCategory.CreditCard.type && this.numericCreditCardLimit > 0 ? this.creditCardLimit : undefined,
+            creditCardStatementDate: isCreditCard ? this.creditCardStatementDate : undefined,
+            creditCardLimit: isCreditCard && !parentAccount && this.numericCreditCardLimit > 0 ? this.creditCardLimit : undefined,
+            creditCardBankName: isCreditCard ? this.creditCardBankName || undefined : undefined,
+            creditCardCardName: isCreditCard ? this.creditCardCardName || undefined : undefined,
+            creditCardLastFourDigits: isCreditCard ? this.creditCardLastFourDigits || undefined : undefined,
+            creditCardExpireMonth: isCreditCard ? this.creditCardExpireMonth || undefined : undefined,
+            creditCardExpireYear: isCreditCard ? this.creditCardExpireYear || undefined : undefined,
+            creditCardCardholderName: isCreditCard ? this.creditCardCardholderName || undefined : undefined,
+            creditCardPictureId: isCreditCard ? this.creditCardPictureId || '0' : undefined,
+            creditCardStatementDateIncludeTransaction: isCreditCard ? this.creditCardStatementDateIncludeTransaction : undefined,
+            creditCardRepaymentDateType: isCreditCard ? this.creditCardRepaymentDateType || undefined : undefined,
+            creditCardRepaymentDaysAfterStatement: isCreditCard ? this.creditCardRepaymentDaysAfterStatement || undefined : undefined,
+            creditCardRepaymentDayOfMonth: isCreditCard ? this.creditCardRepaymentDayOfMonth || undefined : undefined,
+            creditCardStatementReminderEnabled: isCreditCard ? this.creditCardStatementReminderEnabled : undefined,
+            creditCardStatementEmailEnabled: isCreditCard ? this.creditCardStatementEmailEnabled : undefined,
+            creditCardRepaymentReminderEnabled: isCreditCard ? this.creditCardRepaymentReminderEnabled : undefined,
+            creditCardRepaymentReminderDaysBefore: isCreditCard ? this.creditCardRepaymentReminderDaysBefore : undefined,
+            creditCardNotificationMinutesOfDay: isCreditCard ? this.creditCardNotificationMinutesOfDay : undefined,
+            creditCardNotificationTimezoneName: isCreditCard ? this.creditCardNotificationTimezoneName || undefined : undefined,
+            creditCardNotificationTimezoneUtcOffset: isCreditCard ? this.creditCardNotificationTimezoneUtcOffset : undefined,
+            creditCardIsEntityCard: isCreditCard && !parentAccount ? this.creditCardIsEntityCard : undefined,
+            creditCardCurrencyLimit: isCreditCard ? this.creditCardCurrencyLimit || undefined : undefined,
             hidden: !this.visible,
             subAccounts: !parentAccount ? subAccountModifyRequests : undefined,
             clientSessionId: !parentAccount ? clientSessionId : undefined
@@ -515,7 +665,29 @@ export class Account implements AccountInfoResponse {
             this.creditCardStatementDate,
             this.creditCardLimit,
             this.isAsset,
-            this.isLiability
+            this.isLiability,
+            undefined,
+            this.creditCardBankName,
+            this.creditCardCardName,
+            this.creditCardLastFourDigits,
+            this.creditCardExpireMonth,
+            this.creditCardExpireYear,
+            this.creditCardCardholderName,
+            this.creditCardPictureId,
+            this.creditCardPictureUrl,
+            this.creditCardStatementDateIncludeTransaction,
+            this.creditCardRepaymentDateType,
+            this.creditCardRepaymentDaysAfterStatement,
+            this.creditCardRepaymentDayOfMonth,
+            this.creditCardStatementReminderEnabled,
+            this.creditCardStatementEmailEnabled,
+            this.creditCardRepaymentReminderEnabled,
+            this.creditCardRepaymentReminderDaysBefore,
+            this.creditCardNotificationMinutesOfDay,
+            this.creditCardNotificationTimezoneName,
+            this.creditCardNotificationTimezoneUtcOffset,
+            this.creditCardIsEntityCard,
+            this.creditCardCurrencyLimit
         );
     }
 
@@ -540,7 +712,28 @@ export class Account implements AccountInfoResponse {
             this.creditCardLimit,
             this.isAsset,
             this.isLiability,
-            typeof(this.subAccounts) !== 'undefined' ? Account.cloneAccounts(this.subAccounts) : undefined);
+            typeof(this.subAccounts) !== 'undefined' ? Account.cloneAccounts(this.subAccounts) : undefined,
+            this.creditCardBankName,
+            this.creditCardCardName,
+            this.creditCardLastFourDigits,
+            this.creditCardExpireMonth,
+            this.creditCardExpireYear,
+            this.creditCardCardholderName,
+            this.creditCardPictureId,
+            this.creditCardPictureUrl,
+            this.creditCardStatementDateIncludeTransaction,
+            this.creditCardRepaymentDateType,
+            this.creditCardRepaymentDaysAfterStatement,
+            this.creditCardRepaymentDayOfMonth,
+            this.creditCardStatementReminderEnabled,
+            this.creditCardStatementEmailEnabled,
+            this.creditCardRepaymentReminderEnabled,
+            this.creditCardRepaymentReminderDaysBefore,
+            this.creditCardNotificationMinutesOfDay,
+            this.creditCardNotificationTimezoneName,
+            this.creditCardNotificationTimezoneUtcOffset,
+            this.creditCardIsEntityCard,
+            this.creditCardCurrencyLimit);
     }
 
     public createNewSubAccount(currency: string, balanceTime: number): Account {
@@ -608,7 +801,28 @@ export class Account implements AccountInfoResponse {
             accountResponse.creditCardLimit,
             accountResponse.isAsset,
             accountResponse.isLiability,
-            accountResponse.subAccounts ? Account.ofMulti(accountResponse.subAccounts) : undefined
+            accountResponse.subAccounts ? Account.ofMulti(accountResponse.subAccounts) : undefined,
+            accountResponse.creditCardBankName,
+            accountResponse.creditCardCardName,
+            accountResponse.creditCardLastFourDigits,
+            accountResponse.creditCardExpireMonth,
+            accountResponse.creditCardExpireYear,
+            accountResponse.creditCardCardholderName,
+            accountResponse.creditCardPictureId,
+            accountResponse.creditCardPictureUrl,
+            accountResponse.creditCardStatementDateIncludeTransaction,
+            accountResponse.creditCardRepaymentDateType,
+            accountResponse.creditCardRepaymentDaysAfterStatement,
+            accountResponse.creditCardRepaymentDayOfMonth,
+            accountResponse.creditCardStatementReminderEnabled,
+            accountResponse.creditCardStatementEmailEnabled,
+            accountResponse.creditCardRepaymentReminderEnabled,
+            accountResponse.creditCardRepaymentReminderDaysBefore,
+            accountResponse.creditCardNotificationMinutesOfDay,
+            accountResponse.creditCardNotificationTimezoneName,
+            accountResponse.creditCardNotificationTimezoneUtcOffset,
+            accountResponse.creditCardIsEntityCard,
+            accountResponse.creditCardCurrencyLimit
         );
     }
 
@@ -675,7 +889,26 @@ export class AccountWithDisplayBalance extends Account {
             account.creditCardLimit,
             account.isAsset,
             account.isLiability,
-            account.subAccounts
+            account.subAccounts,
+            account.creditCardBankName,
+            account.creditCardCardName,
+            account.creditCardLastFourDigits,
+            account.creditCardExpireMonth,
+            account.creditCardExpireYear,
+            account.creditCardCardholderName,
+            account.creditCardPictureId,
+            account.creditCardPictureUrl,
+            account.creditCardStatementDateIncludeTransaction,
+            account.creditCardRepaymentDateType,
+            account.creditCardRepaymentDaysAfterStatement,
+            account.creditCardRepaymentDayOfMonth,
+            account.creditCardStatementReminderEnabled,
+            account.creditCardStatementEmailEnabled,
+            account.creditCardRepaymentReminderEnabled,
+            account.creditCardRepaymentReminderDaysBefore,
+            account.creditCardNotificationMinutesOfDay,
+            account.creditCardNotificationTimezoneName,
+            account.creditCardNotificationTimezoneUtcOffset
         );
 
         this.displayBalance = displayBalance;
@@ -699,6 +932,26 @@ export interface AccountCreateRequest {
     readonly comment: string;
     readonly creditCardStatementDate?: number;
     readonly creditCardLimit?: string;
+    readonly creditCardBankName?: string;
+    readonly creditCardCardName?: string;
+    readonly creditCardLastFourDigits?: string;
+    readonly creditCardExpireMonth?: number;
+    readonly creditCardExpireYear?: number;
+    readonly creditCardCardholderName?: string;
+    readonly creditCardPictureId?: string;
+    readonly creditCardStatementDateIncludeTransaction?: boolean;
+    readonly creditCardRepaymentDateType?: number;
+    readonly creditCardRepaymentDaysAfterStatement?: number;
+    readonly creditCardRepaymentDayOfMonth?: number;
+    readonly creditCardStatementReminderEnabled?: boolean;
+    readonly creditCardStatementEmailEnabled?: boolean;
+    readonly creditCardRepaymentReminderEnabled?: boolean;
+    readonly creditCardRepaymentReminderDaysBefore?: number;
+    readonly creditCardNotificationMinutesOfDay?: number;
+    readonly creditCardNotificationTimezoneName?: string;
+    readonly creditCardNotificationTimezoneUtcOffset?: number;
+    readonly creditCardIsEntityCard?: boolean;
+    readonly creditCardCurrencyLimit?: string;
     readonly subAccounts?: AccountCreateRequest[];
     readonly clientSessionId?: string;
 }
@@ -717,6 +970,26 @@ export interface AccountModifyRequest {
     readonly comment: string;
     readonly creditCardStatementDate?: number;
     readonly creditCardLimit?: string;
+    readonly creditCardBankName?: string;
+    readonly creditCardCardName?: string;
+    readonly creditCardLastFourDigits?: string;
+    readonly creditCardExpireMonth?: number;
+    readonly creditCardExpireYear?: number;
+    readonly creditCardCardholderName?: string;
+    readonly creditCardPictureId?: string;
+    readonly creditCardStatementDateIncludeTransaction?: boolean;
+    readonly creditCardRepaymentDateType?: number;
+    readonly creditCardRepaymentDaysAfterStatement?: number;
+    readonly creditCardRepaymentDayOfMonth?: number;
+    readonly creditCardStatementReminderEnabled?: boolean;
+    readonly creditCardStatementEmailEnabled?: boolean;
+    readonly creditCardRepaymentReminderEnabled?: boolean;
+    readonly creditCardRepaymentReminderDaysBefore?: number;
+    readonly creditCardNotificationMinutesOfDay?: number;
+    readonly creditCardNotificationTimezoneName?: string;
+    readonly creditCardNotificationTimezoneUtcOffset?: number;
+    readonly creditCardIsEntityCard?: boolean;
+    readonly creditCardCurrencyLimit?: string;
     readonly hidden: boolean;
     readonly subAccounts?: AccountModifyRequest[];
     readonly clientSessionId?: string;
@@ -742,6 +1015,27 @@ export interface AccountInfoResponse {
     readonly comment: string;
     readonly creditCardStatementDate?: number;
     readonly creditCardLimit?: string;
+    readonly creditCardBankName?: string;
+    readonly creditCardCardName?: string;
+    readonly creditCardLastFourDigits?: string;
+    readonly creditCardExpireMonth?: number;
+    readonly creditCardExpireYear?: number;
+    readonly creditCardCardholderName?: string;
+    readonly creditCardPictureId?: string;
+    readonly creditCardPictureUrl?: string;
+    readonly creditCardStatementDateIncludeTransaction?: boolean;
+    readonly creditCardRepaymentDateType?: number;
+    readonly creditCardRepaymentDaysAfterStatement?: number;
+    readonly creditCardRepaymentDayOfMonth?: number;
+    readonly creditCardStatementReminderEnabled?: boolean;
+    readonly creditCardStatementEmailEnabled?: boolean;
+    readonly creditCardRepaymentReminderEnabled?: boolean;
+    readonly creditCardRepaymentReminderDaysBefore?: number;
+    readonly creditCardNotificationMinutesOfDay?: number;
+    readonly creditCardNotificationTimezoneName?: string;
+    readonly creditCardNotificationTimezoneUtcOffset?: number;
+    readonly creditCardIsEntityCard?: boolean;
+    readonly creditCardCurrencyLimit?: string;
     readonly displayOrder: number;
     readonly isAsset?: boolean;
     readonly isLiability?: boolean;
@@ -770,11 +1064,6 @@ export interface AccountDeleteRequest {
 export interface AccountBalance {
     readonly balance: BigDecimal;
     readonly category: number;
-    readonly creditCardLimit?: {
-        readonly amount: BigDecimal;
-        readonly currency: string;
-        readonly shareByCount: number;
-    };
     readonly isAsset: boolean;
     readonly isLiability: boolean;
     readonly currency: string;

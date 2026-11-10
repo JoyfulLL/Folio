@@ -261,6 +261,7 @@
                         :legend-name="isCurrentLiabilityAccount ? tt('Account Outstanding Balance') : tt('Account Balance')"
                         :account="currentAccount"
                         :statement-date="currentAccountStatementDate"
+                        :statement-date-include-transaction="currentAccountStatementDateIncludeTransaction"
                         :skeleton="true"
                         v-if="showAccountBalanceTrendsCharts && loading"
                     />
@@ -274,6 +275,7 @@
                         :legend-name="isCurrentLiabilityAccount ? tt('Account Outstanding Balance') : tt('Account Balance')"
                         :account="currentAccount"
                         :statement-date="currentAccountStatementDate"
+                        :statement-date-include-transaction="currentAccountStatementDateIncludeTransaction"
                         v-if="showAccountBalanceTrendsCharts && !loading"
                     />
                 </div>
@@ -410,6 +412,7 @@ const {
     currentAccount,
     currentAccountCurrency,
     currentAccountStatementDate,
+    currentAccountStatementDateIncludeTransaction,
     isCurrentLiabilityAccount,
     canUpdateAccountCloseBalance,
     newLastReconciledTime,

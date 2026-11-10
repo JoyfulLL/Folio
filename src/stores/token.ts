@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
 import { useSettingsStore } from './setting.ts';
@@ -22,22 +21,6 @@ export const useTokensStore = defineStore('tokens', () => {
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
     const userCustomIconsStore = useUserCustomIconsStore();
-
-    const mapProxyToken = ref<string | null>(null);
-
-    function updateMapProxyToken(token?: string): void {
-        if (token) {
-            mapProxyToken.value = token;
-        }
-    }
-
-    function resetMapProxyToken(): void {
-        mapProxyToken.value = null;
-    }
-
-    function getMapProxyToken(): string | null {
-        return mapProxyToken.value;
-    }
 
     function getAllTokens(): Promise<TokenInfoResponse[]> {
         return new Promise((resolve, reject) => {
@@ -71,7 +54,6 @@ export const useTokensStore = defineStore('tokens', () => {
 
                 if (data && data.success && data.result) {
                     settingsStore.setApplicationSettingsFromCloudSettings(data.result.applicationCloudSettings);
-                    updateMapProxyToken(data.result.newMapProxyToken);
                 }
 
                 if (data && data.success && data.result && data.result.user && isObject(data.result.user)) {
@@ -195,9 +177,6 @@ export const useTokensStore = defineStore('tokens', () => {
 
     return {
         // functions
-        updateMapProxyToken,
-        resetMapProxyToken,
-        getMapProxyToken,
         getAllTokens,
         refreshTokenAndRevokeOldToken,
         generateToken,

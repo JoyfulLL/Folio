@@ -49,6 +49,7 @@
                     <v-window-item value="account">
                         <v-form class="my-4">
                             <v-row>
+                                <!-- Basic information -->
                                 <v-col cols="12" md="12">
                                     <v-text-field
                                         type="text"
@@ -110,37 +111,6 @@
                                                      :with-not-set="account.type === AccountType.MultiSubAccounts.type && account.category === AccountCategory.CreditCard.type && currentAccountIndex < 0"
                                                      v-model="selectedAccount.currency" />
                                 </v-col>
-                                <v-col cols="12" md="6" v-if="currentAccountIndex < 0 && account.category === AccountCategory.CreditCard.type">
-                                    <amount-input :disabled="loading || submitting"
-                                                  :persistent-placeholder="true"
-                                                  :currency="account.currency"
-                                                  :show-currency="true"
-                                                  :label="tt('Credit Limit')"
-                                                  :placeholder="tt('Credit Limit')"
-                                                  v-model="account.numericCreditCardLimit"
-                                                  v-if="account.currency && account.currency !== ACCOUNT_CURRENCY_NOT_SET_VALUE" />
-                                    <v-text-field disabled
-                                                  persistent-placeholder
-                                                  type="text"
-                                                  :label="tt('Credit Limit')"
-                                                  :placeholder="tt('Credit Limit')"
-                                                  :model-value="getAccountCreditCardCreditLimitDisplayValue(account.numericCreditCardLimit, account.currency)"
-                                                  v-else-if="!account.currency || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE" />
-                                </v-col>
-                                <v-col cols="12" md="6" v-if="currentAccountIndex < 0 && account.category === AccountCategory.CreditCard.type">
-                                    <v-autocomplete
-                                        item-title="displayName"
-                                        item-value="type"
-                                        auto-select-first
-                                        persistent-placeholder
-                                        :disabled="loading || submitting"
-                                        :label="tt('Statement Date')"
-                                        :placeholder="tt('Statement Date')"
-                                        :items="allAvailableMonthDays"
-                                        :no-data-text="tt('No results')"
-                                        v-model="account.creditCardStatementDate"
-                                    ></v-autocomplete>
-                                </v-col>
                                 <v-col cols="12" :md="((canShowBalanceTime && selectedAccount.numericBalance) || canShowLastReconciledTime) ? 6 : 12"
                                        v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex >= 0">
                                     <amount-input :disabled="loading || submitting || (!!editAccountId && !isNewAccount(selectedAccount))"
@@ -173,6 +143,265 @@
                                         @clear:model-value="selectedAccount.lastReconciledTime = undefined"
                                         @error="onShowDateTimeError" />
                                 </v-col>
+                                <!-- Credit card profile -->
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-text-field
+                                        type="text"
+                                        autocomplete="off"
+                                        persistent-placeholder
+                                        :maxlength="64"
+                                        :disabled="loading || submitting"
+                                        :label="tt('Bank Name')"
+                                        :placeholder="tt('Bank Name')"
+                                        v-model="selectedAccount.creditCardBankName"
+                                    />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-text-field
+                                        type="text"
+                                        autocomplete="off"
+                                        persistent-placeholder
+                                        :maxlength="64"
+                                        :disabled="loading || submitting"
+                                        :label="tt('Card Name')"
+                                        :placeholder="tt('Card Name')"
+                                        v-model="selectedAccount.creditCardCardName"
+                                    />
+                                </v-col>
+                                <v-col cols="12" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-btn variant="text" size="small" class="advanced-card-details-toggle"
+                                           :disabled="loading || submitting"
+                                           @click="showAdvancedCardDetails = !showAdvancedCardDetails">
+                                        {{ showAdvancedCardDetails ? tt('Hide Advanced Card Details') : tt('Advanced Card Details') }}
+                                    </v-btn>
+                                </v-col>
+                                <template v-if="showAdvancedCardDetails">
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-text-field
+                                        type="text"
+                                        autocomplete="off"
+                                        persistent-placeholder
+                                        :maxlength="4"
+                                        :disabled="loading || submitting"
+                                        :label="tt('Last Four Digits')"
+                                        :placeholder="tt('Last Four Digits')"
+                                        v-model="selectedAccount.creditCardLastFourDigits"
+                                    />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-text-field
+                                        type="text"
+                                        autocomplete="off"
+                                        persistent-placeholder
+                                        :maxlength="64"
+                                        :disabled="loading || submitting"
+                                        :label="tt('Cardholder Name')"
+                                        :placeholder="tt('Cardholder Name')"
+                                        v-model="selectedAccount.creditCardCardholderName"
+                                    />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Expiration Month')"
+                                        :placeholder="tt('Expiration Month')"
+                                        :items="allAvailableExpireMonths"
+                                        :no-data-text="tt('No results')"
+                                        v-model="selectedAccount.creditCardExpireMonth"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Expiration Year')"
+                                        :placeholder="tt('Expiration Year')"
+                                        :items="allAvailableExpireYears"
+                                        :no-data-text="tt('No results')"
+                                        v-model="selectedAccount.creditCardExpireYear"
+                                    ></v-autocomplete>
+                                </v-col>
+                                </template>
+                                <v-col cols="12" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <div class="text-subtitle-2 mb-2">{{ tt('Card Picture') }}</div>
+                                    <v-img v-if="selectedAccount.creditCardPictureUrl"
+                                           :src="selectedAccount.creditCardPictureUrl"
+                                           max-width="320"
+                                           max-height="200"
+                                           contain
+                                           class="mb-2"></v-img>
+                                    <div>
+                                        <v-btn size="small" :disabled="loading || submitting" @click="showOpenCreditCardPictureDialog(selectedAccount)">
+                                            {{ selectedAccount.creditCardPictureUrl ? tt('Replace Picture') : tt('Upload Picture') }}
+                                        </v-btn>
+                                        <v-btn size="small" class="ms-2" :disabled="loading || submitting"
+                                               v-if="selectedAccount.creditCardPictureUrl"
+                                               @click="removeAccountCreditCardPicture(selectedAccount)">
+                                            {{ tt('Remove Picture') }}
+                                        </v-btn>
+                                    </div>
+                                </v-col>
+                                <!-- Credit limit and billing cycle -->
+                                <v-col cols="12" md="6" v-if="currentAccountIndex < 0 && account.category === AccountCategory.CreditCard.type">
+                                    <amount-input :disabled="loading || submitting"
+                                                  :persistent-placeholder="true"
+                                                  :currency="account.currency"
+                                                  :show-currency="true"
+                                                  :label="tt('Credit Limit')"
+                                                  :placeholder="tt('Credit Limit')"
+                                                  v-model="account.numericCreditCardLimit"
+                                                  v-if="account.currency && account.currency !== ACCOUNT_CURRENCY_NOT_SET_VALUE" />
+                                    <v-text-field disabled
+                                                  persistent-placeholder
+                                                  type="text"
+                                                  :label="tt('Credit Limit')"
+                                                  :placeholder="tt('Credit Limit')"
+                                                  :model-value="getAccountCreditCardCreditLimitDisplayValue(account.numericCreditCardLimit, account.currency)"
+                                                  v-else-if="!account.currency || account.currency === ACCOUNT_CURRENCY_NOT_SET_VALUE" />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="currentAccountIndex < 0 && account.category === AccountCategory.CreditCard.type">
+                                    <v-switch :disabled="loading || submitting"
+                                              :label="tt('Physical Card')"
+                                              :hint="tt('Turn off if this account is only a shared credit limit container')"
+                                              persistent-hint
+                                              :model-value="account.creditCardIsEntityCard !== false"
+                                              @update:model-value="account.creditCardIsEntityCard = $event !== false" />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-text-field
+                                        type="text"
+                                        autocomplete="off"
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Bank limit in this card currency')"
+                                        :placeholder="tt('Bank limit in this card currency')"
+                                        :hint="tt('The same shared pool limit stated by the bank in this card currency')"
+                                        persistent-hint
+                                        v-model="selectedAccount.creditCardCurrencyLimit"
+                                    />
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Statement Date')"
+                                        :placeholder="tt('Statement Date')"
+                                        :items="allAvailableMonthDays"
+                                        :no-data-text="tt('No results')"
+                                        v-model="selectedAccount.creditCardStatementDate"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-switch :disabled="loading || submitting"
+                                              :label="tt('Include Statement Date Transactions')"
+                                              :hint="tt('When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill')"
+                                              persistent-hint
+                                              v-model="selectedAccount.creditCardStatementDateIncludeTransaction"/>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Final Repayment Date')"
+                                        :placeholder="tt('Final Repayment Date')"
+                                        :items="allAvailableRepaymentDateTypes"
+                                        :no-data-text="tt('No results')"
+                                        v-model="selectedAccount.creditCardRepaymentDateType"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && selectedAccount.creditCardRepaymentDateType === 1">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Days After Statement Date')"
+                                        :placeholder="tt('Days After Statement Date')"
+                                        :items="allAvailableRepaymentDays"
+                                        :no-data-text="tt('No results')"
+                                        v-model="selectedAccount.creditCardRepaymentDaysAfterStatement"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && selectedAccount.creditCardRepaymentDateType === 2">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Repayment Day of Month')"
+                                        :placeholder="tt('Repayment Day of Month')"
+                                        :items="allAvailableMonthDays"
+                                        :no-data-text="tt('No results')"
+                                        v-model="selectedAccount.creditCardRepaymentDayOfMonth"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <!-- Credit card email notifications -->
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                    <div class="text-subtitle-2 mb-2">{{ tt('Email Notifications') }}</div>
+                                    <v-switch :disabled="loading || submitting"
+                                              :label="tt('Statement Date Reminder')"
+                                              :hint="tt('Send an email on each statement date')"
+                                              persistent-hint
+                                              v-model="selectedAccount.creditCardStatementReminderEnabled"/>
+                                    <v-switch class="mt-2" :disabled="loading || submitting"
+                                              :label="tt('Statement Email')"
+                                              :hint="tt('Send an email containing all transactions of the just-ended billing cycle')"
+                                              persistent-hint
+                                              v-model="selectedAccount.creditCardStatementEmailEnabled"/>
+                                    <v-switch class="mt-2" :disabled="loading || submitting"
+                                              :label="tt('Repayment Date Reminder')"
+                                              :hint="tt('Send an email before and on each repayment date')"
+                                              persistent-hint
+                                              v-model="selectedAccount.creditCardRepaymentReminderEnabled"/>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && selectedAccount.creditCardRepaymentReminderEnabled">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Days Before Repayment Date')"
+                                        :placeholder="tt('Days Before Repayment Date')"
+                                        :items="allAvailableRepaymentReminderDaysBefore"
+                                        :no-data-text="tt('No results')"
+                                        :model-value="getAccountRepaymentReminderDaysBefore(selectedAccount)"
+                                        @update:model-value="setAccountRepaymentReminderDaysBefore(selectedAccount, $event)"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && hasAccountCreditCardNotificationEnabled(selectedAccount)">
+                                    <v-autocomplete
+                                        item-title="displayName"
+                                        item-value="type"
+                                        auto-select-first
+                                        persistent-placeholder
+                                        :disabled="loading || submitting"
+                                        :label="tt('Notification Time')"
+                                        :placeholder="tt('Notification Time')"
+                                        :items="allAvailableNotificationTimes"
+                                        :no-data-text="tt('No results')"
+                                        :hint="tt('Notifications are sent at this time in your timezone') + ' (' + notificationTimezoneName + ')'"
+                                        persistent-hint
+                                        :model-value="getAccountNotificationMinutesOfDay(selectedAccount)"
+                                        @update:model-value="setAccountNotificationMinutesOfDay(selectedAccount, $event)"
+                                    ></v-autocomplete>
+                                </v-col>
+                                <!-- Other -->
                                 <v-col cols="12" md="12">
                                     <v-textarea
                                         type="text"
@@ -213,6 +442,7 @@
 
     <confirm-dialog ref="confirmDialog"/>
     <snack-bar ref="snackbar" />
+    <input ref="creditCardPictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="onUploadCreditCardPicture($event)" />
 </template>
 
 <script setup lang="ts">
@@ -232,6 +462,7 @@ import { AccountType, AccountCategory } from '@/core/account.ts';
 import { ALL_ACCOUNT_ICONS } from '@/consts/icon.ts';
 import { ALL_ACCOUNT_COLORS } from '@/consts/color.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
+import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 
 import { Account } from '@/models/account.ts';
 
@@ -268,11 +499,28 @@ const {
     allAccountCategories,
     allAccountTypes,
     allAvailableMonthDays,
+    allAvailableExpireMonths,
+    allAvailableExpireYears,
+    allAvailableRepaymentDateTypes,
+    allAvailableRepaymentDays,
+    allAvailableRepaymentReminderDaysBefore,
+    allAvailableNotificationTimes,
+    hasAccountCreditCardNotificationEnabled,
+    getAccountNotificationMinutesOfDay,
+    setAccountNotificationMinutesOfDay,
+    getAccountRepaymentReminderDaysBefore,
+    setAccountRepaymentReminderDaysBefore,
+    notificationTimezoneName,
     getCurrentUnixTimeForNewAccount,
     getDefaultTimezoneOffsetMinutes,
     getAccountCreditCardCreditLimitDisplayValue,
     updateAccountBalanceTime,
     updateAccountLastReconciledTime,
+    fillCreditCardNotificationSettings,
+    updateAccountCreditCardPicture,
+    removeAccountCreditCardPicture,
+    discardUploadedUnboundCreditCardPicture,
+    confirmUploadedCreditCardPicture,
     isNewAccount,
     addSubAccount,
     setAccount
@@ -283,11 +531,13 @@ const accountsStore = useAccountsStore();
 
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const creditCardPictureInput = useTemplateRef<HTMLInputElement>('creditCardPictureInput');
 
 let resolveFunc: ((value: AccountEditResponse) => void) | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
 
 const showState = ref<boolean>(false);
+const showAdvancedCardDetails = ref<boolean>(false);
 const activeTab = ref<string>('account');
 const initAccountCategory = ref<AccountCategory>(defaultAccountCategory);
 const initAccount = ref<Account | null>(null);
@@ -324,6 +574,7 @@ function open(options?: { id?: string, currentAccount?: Account, category?: numb
     showState.value = true;
     loading.value = true;
     submitting.value = false;
+    discardUploadedUnboundCreditCardPicture();
 
     if (isNumber(options?.category) && AccountCategory.valueOf(options.category)) {
         initAccountCategory.value = AccountCategory.valueOf(options.category)!;
@@ -385,6 +636,7 @@ function save(): void {
     }
 
     submitting.value = true;
+    fillCreditCardNotificationSettings();
 
     accountsStore.saveAccount({
         account: account.value,
@@ -393,6 +645,7 @@ function save(): void {
         clientSessionId: clientSessionId.value
     }).then(() => {
         submitting.value = false;
+        confirmUploadedCreditCardPicture();
 
         let message = 'You have saved this account';
 
@@ -426,8 +679,39 @@ function removeSubAccount(currentSubAccount: Account): void {
 }
 
 function cancel(): void {
+    discardUploadedUnboundCreditCardPicture();
     rejectFunc?.();
     showState.value = false;
+}
+
+const pictureTargetAccount = ref<Account | null>(null);
+
+function showOpenCreditCardPictureDialog(targetAccount?: Account): void {
+    if (loading.value || submitting.value) {
+        return;
+    }
+
+    pictureTargetAccount.value = targetAccount || account.value;
+    creditCardPictureInput.value?.click();
+}
+
+function onUploadCreditCardPicture(event: Event): void {
+    if (!event || !event.target) {
+        return;
+    }
+
+    const el = event.target as HTMLInputElement;
+
+    if (!el.files || !el.files.length || !el.files[0]) {
+        return;
+    }
+
+    const pictureFile = el.files[0] as File;
+
+    el.value = '';
+    updateAccountCreditCardPicture(pictureFile, pictureTargetAccount.value || account.value).catch(error => {
+        snackbar.value?.showError(error);
+    });
 }
 
 function onShowDateTimeError(error: string): void {

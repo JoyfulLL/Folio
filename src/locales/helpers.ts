@@ -136,7 +136,8 @@ import {
     type LocalizedAccountCategory,
     AccountType,
     AccountCategory,
-    CreditCardAmountDisplayType
+    CreditCardAmountDisplayType,
+    CreditCardNotificationInterval
 } from '@/core/account.ts';
 
 import {
@@ -2930,6 +2931,7 @@ function parse(row, index) {
         getAllAccountCategories,
         getAllAccountTypes: () => getLocalizedDisplayNameAndType(AccountType.values()),
         getAllCreditCardAmountDisplayTypes: () => getLocalizedDisplayNameAndType(CreditCardAmountDisplayType.values()),
+        getAllCreditCardNotificationIntervals: () => getLocalizedDisplayNameAndType(CreditCardNotificationInterval.values()),
         getAllCategoricalChartTypes: (withDesktopOnlyChart?: boolean) => getLocalizedDisplayNameAndType(CategoricalChartType.values(!!withDesktopOnlyChart)),
         getAllTrendChartTypes: () => getLocalizedDisplayNameAndType(TrendChartType.values()),
         getAllAccountBalanceTrendChartTypes: () => getLocalizedDisplayNameAndType(AccountBalanceTrendChartType.values()),

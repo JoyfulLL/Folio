@@ -278,6 +278,7 @@
                     :items="reconciliationStatements?.transactions"
                     :account="currentAccount"
                     :statement-date="currentAccountStatementDate"
+                    :statement-date-include-transaction="currentAccountStatementDateIncludeTransaction"
                 />
             </f7-card-content>
         </f7-card>
@@ -436,6 +437,7 @@ const {
     currentAccount,
     currentAccountCurrency,
     currentAccountStatementDate,
+    currentAccountStatementDateIncludeTransaction,
     currentAccountLastReconciledTime,
     displayStartDateTime,
     displayEndDateTime,
@@ -604,7 +606,7 @@ function changeDateFilter(dateRangeType: number): void {
     let dateRange: TimeRangeAndDateType | null = null;
 
     if (DateRange.isBillingCycle(dateRangeType)) {
-        dateRange = getDateRangeByBillingCycleDateType(dateRangeType, firstDayOfWeek.value, fiscalYearStart.value, accountsStore.getAccountStatementDate(accountId.value));
+        dateRange = getDateRangeByBillingCycleDateType(dateRangeType, firstDayOfWeek.value, fiscalYearStart.value, accountsStore.getAccountStatementDate(accountId.value), accountsStore.getAccountStatementDateIncludeTransaction(accountId.value));
     } else if (DateRange.isLastReconciledTimeRange(dateRangeType)) {
         dateRange = getDateRangeByLastReconciledTimeRangeDateType(dateRangeType, currentAccountLastReconciledTime.value);
     } else {
@@ -625,7 +627,7 @@ function changeCustomDateFilter(minTime: number, maxTime: number): void {
         return;
     }
 
-    let dateType: number | null = getDateTypeByBillingCycleDateRange(minTime, maxTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal, accountsStore.getAccountStatementDate(accountId.value));
+    let dateType: number | null = getDateTypeByBillingCycleDateRange(minTime, maxTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal, accountsStore.getAccountStatementDate(accountId.value), accountsStore.getAccountStatementDateIncludeTransaction(accountId.value));
 
     if (!dateType) {
         dateType = getDateTypeByDateRange(minTime, maxTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal);

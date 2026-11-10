@@ -70,6 +70,7 @@ export interface CommonAccountBalanceTrendsChartProps {
     fiscalYearStart: number;
     account: AccountInfoResponse;
     statementDate: number | undefined;
+    statementDateIncludeTransaction?: boolean;
 }
 
 export function useAccountBalanceTrendsChartBase(props: CommonAccountBalanceTrendsChartProps) {
@@ -129,7 +130,7 @@ export function useAccountBalanceTrendsChartBase(props: CommonAccountBalanceTren
         if (props.dateAggregationType === ChartDateAggregationType.Day.type) {
             return getAllDaysStartAndEndUnixTimes(dataDateRange.value.minUnixTime, dataDateRange.value.maxUnixTime);
         } else if (props.dateAggregationType === ChartDateAggregationType.BillingCycle.type) {
-            return getAllBillingCyclesStartAndEndUnixTimes(dataDateRange.value.minUnixTime, dataDateRange.value.maxUnixTime, props.statementDate ?? 1);
+            return getAllBillingCyclesStartAndEndUnixTimes(dataDateRange.value.minUnixTime, dataDateRange.value.maxUnixTime, props.statementDate ?? 1, props.statementDateIncludeTransaction);
         } else {
             const startYearMonth = getGregorianCalendarYearAndMonthFromUnixTime(dataDateRange.value.minUnixTime);
             const endYearMonth = getGregorianCalendarYearAndMonthFromUnixTime(dataDateRange.value.maxUnixTime);
@@ -171,7 +172,7 @@ export function useAccountBalanceTrendsChartBase(props: CommonAccountBalanceTren
                 minDateTime = getDayFirstDateTimeBySpecifiedUnixTime(dateItem.time, transactionTimeUtfOffset);
                 displayDate = formatDateTimeToShortDate(minDateTime);
             } else if (props.dateAggregationType === ChartDateAggregationType.BillingCycle.type) {
-                minDateTime = getBillingCycleLastUnixTimeBySpecifiedUnixTime(dateItem.time, props.statementDate ?? 1, transactionTimeUtfOffset);
+                minDateTime = getBillingCycleLastUnixTimeBySpecifiedUnixTime(dateItem.time, props.statementDate ?? 1, transactionTimeUtfOffset, props.statementDateIncludeTransaction);
                 displayDate = formatDateTimeToGregorianLikeShortYearMonth(minDateTime);
             } else {
                 return ret;
