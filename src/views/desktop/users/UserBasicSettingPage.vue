@@ -512,6 +512,113 @@
         </v-col>
     </v-row>
 
+    <v-row>
+        <v-col cols="12">
+            <v-card class="setting-items" :class="{ 'disabled': dailyReportLoading }">
+                <v-card-title>{{ tt('Daily Transaction Report') }}</v-card-title>
+
+                <v-card-text class="text-body-medium mt-1">{{ tt('Push the daily income and expense report to a feishu group chat via a custom bot webhook') }}</v-card-text>
+
+                <v-form>
+                    <v-card-text class="my-1 pa-0 text-body-medium">
+                        <div class="setting-item">
+                            <span>{{ tt('Enable Daily Report') }}</span>
+                            <v-spacer/>
+                            <v-switch
+                                class="ms-4"
+                                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                                v-model="dailyReport.enabled"
+                                hide-details
+                            />
+                        </div>
+
+                        <div class="setting-item">
+                            <span>{{ tt('Feishu Webhook') }}</span>
+                            <v-spacer/>
+                            <v-text-field
+                                class="ms-4"
+                                density="compact"
+                                max-width="500px"
+                                persistent-placeholder
+                                autocomplete="off"
+                                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                                :label="tt('Feishu Webhook')"
+                                :placeholder="tt('Not set')"
+                                :hint="dailyReportWebhookUrlHint"
+                                persistent-hint
+                                v-model="dailyReport.webhookUrl"
+                            />
+                        </div>
+
+                        <div class="setting-item">
+                            <span>{{ tt('Feishu Signing Secret') }}</span>
+                            <v-spacer/>
+                            <v-text-field
+                                class="ms-4"
+                                density="compact"
+                                max-width="500px"
+                                persistent-placeholder
+                                autocomplete="new-password"
+                                type="password"
+                                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                                :label="tt('Feishu Signing Secret')"
+                                :hint="dailyReportSigningSecretSet ? tt('Leave blank to keep the saved secret') : tt('Encrypted with the server secret key before being stored')"
+                                persistent-hint
+                                v-model="dailyReport.signingSecret"
+                            />
+                        </div>
+
+                        <div class="setting-item">
+                            <span>{{ tt('Custom Keyword') }}</span>
+                            <v-spacer/>
+                            <v-text-field
+                                class="ms-4"
+                                density="compact"
+                                max-width="500px"
+                                persistent-placeholder
+                                autocomplete="off"
+                                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                                :label="tt('Custom Keyword')"
+                                :hint="tt('Required when the bot enables the keyword check, leave blank otherwise')"
+                                persistent-hint
+                                v-model="dailyReport.keyword"
+                            />
+                        </div>
+
+                        <div class="setting-item">
+                            <span>{{ tt('Daily Report Send Time') }}</span>
+                            <v-spacer/>
+                            <v-text-field
+                                class="ms-4"
+                                density="compact"
+                                max-width="500px"
+                                persistent-placeholder
+                                type="time"
+                                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                                :label="tt('Daily Report Send Time')"
+                                :hint="tt('Local time of the report timezone, 00:00 means following the server default')"
+                                persistent-hint
+                                v-model="dailyReport.sendTime"
+                            />
+                        </div>
+                    </v-card-text>
+
+                    <v-card-text class="d-flex flex-wrap gap-4">
+                        <v-btn :disabled="dailyReportLoading || !dailyReportChanged || dailyReportSaving || dailyReportTesting" @click="saveDailyReport">
+                            {{ tt('Save Daily Report Settings') }}
+                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="dailyReportSaving"></v-progress-circular>
+                        </v-btn>
+
+                        <v-btn color="default" variant="tonal" :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting" @click="testDailyReport">
+                            {{ tt('Send Test Message') }}
+                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="dailyReportTesting"></v-progress-circular>
+                        </v-btn>
+                    </v-card-text>
+                </v-form>
+            </v-card>
+        </v-col>
+    </v-row>
+
     <confirm-dialog ref="confirmDialog"/>
     <snack-bar ref="snackbar" />
     <input ref="avatarInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="updateAvatar($event)" />
@@ -536,6 +643,8 @@ import type { UserProfileResponse } from '@/models/user.ts';
 import { Account } from '@/models/account.ts';
 
 import { isUserVerifyEmailEnabled } from '@/lib/server_settings.ts';
+import services from '@/lib/services.ts';
+import type { UserDailyReportSettingGetResponse } from '@/models/user_daily_report_setting.ts';
 
 import {
     mdiAccount,
@@ -602,8 +711,159 @@ const avatarProvider = ref<string | undefined>('');
 
 const currentUserAvatar = computed<string | null>(() => userStore.getUserAvatarUrl(avatarUrl.value));
 
+const dailyReportLoading = ref<boolean>(false);
+const dailyReportSaving = ref<boolean>(false);
+const dailyReportTesting = ref<boolean>(false);
+const dailyReportSaved = ref<UserDailyReportSettingGetResponse | null>(null);
+const dailyReport = ref({
+    enabled: false,
+    webhookUrl: '',
+    signingSecret: '',
+    keyword: '',
+    sendTime: '00:05'
+});
+
+const dailyReportSendTimeMinutes = computed<number>(() => dailyReportParseTimeToMinutes(dailyReport.value.sendTime));
+
+const dailyReportChanged = computed<boolean>(() => {
+    const saved = dailyReportSaved.value;
+
+    if (!saved) {
+        return false;
+    }
+
+    return dailyReport.value.enabled !== saved.enabled
+        || dailyReport.value.webhookUrl.trim() !== ''
+        || dailyReport.value.signingSecret !== ''
+        || dailyReport.value.keyword.trim() !== saved.keyword
+        || dailyReportSendTimeMinutes.value !== saved.sendTimeMinutesOfDay;
+});
+
+const dailyReportSigningSecretSet = computed<boolean>(() => !!dailyReportSaved.value?.signingSecretSet);
+
+const dailyReportWebhookUrlHint = computed<string>(() => {
+    const saved = dailyReportSaved.value;
+
+    if (saved && saved.webhookUrlSet && saved.webhookUrlMasked) {
+        return saved.webhookUrlMasked;
+    }
+
+    return tt('Not set');
+});
+
+function dailyReportParseTimeToMinutes(value: string): number {
+    const parts = value.split(':');
+
+    if (parts.length !== 2) {
+        return 0;
+    }
+
+    const h = parseInt(parts[0] ?? '', 10);
+    const m = parseInt(parts[1] ?? '', 10);
+
+    if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+        return 0;
+    }
+
+    return h * 60 + m;
+}
+
+function dailyReportMinutesToTimeText(minutes: number): string {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+
+    return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
+}
+
+function loadDailyReportSettings(): void {
+    dailyReportLoading.value = true;
+
+    services.getDailyReportSettings().then(response => {
+        const data = response.data;
+
+        if (!data || !data.success || !data.result) {
+            dailyReportLoading.value = false;
+            return;
+        }
+
+        dailyReportSaved.value = data.result;
+        dailyReport.value.enabled = data.result.enabled;
+        dailyReport.value.keyword = data.result.keyword;
+        dailyReport.value.sendTime = dailyReportMinutesToTimeText(data.result.sendTimeMinutesOfDay);
+        dailyReportLoading.value = false;
+    }).catch(error => {
+        dailyReportLoading.value = false;
+
+        if (!error.processed) {
+            snackbar.value?.showError(error);
+        }
+    });
+}
+
+function saveDailyReportSettings(): Promise<void> {
+    dailyReportSaving.value = true;
+
+    return services.updateDailyReportSettings({
+        enabled: dailyReport.value.enabled,
+        webhookUrl: dailyReport.value.webhookUrl.trim(),
+        signingSecret: dailyReport.value.signingSecret,
+        keyword: dailyReport.value.keyword.trim(),
+        sendTimeMinutesOfDay: dailyReportSendTimeMinutes.value,
+        timezoneName: ''
+    }).then(response => {
+        const data = response.data;
+
+        if (data && data.success && data.result) {
+            dailyReportSaved.value = data.result;
+            dailyReport.value.keyword = data.result.keyword;
+            dailyReport.value.sendTime = dailyReportMinutesToTimeText(data.result.sendTimeMinutesOfDay);
+        }
+
+        dailyReport.value.webhookUrl = '';
+        dailyReport.value.signingSecret = '';
+        dailyReportSaving.value = false;
+        snackbar.value?.showMessage('Daily report settings have been saved');
+    }).catch(error => {
+        dailyReportSaving.value = false;
+
+        if (!error.processed) {
+            snackbar.value?.showError(error);
+        }
+
+        throw error;
+    });
+}
+
+function saveDailyReport(): void {
+    saveDailyReportSettings().catch(() => {});
+}
+
+function testDailyReport(): void {
+    const doTest = () => {
+        dailyReportTesting.value = true;
+
+        services.testDailyReportSettings().then(() => {
+            dailyReportTesting.value = false;
+            snackbar.value?.showMessage('Test message has been sent, please check the feishu group');
+        }).catch(error => {
+            dailyReportTesting.value = false;
+
+            if (!error.processed) {
+                snackbar.value?.showError(error);
+            }
+        });
+    };
+
+    if (dailyReportChanged.value) {
+        saveDailyReportSettings().then(doTest).catch(() => {});
+    } else {
+        doTest();
+    }
+}
+
 function init(): void {
     loading.value = true;
+    loadDailyReportSettings();
 
     const promises = [
         accountsStore.loadAllAccounts({ force: false }),

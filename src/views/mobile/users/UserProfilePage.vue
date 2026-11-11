@@ -581,6 +581,64 @@
             </f7-list-item>
         </f7-list>
 
+        <f7-list form strong inset dividers class="margin-vertical" v-if="!loading">
+            <f7-list-item group-title :title="tt('Daily Transaction Report')"></f7-list-item>
+
+            <f7-list-item :title="tt('Enable Daily Report')">
+                <template #after>
+                    <f7-toggle :checked="dailyReport.enabled" @toggle:change="dailyReport.enabled = $event !== false"></f7-toggle>
+                </template>
+            </f7-list-item>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="512"
+                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                :label="tt('Feishu Webhook')"
+                :placeholder="dailyReportWebhookUrlHint"
+                v-model:value="dailyReport.webhookUrl"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="password"
+                autocomplete="new-password"
+                clear-button
+                :maxlength="128"
+                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                :label="tt('Feishu Signing Secret')"
+                :placeholder="dailyReportSigningSecretSet ? tt('Leave blank to keep the saved secret') : ''"
+                v-model:value="dailyReport.signingSecret"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="text"
+                autocomplete="off"
+                clear-button
+                :maxlength="32"
+                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                :label="tt('Custom Keyword')"
+                :placeholder="tt('Required when the bot enables the keyword check, leave blank otherwise')"
+                v-model:value="dailyReport.keyword"
+            ></f7-list-input>
+
+            <f7-list-input
+                type="time"
+                :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
+                :label="tt('Daily Report Send Time')"
+                v-model:value="dailyReport.sendTime"
+            ></f7-list-input>
+        </f7-list>
+
+        <div class="padding-horizontal padding-bottom" v-if="!loading">
+            <f7-button large fill :class="{ 'disabled': dailyReportLoading || dailyReportSaving || dailyReportTesting || !dailyReportChanged }"
+                       :text="tt('Save Daily Report Settings')" @click="saveDailyReport"></f7-button>
+            <f7-button large fill class="margin-top" color="gray"
+                       :class="{ 'disabled': dailyReportLoading || dailyReportSaving || dailyReportTesting }"
+                       :text="tt('Send Test Message')" @click="testDailyReport"></f7-button>
+        </div>
+
         <f7-actions close-by-outside-click close-on-escape :opened="showMoreActionSheet" @actions:closed="showMoreActionSheet = false">
             <f7-actions-group>
                 <f7-actions-button :class="{ 'disabled': loading || resending }" @click="resendVerifyEmail"
@@ -604,7 +662,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import type { Router } from 'framework7/types';
 
 import type { LanguageOption } from '@/locales/index.ts';
@@ -622,6 +680,8 @@ import type { LocalizedCurrencyInfo } from '@/core/currency.ts';
 import { TransactionEditScopeType } from '@/core/transaction.ts';
 
 import type { UserProfileResponse } from '@/models/user.ts';
+import services from '@/lib/services.ts';
+import type { UserDailyReportSettingGetResponse } from '@/models/user_daily_report_setting.ts';
 import { Account } from '@/models/account.ts';
 
 import { findDisplayNameByType } from '@/lib/common.ts';
@@ -642,6 +702,158 @@ const {
 } = useI18n();
 
 const { showAlert, showToast, routeBackOnError } = useI18nUIComponents();
+
+const dailyReportLoading = ref<boolean>(false);
+const dailyReportSaving = ref<boolean>(false);
+const dailyReportTesting = ref<boolean>(false);
+const dailyReportSaved = ref<UserDailyReportSettingGetResponse | null>(null);
+const dailyReport = ref({
+    enabled: false,
+    webhookUrl: '',
+    signingSecret: '',
+    keyword: '',
+    sendTime: '00:05'
+});
+
+const dailyReportSendTimeMinutes = computed<number>(() => dailyReportParseTimeToMinutes(dailyReport.value.sendTime));
+
+const dailyReportChanged = computed<boolean>(() => {
+    const saved = dailyReportSaved.value;
+
+    if (!saved) {
+        return false;
+    }
+
+    return dailyReport.value.enabled !== saved.enabled
+        || dailyReport.value.webhookUrl.trim() !== ''
+        || dailyReport.value.signingSecret !== ''
+        || dailyReport.value.keyword.trim() !== saved.keyword
+        || dailyReportSendTimeMinutes.value !== saved.sendTimeMinutesOfDay;
+});
+
+const dailyReportSigningSecretSet = computed<boolean>(() => !!dailyReportSaved.value?.signingSecretSet);
+
+const dailyReportWebhookUrlHint = computed<string>(() => {
+    const saved = dailyReportSaved.value;
+
+    if (saved && saved.webhookUrlSet && saved.webhookUrlMasked) {
+        return saved.webhookUrlMasked;
+    }
+
+    return tt('Not set');
+});
+
+function dailyReportParseTimeToMinutes(value: string): number {
+    const parts = value.split(':');
+
+    if (parts.length !== 2) {
+        return 0;
+    }
+
+    const h = parseInt(parts[0] ?? '', 10);
+    const m = parseInt(parts[1] ?? '', 10);
+
+    if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+        return 0;
+    }
+
+    return h * 60 + m;
+}
+
+function dailyReportMinutesToTimeText(minutes: number): string {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+
+    return (h < 10 ? '0' + h : '' + h) + ':' + (m < 10 ? '0' + m : '' + m);
+}
+
+function loadDailyReportSettings(): void {
+    dailyReportLoading.value = true;
+
+    services.getDailyReportSettings().then(response => {
+        const data = response.data;
+
+        if (!data || !data.success || !data.result) {
+            dailyReportLoading.value = false;
+            return;
+        }
+
+        dailyReportSaved.value = data.result;
+        dailyReport.value.enabled = data.result.enabled;
+        dailyReport.value.keyword = data.result.keyword;
+        dailyReport.value.sendTime = dailyReportMinutesToTimeText(data.result.sendTimeMinutesOfDay);
+        dailyReportLoading.value = false;
+    }).catch(error => {
+        dailyReportLoading.value = false;
+
+        if (!error.processed) {
+            showToast(error?.response?.data?.errorMessage || error?.message || String(error));
+        }
+    });
+}
+
+function saveDailyReportSettings(): Promise<void> {
+    dailyReportSaving.value = true;
+
+    return services.updateDailyReportSettings({
+        enabled: dailyReport.value.enabled,
+        webhookUrl: dailyReport.value.webhookUrl.trim(),
+        signingSecret: dailyReport.value.signingSecret,
+        keyword: dailyReport.value.keyword.trim(),
+        sendTimeMinutesOfDay: dailyReportSendTimeMinutes.value,
+        timezoneName: ''
+    }).then(response => {
+        const data = response.data;
+
+        if (data && data.success && data.result) {
+            dailyReportSaved.value = data.result;
+            dailyReport.value.keyword = data.result.keyword;
+            dailyReport.value.sendTime = dailyReportMinutesToTimeText(data.result.sendTimeMinutesOfDay);
+        }
+
+        dailyReport.value.webhookUrl = '';
+        dailyReport.value.signingSecret = '';
+        dailyReportSaving.value = false;
+        showToast(tt('Daily report settings have been saved'));
+    }).catch(error => {
+        dailyReportSaving.value = false;
+
+        if (!error.processed) {
+            showToast(error?.response?.data?.errorMessage || error?.message || String(error));
+        }
+
+        throw error;
+    });
+}
+
+function saveDailyReport(): void {
+    saveDailyReportSettings().catch(() => {});
+}
+
+function testDailyReport(): void {
+    const doTest = () => {
+        dailyReportTesting.value = true;
+
+        services.testDailyReportSettings().then(() => {
+            dailyReportTesting.value = false;
+            showToast(tt('Test message has been sent, please check the feishu group'));
+        }).catch(error => {
+            dailyReportTesting.value = false;
+
+            if (!error.processed) {
+                showToast(error?.response?.data?.errorMessage || error?.message || String(error));
+            }
+        });
+    };
+
+    if (dailyReportChanged.value) {
+        saveDailyReportSettings().then(doTest).catch(() => {});
+    } else {
+        doTest();
+    }
+}
+
+onMounted(loadDailyReportSettings);
 
 const {
     newProfile,

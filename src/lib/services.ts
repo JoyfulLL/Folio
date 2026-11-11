@@ -58,6 +58,11 @@ import type {
     LatestExchangeRateResponse
 } from '@/models/exchange_rate.ts';
 import type {
+    UserDailyReportSettingGetResponse,
+    UserDailyReportSettingUpdateRequest,
+    UserDailyReportSettingTestSendResponse
+} from '@/models/user_daily_report_setting.ts';
+import type {
     ForgetPasswordRequest
 } from '@/models/forget_password.ts';
 import type {
@@ -462,6 +467,15 @@ export default {
     },
     removeAvatar: (): ApiResponsePromise<UserProfileResponse> => {
         return axios.post<ApiResponse<UserProfileResponse>>('v1/users/avatar/remove.json');
+    },
+    getDailyReportSettings: (): ApiResponsePromise<UserDailyReportSettingGetResponse> => {
+        return axios.get<ApiResponse<UserDailyReportSettingGetResponse>>('v1/users/daily_report/settings/get.json');
+    },
+    updateDailyReportSettings: (req: UserDailyReportSettingUpdateRequest): ApiResponsePromise<UserDailyReportSettingGetResponse> => {
+        return axios.post<ApiResponse<UserDailyReportSettingGetResponse>>('v1/users/daily_report/settings/update.json', req);
+    },
+    testDailyReportSettings: (): ApiResponsePromise<UserDailyReportSettingTestSendResponse> => {
+        return axios.post<ApiResponse<UserDailyReportSettingTestSendResponse>>('v1/users/daily_report/settings/test.json');
     },
     resendVerifyEmailByLoginedUser: (): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/users/verify_email/resend.json');

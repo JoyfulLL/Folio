@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mayswind/ezbookkeeping/pkg/models"
+	"github.com/mayswind/ezbookkeeping/pkg/settings"
 	"github.com/mayswind/ezbookkeeping/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -197,4 +198,46 @@ func TestDailyReportParseUids(t *testing.T) {
 	assert.Empty(t, dailyReportParseUids("  "))
 	assert.Empty(t, dailyReportParseUids("not-a-number"))
 	assert.Empty(t, dailyReportParseUids("0,-1"))
+}
+
+func TestDailyReportBuildUserConfig(t *testing.T) {
+	config := &settings.Config{
+		DailyReportKeyword:              "记账",
+		DailyReportSendTimeMinutesOfDay: 300,
+		DailyReportTimezoneName:         "Asia/Shanghai",
+	}
+
+	// a row with every field set uses the saved values
+	row := &models.UserDailyReportSetting{
+		Uid:                  1,
+		Keyword:              "流水",
+		SendTimeMinutesOfDay: 600,
+		TimezoneName:         "Asia/Tokyo",
+	}
+
+	userConfig := dailyReportBuildUserConfig(config, row, "https://example.com/hook", "secret")
+	assert.Equal(t, int64(1), userConfig.uid)
+	assert.Equal(t, "https://example.com/hook", userConfig.webhookUrl)
+	assert.Equal(t, "secret", userConfig.signingSecret)
+	assert.Equal(t, "流水", userConfig.keyword)
+	assert.Equal(t, 600, userConfig.sendTimeMinutesOfDay)
+
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	assert.Nil(t, err)
+	assert.Equal(t, tokyo, userConfig.location)
+
+	// a row without optional fields falls back to the server-wide configuration
+	emptyRow := &models.UserDailyReportSetting{Uid: 2}
+	userConfig = dailyReportBuildUserConfig(config, emptyRow, "https://example.com/hook2", "secret2")
+	assert.Equal(t, "记账", userConfig.keyword)
+	assert.Equal(t, 300, userConfig.sendTimeMinutesOfDay)
+
+	shanghai, err := time.LoadLocation("Asia/Shanghai")
+	assert.Nil(t, err)
+	assert.Equal(t, shanghai, userConfig.location)
+
+	// an invalid timezone name falls back to the server-wide timezone
+	invalidTzRow := &models.UserDailyReportSetting{Uid: 3, TimezoneName: "Not/AZone"}
+	userConfig = dailyReportBuildUserConfig(config, invalidTzRow, "https://example.com/hook3", "secret3")
+	assert.Equal(t, shanghai, userConfig.location)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
+	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/feishu"
 	"github.com/mayswind/ezbookkeeping/pkg/httpclient"
 	"github.com/mayswind/ezbookkeeping/pkg/log"
@@ -48,6 +49,7 @@ type DailyReportService struct {
 	ServiceUsingUuid
 	accounts     *AccountService
 	transactions *TransactionService
+	userSettings *UserDailyReportSettingsService
 }
 
 // Initialize a daily report service singleton instance
@@ -64,15 +66,30 @@ var (
 		},
 		accounts:     Accounts,
 		transactions: Transactions,
+		userSettings: UserDailyReportSettings,
 	}
 )
 
+// dailyReportUserConfig represents the effective sending configuration of one user, resolved
+// from either the user's own daily report settings saved in the database or the server-wide
+// configuration as the fallback
+type dailyReportUserConfig struct {
+	uid                  int64
+	webhookUrl           string
+	signingSecret        string
+	keyword              string
+	sendTimeMinutesOfDay int
+	location             *time.Location
+}
+
 // RunDailyReports sends the daily income and expense report of every configured user to the
-// configured Feishu custom bot webhook. The job ticks every 15 minutes like the credit card
-// notification job, and each user's local reporting date is derived from the configured
-// timezone, so the report is always generated once per user-local day. The unique index of
-// uid and report date keeps every report sent only once, so restarting the service or running
-// the job more than once never sends the same report twice
+// user's Feishu custom bot webhook. Users with their own daily report settings saved in the
+// database (managed in the web ui) always use their own webhook; users listed in the
+// server-wide configuration without own settings fall back to the server-wide webhook. The job
+// ticks every 15 minutes like the credit card notification job, and each user's local reporting
+// date is derived from the configured timezone, so the report is always generated once per
+// user-local day. The unique index of uid and report date keeps every report sent only once, so
+// restarting the service or running the job more than once never sends the same report twice
 func (s *DailyReportService) RunDailyReports(c core.Context, currentUnixTime int64) error {
 	config := s.CurrentConfig()
 
@@ -81,23 +98,23 @@ func (s *DailyReportService) RunDailyReports(c core.Context, currentUnixTime int
 		return nil
 	}
 
-	if config.DailyReportWebhookUrl == "" || config.DailyReportSigningSecret == "" {
-		log.Warnf(c, "[daily_reports.RunDailyReports] daily reports are skipped, because the feishu webhook url or the signing secret is not configured")
-		return nil
+	userConfigs, err := s.resolveUserConfigs(c, config)
+
+	if err != nil {
+		log.Errorf(c, "[daily_reports.RunDailyReports] failed to resolve the daily report user configs, because %s", err.Error())
+		return err
 	}
 
-	uids := dailyReportParseUids(config.DailyReportUids)
-
-	if len(uids) < 1 {
-		log.Warnf(c, "[daily_reports.RunDailyReports] daily reports are skipped, because no user id is configured")
+	if len(userConfigs) < 1 {
+		log.Warnf(c, "[daily_reports.RunDailyReports] daily reports are skipped, because no user has enabled the daily report")
 		return nil
 	}
 
 	var firstError error
 
-	for i := 0; i < len(uids); i++ {
-		if err := s.runDailyReportForUser(c, uids[i], config, currentUnixTime); err != nil {
-			log.Errorf(c, "[daily_reports.RunDailyReports] failed to send the daily report of user \"uid:%d\", because %s", uids[i], err.Error())
+	for i := 0; i < len(userConfigs); i++ {
+		if err := s.runDailyReportForUser(c, userConfigs[i], config, currentUnixTime); err != nil {
+			log.Errorf(c, "[daily_reports.RunDailyReports] failed to send the daily report of user \"uid:%d\", because %s", userConfigs[i].uid, err.Error())
 
 			if firstError == nil {
 				firstError = err
@@ -108,15 +125,119 @@ func (s *DailyReportService) RunDailyReports(c core.Context, currentUnixTime int
 	return firstError
 }
 
-func (s *DailyReportService) runDailyReportForUser(c core.Context, uid int64, config *settings.Config, currentUnixTime int64) error {
+// resolveUserConfigs returns the effective sending configuration of every user who should
+// receive a daily report. Users with enabled settings in the database take precedence; users
+// only listed in the server-wide configuration fall back to the server-wide webhook
+func (s *DailyReportService) resolveUserConfigs(c core.Context, config *settings.Config) ([]*dailyReportUserConfig, error) {
+	var userConfigs []*dailyReportUserConfig
+	uidsOwnSettings := make(map[int64]bool)
+
+	rows, err := s.userSettings.GetEnabledSettings(c)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(rows); i++ {
+		row := rows[i]
+		userConfig, err := s.buildUserConfigFromRow(c, config, row)
+
+		if err != nil {
+			// the stored secrets cannot be decrypted, most likely because the server secret key
+			// has been changed; skip the user instead of failing the whole job
+			log.Errorf(c, "[daily_reports.resolveUserConfigs] failed to resolve the daily report config of user \"uid:%d\" from the saved settings, because %s", row.Uid, err.Error())
+			continue
+		}
+
+		userConfigs = append(userConfigs, userConfig)
+		uidsOwnSettings[row.Uid] = true
+	}
+
+	globalWebhookConfigured := config.DailyReportWebhookUrl != "" && config.DailyReportSigningSecret != ""
+
+	for _, uid := range dailyReportParseUids(config.DailyReportUids) {
+		if uidsOwnSettings[uid] {
+			continue
+		}
+
+		if !globalWebhookConfigured {
+			log.Warnf(c, "[daily_reports.resolveUserConfigs] the server-wide fallback of user \"uid:%d\" is skipped, because the feishu webhook url or the signing secret is not configured", uid)
+			continue
+		}
+
+		userConfigs = append(userConfigs, &dailyReportUserConfig{
+			uid:                  uid,
+			webhookUrl:           config.DailyReportWebhookUrl,
+			signingSecret:        config.DailyReportSigningSecret,
+			keyword:              config.DailyReportKeyword,
+			sendTimeMinutesOfDay: config.DailyReportSendTimeMinutesOfDay,
+			location:             dailyReportLocation(config),
+		})
+	}
+
+	return userConfigs, nil
+}
+
+// buildUserConfigFromRow decrypts the saved webhook url and signing secret of one user and
+// fills the unset fields with the server-wide defaults
+func (s *DailyReportService) buildUserConfigFromRow(c core.Context, config *settings.Config, row *models.UserDailyReportSetting) (*dailyReportUserConfig, error) {
+	webhookUrl, err := s.userSettings.DecryptWebhookUrl(c, row)
+
+	if err != nil {
+		return nil, err
+	}
+
+	signingSecret, err := s.userSettings.DecryptSigningSecret(c, row)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dailyReportBuildUserConfig(config, row, webhookUrl, signingSecret), nil
+}
+
+// dailyReportBuildUserConfig merges the saved settings of one user with the server-wide
+// defaults: every field the user has not set falls back to the server-wide configuration
+func dailyReportBuildUserConfig(config *settings.Config, row *models.UserDailyReportSetting, webhookUrl string, signingSecret string) *dailyReportUserConfig {
+	keyword := row.Keyword
+
+	if keyword == "" {
+		keyword = config.DailyReportKeyword
+	}
+
+	sendTimeMinutesOfDay := config.DailyReportSendTimeMinutesOfDay
+
+	if row.SendTimeMinutesOfDay > 0 {
+		sendTimeMinutesOfDay = row.SendTimeMinutesOfDay
+	}
+
 	location := dailyReportLocation(config)
+
+	if row.TimezoneName != "" {
+		if rowLocation, err := time.LoadLocation(row.TimezoneName); err == nil {
+			location = rowLocation
+		}
+	}
+
+	return &dailyReportUserConfig{
+		uid:                  row.Uid,
+		webhookUrl:           webhookUrl,
+		signingSecret:        signingSecret,
+		keyword:              keyword,
+		sendTimeMinutesOfDay: sendTimeMinutesOfDay,
+		location:             location,
+	}
+}
+
+func (s *DailyReportService) runDailyReportForUser(c core.Context, userConfig *dailyReportUserConfig, config *settings.Config, currentUnixTime int64) error {
+	location := userConfig.location
 	now := time.Unix(currentUnixTime, 0).In(location)
 
 	// wait until the configured local time of the reporting timezone has passed, so yesterday's
 	// data is complete before the report is generated
 	minutesOfDay := now.Hour()*60 + now.Minute()
 
-	if minutesOfDay < config.DailyReportSendTimeMinutesOfDay {
+	if minutesOfDay < userConfig.sendTimeMinutesOfDay {
 		return nil
 	}
 
@@ -124,7 +245,7 @@ func (s *DailyReportService) runDailyReportForUser(c core.Context, uid int64, co
 	reportDate := todayStart.AddDate(0, 0, -1)
 	reportDateNumeric := utils.FormatUnixTimeToNumericYearMonthDay(reportDate.Unix(), location)
 
-	reportLog, err := s.getOrAddDailyReportLog(c, uid, reportDateNumeric, currentUnixTime)
+	reportLog, err := s.getOrAddDailyReportLog(c, userConfig.uid, reportDateNumeric, currentUnixTime)
 
 	if err != nil {
 		return err
@@ -142,38 +263,104 @@ func (s *DailyReportService) runDailyReportForUser(c core.Context, uid int64, co
 
 	monthStart := time.Date(reportDate.Year(), reportDate.Month(), 1, 0, 0, 0, 0, location)
 
-	dailySummaries, err := s.getCurrencySummaries(c, uid, reportDate, todayStart, location)
+	dailySummaries, err := s.getCurrencySummaries(c, userConfig.uid, reportDate, todayStart, location)
 
 	if err != nil {
-		s.failDailyReport(c, uid, reportLog, err, currentUnixTime, config)
+		s.failDailyReport(c, userConfig, reportLog, err, currentUnixTime, config)
 		return err
 	}
 
-	monthlySummaries, err := s.getCurrencySummaries(c, uid, monthStart, todayStart, location)
+	monthlySummaries, err := s.getCurrencySummaries(c, userConfig.uid, monthStart, todayStart, location)
 
 	if err != nil {
-		s.failDailyReport(c, uid, reportLog, err, currentUnixTime, config)
+		s.failDailyReport(c, userConfig, reportLog, err, currentUnixTime, config)
 		return err
 	}
 
 	card := s.buildDailyReportSuccessCard(reportDate, dailySummaries, monthlySummaries)
-	client := s.createFeishuClient(config)
+	client := s.createFeishuClientForUser(userConfig, config)
 	sendErr := client.SendCard(card)
 
 	if sendErr != nil {
-		s.failDailyReport(c, uid, reportLog, sendErr, currentUnixTime, config)
+		s.failDailyReport(c, userConfig, reportLog, sendErr, currentUnixTime, config)
 		return sendErr
 	}
 
-	log.Infof(c, "[daily_reports.runDailyReportForUser] the daily report of user \"uid:%d\" for date \"%s\" has been sent to feishu", uid, utils.FormatNumericYearMonthDayToLongDate(reportDateNumeric))
-	s.updateDailyReportLogResult(c, uid, reportLog, models.DAILY_REPORT_LOG_STATUS_SUCCESS, "", currentUnixTime)
+	log.Infof(c, "[daily_reports.runDailyReportForUser] the daily report of user \"uid:%d\" for date \"%s\" has been sent to feishu", userConfig.uid, utils.FormatNumericYearMonthDayToLongDate(reportDateNumeric))
+	s.updateDailyReportLogResult(c, userConfig.uid, reportLog, models.DAILY_REPORT_LOG_STATUS_SUCCESS, "", currentUnixTime)
 
 	return nil
 }
 
+// SendTestReport sends a test card to the feishu webhook of the given user immediately, used by
+// the "send test message" button in the web ui. It does not touch the daily report log
+func (s *DailyReportService) SendTestReport(c core.Context, uid int64) error {
+	config := s.CurrentConfig()
+
+	if !config.EnableDailyReport {
+		return errs.ErrDailyReportNotEnabled
+	}
+
+	row, err := s.userSettings.GetSettingByUid(c, uid)
+
+	if err != nil {
+		return err
+	}
+
+	var userConfig *dailyReportUserConfig
+
+	if row != nil && row.Enabled {
+		userConfig, err = s.buildUserConfigFromRow(c, config, row)
+
+		if err != nil {
+			return errs.ErrDailyReportSavedSecretNotDecodable
+		}
+	} else {
+		if config.DailyReportWebhookUrl == "" || config.DailyReportSigningSecret == "" {
+			return errs.ErrDailyReportNotConfigured
+		}
+
+		userConfig = &dailyReportUserConfig{
+			uid:                  uid,
+			webhookUrl:           config.DailyReportWebhookUrl,
+			signingSecret:        config.DailyReportSigningSecret,
+			keyword:              config.DailyReportKeyword,
+			sendTimeMinutesOfDay: config.DailyReportSendTimeMinutesOfDay,
+			location:             dailyReportLocation(config),
+		}
+	}
+
+	now := time.Now()
+	card := s.buildDailyReportTestCard(now.In(userConfig.location))
+	client := s.createFeishuClientForUser(userConfig, config)
+
+	return client.SendCard(card)
+}
+
+// buildDailyReportTestCard builds a simple card for testing the webhook settings
+func (s *DailyReportService) buildDailyReportTestCard(now time.Time) map[string]any {
+	return map[string]any{
+		"config": map[string]any{
+			"wide_screen_mode": true,
+		},
+		"header": map[string]any{
+			"template": "blue",
+			"title": map[string]any{
+				"tag":     "plain_text",
+				"content": "推送测试成功",
+			},
+		},
+		"elements": []any{
+			dailyReportCardRow("服务器时间", now.Format("2006-01-02 15:04:05 (MST)"), ""),
+			dailyReportCardRow("说明", "收到这张卡片说明日报推送配置正确，每日日报将按设置的发送时间推送到本群。", ""),
+		},
+	}
+}
+
 // failDailyReport records the failure and sends a feishu alert only for the first failure of
 // one reporting date, so a broken webhook does not trigger an alert every 15 minutes
-func (s *DailyReportService) failDailyReport(c core.Context, uid int64, reportLog *models.DailyReportLog, sendErr error, currentUnixTime int64, config *settings.Config) {
+func (s *DailyReportService) failDailyReport(c core.Context, userConfig *dailyReportUserConfig, reportLog *models.DailyReportLog, sendErr error, currentUnixTime int64, config *settings.Config) {
+	uid := userConfig.uid
 	isFirstFailure := reportLog.RetryCount == 0
 	s.updateDailyReportLogResult(c, uid, reportLog, models.DAILY_REPORT_LOG_STATUS_FAILED, sendErr.Error(), currentUnixTime)
 
@@ -188,7 +375,7 @@ func (s *DailyReportService) failDailyReport(c core.Context, uid int64, reportLo
 		dailyReportTrimLastError(sendErr.Error()) + "\n" +
 		"请检查服务器日志与飞书机器人配置。"
 
-	client := s.createFeishuClient(config)
+	client := s.createFeishuClientForUser(userConfig, config)
 	alertErr := client.SendText(alertText)
 
 	if alertErr != nil {
@@ -563,10 +750,10 @@ func dailyReportParseUids(uidsText string) []int64 {
 	return uids
 }
 
-func (s *DailyReportService) createFeishuClient(config *settings.Config) *feishu.FeishuClient {
+func (s *DailyReportService) createFeishuClientForUser(userConfig *dailyReportUserConfig, config *settings.Config) *feishu.FeishuClient {
 	httpClient := httpclient.NewHttpClient(config.DailyReportRequestTimeout, config.DailyReportProxy, false, core.GetOutgoingUserAgent(), false, []uint16{})
 
-	return feishu.NewFeishuClient(config.DailyReportWebhookUrl, config.DailyReportSigningSecret, config.DailyReportKeyword, httpClient)
+	return feishu.NewFeishuClient(userConfig.webhookUrl, userConfig.signingSecret, userConfig.keyword, httpClient)
 }
 
 func dailyReportTrimLastError(lastError string) string {

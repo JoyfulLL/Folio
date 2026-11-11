@@ -377,6 +377,11 @@ func startWebServer(c *core.CliContext) error {
 			apiV1Route.POST("/users/settings/cloud/update.json", bindApi(api.UserApplicationCloudSettings.ApplicationSettingsUpdateHandler, config, core.USER_TOKEN_TYPE_NORMAL))
 			apiV1Route.POST("/users/settings/cloud/disable.json", bindApi(api.UserApplicationCloudSettings.ApplicationSettingsDisableHandler, config, core.USER_TOKEN_TYPE_NORMAL))
 
+			// Daily Report Settings
+			apiV1Route.GET("/users/daily_report/settings/get.json", bindApi(api.UserDailyReportSettings.DailyReportSettingsGetHandler, config, core.USER_TOKEN_TYPE_NORMAL))
+			apiV1Route.POST("/users/daily_report/settings/update.json", bindApi(api.UserDailyReportSettings.DailyReportSettingsUpdateHandler, config, core.USER_TOKEN_TYPE_NORMAL))
+			apiV1Route.POST("/users/daily_report/settings/test.json", bindApi(api.UserDailyReportSettings.DailyReportSettingsTestSendHandler, config, core.USER_TOKEN_TYPE_NORMAL))
+
 			// Two-Factor Authorization
 			if config.EnableTwoFactor {
 				apiV1Route.GET("/users/2fa/status.json", bindApi(api.TwoFactorAuthorizations.TwoFactorStatusHandler, config))

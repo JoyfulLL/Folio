@@ -206,6 +206,14 @@ func updateAllDatabaseTablesStructure(c *core.CliContext) error {
 
 	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] daily report log table maintained successfully")
 
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.UserDailyReportSetting))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] user daily report setting table maintained successfully")
+
 	err = datastore.Container.UserDataStore.SyncStructs(new(models.CreditCardPictureInfo))
 
 	if err != nil {
