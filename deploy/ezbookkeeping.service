@@ -22,8 +22,14 @@
 #   EBK_DAILY_REPORT_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
 #   EBK_DAILY_REPORT_SIGNING_SECRET=...
 #   EBK_DAILY_REPORT_UIDS=1
+# If a statically linked binary cannot resolve external hosts (Feishu webhook),
+# force Go's built-in DNS resolver here:
+#   GODEBUG=netdns=go
 # If you create it: sudo chown root:ezbookkeeping /etc/ezbookkeeping.env
 #                   sudo chmod 640 /etc/ezbookkeeping.env
+# SELinux note (Oracle Linux / RHEL): the binary in /opt/ez must keep an
+# executable label. ez-update.sh preserves it automatically; check with
+#   ls -Z /opt/ez/ezbookkeeping     # expect usr_t or bin_t, NOT default_t
 # Keep [security] secret_key in /opt/ez/conf/ezbookkeeping.ini unchanged forever.
 
 [Unit]

@@ -60,7 +60,6 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          version="$(node -p 'require("./package.json").version')"
           if [ -n "$INPUT_TAG" ]; then
             tag="$INPUT_TAG"
           elif [ "$EVENT_NAME" = "push" ]; then
@@ -78,12 +77,15 @@ jobs:
             amd64) matrix='[{"arch":"amd64","runner":"ubuntu-24.04"}]' ;;
             *)     matrix='[{"arch":"amd64","runner":"ubuntu-24.04"},{"arch":"arm64","runner":"ubuntu-24.04-arm"}]' ;;
           esac
+          # The tag is the authoritative version: /healthz.json and
+          # `ezbookkeeping --version` report this exact string.
+          version="$tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "build_date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
           echo "build_unixtime=$(date -u +%s)" >> "$GITHUB_OUTPUT"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-          echo "Building $tag (package version $version, commit ${SHA:0:7}), runners: $matrix"
+          echo "Building $tag (commit ${SHA:0:7}), runners: $matrix"
 
   build:
     needs: prepare
@@ -128,6 +130,7 @@ jobs:
       - name: Build full package (lint + tests + backend + frontend)
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.tag }}
           ARCH: ${{ matrix.arch }}
         run: |
           set -euo pipefail

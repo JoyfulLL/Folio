@@ -1,0 +1,7 @@
+# Shell scripts and systemd units MUST stay LF. With core.autocrlf=true on
+# Windows a checkout would otherwise rewrite them to CRLF, and scp'ing that
+# file to Linux gives "bad interpreter: /usr/bin/env bash^M".
+deploy/*.sh           text eol=lf
+deploy/*.service      text eol=lf
+deploy/*.env.example  text eol=lf
+.github/workflows/*.yml text eol=lf

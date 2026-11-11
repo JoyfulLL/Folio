@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # ez-update.sh - in-place, pull-based deploy for the custom ezBookkeeping build.
 #
+# Works on any Linux (Ubuntu, Debian, RHEL-family / Oracle Linux 10, ...).
+# On RHEL-family systems SELinux is enforcing by default, so replacements keep
+# the destination's inode/directory label instead of recreating it.
+#
 # Designed for the EXISTING layout (no path changes, nginx does not need touching):
 #   /opt/ez/ezbookkeeping            binary
 #   /opt/ez/public                  frontend (nginx root/proxy target stays the same)
@@ -61,10 +65,19 @@ usage() {
 TMP_DIR=""
 STAGE=""
 APP_BACKUP=""
+SERVICE_STOPPED=0
 
 cleanup() {
+    local rc=$?
     if [ -n "$STAGE" ] && [ -d "$STAGE" ]; then rm -rf -- "$STAGE"; fi
     if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then rm -rf -- "$TMP_DIR"; fi
+    # Never leave the service down because an update aborted (e.g. mysqldump
+    # failed, package was corrupt, Ctrl-C). Only kicks in on a non-zero exit
+    # while we still own the stop; successful runs reset SERVICE_STOPPED=0.
+    if [ "$SERVICE_STOPPED" = "1" ] && [ "$rc" -ne 0 ]; then
+        systemctl start "$SERVICE_NAME" >/dev/null 2>&1 || true
+        printf '[ez-update] ERROR: update aborted (rc=%s); service restarted\n' "$rc" >&2
+    fi
     return 0
 }
 trap cleanup EXIT INT TERM
@@ -98,7 +111,7 @@ if command -v python3 >/dev/null 2>&1; then
 elif command -v jq >/dev/null 2>&1; then
     JSON_TOOL="jq"
 else
-    die "python3 or jq is required to parse the GitHub API response"
+    die "python3 or jq is required to parse the GitHub API response (Oracle Linux: sudo dnf install -y python3)"
 fi
 
 # Read one key from one section of the ini without a Python dependency.
@@ -184,7 +197,46 @@ backup_items() {
     for item in "${ITEMS[@]}"; do
         assert_safe_item "$item"
         if [ -e "$INSTALL_DIR/$item" ]; then
+            # -a also preserves the SELinux context: the backup doubles as the
+            # reference label used by fix_selinux_contexts() below.
             cp -a "$INSTALL_DIR/$item" "$dest/"
+        fi
+    done
+}
+
+# Replace one build artifact WITHOUT recreating its inode / directory.
+# RHEL-family distros (Oracle Linux 10, RHEL, Rocky, Alma) run SELinux in
+# enforcing mode by default. "rm -rf" + "cp -a" would import the staging
+# directory's label into /opt/ez and systemd could fail with 203/EXEC.
+# Keeping the destination makes new files inherit exactly the label that
+# already works with systemd and nginx today.
+replace_item() {
+    local src="$1" item="$2" dest="$INSTALL_DIR/$item"
+    assert_safe_item "$item"
+    [ -e "$src/$item" ] || return 0
+    if [ -d "$src/$item" ]; then
+        mkdir -p "$dest"
+        find "$dest" -mindepth 1 -delete
+        # No -a here: --preserve=context would copy the staging label instead.
+        cp -R --no-dereference "$src/$item/." "$dest/"
+    else
+        # Overwriting an existing regular file keeps its inode and its label.
+        cp -f "$src/$item" "$dest"
+    fi
+    chown -R "$SERVICE_USER:$SERVICE_GROUP" "$dest"
+}
+
+# Belt and braces for enforcing SELinux: force the top-level label of each
+# deployed item to match the backed-up original. No-op when SELinux is off.
+fix_selinux_contexts() {
+    command -v getenforce >/dev/null 2>&1 || return 0
+    [ "$(getenforce 2>/dev/null || true)" = "Enforcing" ] || return 0
+    command -v chcon >/dev/null 2>&1 || return 0
+    [ -n "$APP_BACKUP" ] && [ -d "$APP_BACKUP" ] || return 0
+    local item
+    for item in "${ITEMS[@]}"; do
+        if [ -e "$APP_BACKUP/$item" ] && [ -e "$INSTALL_DIR/$item" ]; then
+            chcon --reference="$APP_BACKUP/$item" "$INSTALL_DIR/$item" >/dev/null 2>&1 || true
         fi
     done
 }
@@ -192,25 +244,21 @@ backup_items() {
 install_items() {
     local src="$1" item
     for item in "${ITEMS[@]}"; do
-        assert_safe_item "$item"
-        if [ -e "$src/$item" ]; then
-            rm -rf -- "$INSTALL_DIR/$item"
-            cp -a "$src/$item" "$INSTALL_DIR/"
-            chown -R "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR/$item"
-        fi
+        replace_item "$src" "$item"
     done
     chmod 755 "$INSTALL_DIR/ezbookkeeping"
 }
 
 restore_items() {
-    local src="$1" item
+    local src="$1" item dest
     for item in "${ITEMS[@]}"; do
         assert_safe_item "$item"
-        rm -rf -- "$INSTALL_DIR/$item"
-        if [ -e "$src/$item" ]; then
-            cp -a "$src/$item" "$INSTALL_DIR/"
-            chown -R "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR/$item"
+        dest="$INSTALL_DIR/$item"
+        if [ ! -e "$src/$item" ]; then
+            rm -rf -- "$dest"
+            continue
         fi
+        replace_item "$src" "$item"
     done
     chmod 755 "$INSTALL_DIR/ezbookkeeping"
 }
@@ -255,9 +303,13 @@ prune() {
 
 rollback() {
     log "start/health check failed - rolling back from $APP_BACKUP"
+    SERVICE_STOPPED=1
     systemctl stop "$SERVICE_NAME" || true
     restore_items "$APP_BACKUP"
-    systemctl start "$SERVICE_NAME" || true
+    fix_selinux_contexts
+    if systemctl start "$SERVICE_NAME"; then
+        SERVICE_STOPPED=0
+    fi
     log "rolled back. inspect: journalctl -u $SERVICE_NAME -n 50 --no-pager"
     exit 1
 }
@@ -278,6 +330,18 @@ if [ "$MODE" = "check" ]; then
     log "sqlite db        : $SQLITE_DB_PATH  ($([ -f "$SQLITE_DB_PATH" ] && echo exists || echo 'not used'))"
     log "repository       : $GITHUB_REPO   token: $([ -n "$GITHUB_TOKEN" ] && echo set || echo none)"
     log "cpu / package    : $(uname -m) -> linux-$ARCH"
+    OS_LABEL="$(awk -F= '/^PRETTY_NAME=/ { gsub(/"/, "", $2); print $2; exit }' /etc/os-release 2>/dev/null || true)"
+    SELINUX_MODE="n/a"
+    if command -v getenforce >/dev/null 2>&1; then
+        SELINUX_MODE="$(getenforce 2>/dev/null || echo '?')"
+    fi
+    BIN_LABEL="n/a (SELinux not enforcing)"
+    if [ "$SELINUX_MODE" = "Enforcing" ]; then
+        BIN_LABEL="$(stat -c '%C' "$INSTALL_DIR/ezbookkeeping" 2>/dev/null || echo '?')"
+    fi
+    log "os / selinux     : ${OS_LABEL:-unknown} / $SELINUX_MODE"
+    log "binary label     : $BIN_LABEL"
+    log "json parser      : $JSON_TOOL"
     log "requested tag    : ${1:-${RELEASE_TAG:-latest}}"
     log "WILL REPLACE     : $(printf '%s ' "${ITEMS[@]}")"
     log "NEVER TOUCH      : $(printf '%s ' "${PROTECTED[@]}") (and any other file in $INSTALL_DIR)"
@@ -290,10 +354,13 @@ if [ "$MODE" = "rollback" ]; then
     APP_BACKUP="$(latest_app_backup)"
     [ -n "$APP_BACKUP" ] || die "no app-* backup found in $BACKUP_DIR"
     log "restoring $APP_BACKUP"
+    SERVICE_STOPPED=1
     systemctl stop "$SERVICE_NAME" || true
     restore_items "$APP_BACKUP"
+    fix_selinux_contexts
     systemctl daemon-reload
     systemctl start "$SERVICE_NAME" || die "service did not start after rollback"
+    SERVICE_STOPPED=0
     if BODY="$(probe)"; then
         log "OK, rolled back and healthy: $BODY"
     else
@@ -353,18 +420,52 @@ APP_BACKUP="$BACKUP_DIR/app-$TS"
 # ---- stop + back up --------------------------------------------------------
 if systemctl is-active --quiet "$SERVICE_NAME"; then
     systemctl stop "$SERVICE_NAME"
+    SERVICE_STOPPED=1
     log "service stopped"
 fi
 
+DB_BACKUP="$BACKUP_DIR/db-$TS.sql.gz"
+DB_BACKUP_ERR="$TMP_DIR/db-dump.err"
 if [ -n "$DB_BACKUP_CMD" ]; then
-    bash -c "$DB_BACKUP_CMD" | gzip -9 > "$BACKUP_DIR/db-$TS.sql.gz" \
-        || die "database backup failed"
-    log "database dumped to $BACKUP_DIR/db-$TS.sql.gz"
+    # Fail-closed: no valid dump -> no deployment. cleanup() restarts the
+    # service on any non-zero exit, so a broken mysqldump never means downtime.
+    if ! bash -c "$DB_BACKUP_CMD" 2>"$DB_BACKUP_ERR" | gzip -9 > "$DB_BACKUP"; then
+        rm -f -- "$DB_BACKUP"
+        sed 's/^/  | /' "$DB_BACKUP_ERR" >&2 || true
+        # By far the most common cause of a failed dump on an otherwise working
+        # install: the dump account is a plain DML user. Say so instead of
+        # leaving the operator to decode the mysqldump error above.
+        log "hint: if mysqldump said 'FLUSH ... TABLES: Access denied', the dump account"
+        log "      needs the global RELOAD (or FLUSH_TABLES) privilege; add PROCESS too,"
+        log "      or pass --no-tablespaces, to avoid a later tablespace privilege error."
+        log "      See the PRIVILEGES notes in deploy/ez-update.env.example."
+        die "database backup failed (service was NOT modified and will be restarted)"
+    fi
+    [ -s "$DB_BACKUP" ] || die "database backup is empty"
+    gzip -t "$DB_BACKUP" || die "database backup is not a valid gzip stream"
+    # mysqldump can exit 0 *after* complaining about objects it could not read,
+    # e.g. "Error ... when trying to dump masking policies". Such a dump is
+    # silently INCOMPLETE, which is worse than having no backup at all, because
+    # it would only be discovered during a rollback. Refuse it by default.
+    if [ -s "$DB_BACKUP_ERR" ]; then
+        log "mysqldump reported:"
+        sed 's/^/  | /' "$DB_BACKUP_ERR"
+    fi
+    if grep -q '^mysqldump: Error' "$DB_BACKUP_ERR"; then
+        if [ "${ALLOW_PARTIAL_DB_BACKUP:-0}" != "1" ]; then
+            rm -f -- "$DB_BACKUP"
+            die "database backup is incomplete (set ALLOW_PARTIAL_DB_BACKUP=1 to accept it anyway)"
+        fi
+        log "WARNING: continuing with a PARTIAL database backup (ALLOW_PARTIAL_DB_BACKUP=1)"
+    fi
+    log "database dumped to $DB_BACKUP"
 elif [ -f "$SQLITE_DB_PATH" ]; then
     cp -a "$SQLITE_DB_PATH" "$BACKUP_DIR/sqlite-$TS.db"
     log "sqlite database copied to $BACKUP_DIR/sqlite-$TS.db"
+elif [ "${ALLOW_NO_DB_BACKUP:-0}" = "1" ]; then
+    log "WARNING: proceeding WITHOUT a database backup (ALLOW_NO_DB_BACKUP=1)"
 else
-    log "WARNING: DB_BACKUP_CMD is empty and no sqlite db found - no database backup taken"
+    die "no database backup possible: set DB_BACKUP_CMD (MySQL/MariaDB) or check SQLITE_DB_PATH, or set ALLOW_NO_DB_BACKUP=1 to accept the risk"
 fi
 
 backup_items "$APP_BACKUP"
@@ -382,6 +483,7 @@ find "$STAGE" -mindepth 1 -maxdepth 1 \
     -exec rm -rf -- {} +
 
 install_items "$STAGE"
+fix_selinux_contexts
 rm -rf -- "$STAGE"
 STAGE=""
 log "replaced $(printf '%s ' "${ITEMS[@]}")in $INSTALL_DIR (conf/ data/ storage/ log/ untouched)"
@@ -392,6 +494,7 @@ if ! systemctl start "$SERVICE_NAME"; then
     journalctl -u "$SERVICE_NAME" -n 40 --no-pager || true
     rollback
 fi
+SERVICE_STOPPED=0
 
 if ! BODY="$(probe)"; then
     log "health check failed after $((HEALTH_RETRIES * HEALTH_INTERVAL))s: $HEALTH_URL"
