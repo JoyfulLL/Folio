@@ -1,0 +1,47 @@
+# /etc/systemd/system/ezbookkeeping.service
+#
+# This file OVERRIDES the packaged unit at
+# /usr/lib/systemd/system/ezbookkeeping.service (systemd prefers /etc over
+# /usr/lib). You do NOT need to edit or delete the original file.
+#
+# Install:
+#   sudo install -m 0644 deploy/ezbookkeeping.service /etc/systemd/system/ezbookkeeping.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl cat ezbookkeeping          # confirm which file is in effect
+#   sudo systemctl restart ezbookkeeping
+#
+# Paths are IDENTICAL to the currently running service:
+#   WorkingDirectory = /opt/ez
+#   ExecStart        = /opt/ez/ezbookkeeping server run
+#   config           = /opt/ez/conf/ezbookkeeping.ini  (default lookup, no --conf-path)
+# nginx needs NO change: /opt/ez/public and port 6060 stay where they are.
+#
+# Optional /etc/ezbookkeeping.env (EnvironmentFile has a leading "-" so the
+# file may be absent). Example EBK_* overrides:
+#   EBK_DAILY_REPORT_ENABLE=true
+#   EBK_DAILY_REPORT_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
+#   EBK_DAILY_REPORT_SIGNING_SECRET=...
+#   EBK_DAILY_REPORT_UIDS=1
+# If you create it: sudo chown root:ezbookkeeping /etc/ezbookkeeping.env
+#                   sudo chmod 640 /etc/ezbookkeeping.env
+# Keep [security] secret_key in /opt/ez/conf/ezbookkeeping.ini unchanged forever.
+
+[Unit]
+Description=ezBookkeeping (custom build)
+After=syslog.target network.target network-online.target mariadb.service mysqld.service postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ezbookkeeping
+Group=ezbookkeeping
+WorkingDirectory=/opt/ez
+EnvironmentFile=-/etc/ezbookkeeping.env
+ExecStart=/opt/ez/ezbookkeeping server run
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

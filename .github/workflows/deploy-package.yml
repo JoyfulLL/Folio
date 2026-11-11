@@ -1,0 +1,206 @@
+name: Deploy Package (custom)
+
+# Lightweight, single-purpose pipeline for the personal fork.
+# It does NOT run on "push main" and does NOT use "v*.*.*" tags, so it never
+# collides with the four heavyweight upstream workflows (build-snapshot.yml,
+# build-release.yml, build-non-main-branch.yml, update-i18n-progress.yml).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, e.g. credit-1.0.1. Leave empty for snapshot-YYYYMMDD-<sha>'
+        required: false
+        default: ''
+      arch:
+        description: 'Which architecture to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - amd64
+          - arm64
+      skip_tests:
+        description: 'Optional Go test -skip regex (leave empty to run all tests)'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'credit-*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+      build_date: ${{ steps.meta.outputs.build_date }}
+      build_unixtime: ${{ steps.meta.outputs.build_unixtime }}
+      matrix: ${{ steps.meta.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute build metadata
+        id: meta
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_ARCH: ${{ inputs.arch }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          version="$(node -p 'require("./package.json").version')"
+          if [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
+          elif [ "$EVENT_NAME" = "push" ]; then
+            tag="$REF_NAME"
+          else
+            tag="snapshot-$(date -u +%Y%m%d)-${SHA:0:7}"
+          fi
+          tag="${tag//\//-}"
+          if [[ "$tag" =~ [[:space:]] ]] || [ -z "$tag" ]; then
+            echo "Invalid release tag: '$tag'" >&2
+            exit 1
+          fi
+          case "$INPUT_ARCH" in
+            arm64) matrix='[{"arch":"arm64","runner":"ubuntu-24.04-arm"}]' ;;
+            amd64) matrix='[{"arch":"amd64","runner":"ubuntu-24.04"}]' ;;
+            *)     matrix='[{"arch":"amd64","runner":"ubuntu-24.04"},{"arch":"arm64","runner":"ubuntu-24.04-arm"}]' ;;
+          esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build_date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          echo "build_unixtime=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Building $tag (package version $version, commit ${SHA:0:7}), runners: $matrix"
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    env:
+      # BUILD_PIPELINE=1 + CHECK_3RD_API=0 makes the exchangerates tests skip
+      # live third-party HTTP calls (same mechanism the upstream Docker build uses).
+      BUILD_PIPELINE: '1'
+      CHECK_3RD_API: '0'
+      SKIP_TESTS: ${{ inputs.skip_tests }}
+      NODE_OPTIONS: '--max-old-space-size=4096'
+      BUILD_DATE: ${{ needs.prepare.outputs.build_date }}
+      BUILD_UNIXTIME: ${{ needs.prepare.outputs.build_unixtime }}
+    steps:
+      - name: Checkout (keep .git for git-rev-sync)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26.13.0'
+          cache: npm
+
+      - name: Install native toolchain for static CGO linking
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential libc6-dev
+
+      - name: Build full package (lint + tests + backend + frontend)
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          chmod +x build.sh
+          # No --no-lint / --no-test: a green build.sh is what guarantees the
+          # tar.gz really contains the backend binary and the frontend dist.
+          ./build.sh package --release -o "ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
+
+      - name: Verify package contents
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          pkg="ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
+          test -s "$pkg"
+          # No "grep -q": with pipefail it can SIGPIPE tar and cause a false failure.
+          tar -tzf "$pkg" | grep -x './ezbookkeeping' >/dev/null || { echo "ERROR: backend binary missing"; exit 1; }
+          tar -tzf "$pkg" | grep '^\./public/' >/dev/null || { echo "ERROR: frontend dist missing"; exit 1; }
+          echo "OK: $pkg ($(du -h "$pkg" | cut -f1))"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.arch }}
+          path: ezbookkeeping-*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: release-files
+
+      - name: Verify packages
+        run: |
+          set -euo pipefail
+          ls -lh release-files
+          count="$(find release-files -maxdepth 1 -name '*.tar.gz' | wc -l)"
+          [ "$count" -ge 1 ] || { echo "ERROR: no packages downloaded"; exit 1; }
+
+      - name: Publish / update GitHub Release
+        run: |
+          set -euo pipefail
+          cat > notes.md <<EOF
+          Custom ezBookkeeping build \`$VERSION\`.
+
+          - Commit: \`$GITHUB_SHA\`
+          - Assets: one tar.gz per architecture, named \`ezbookkeeping-$TAG-linux-<arch>.tar.gz\`
+          - Deploy with \`ez-update.sh $TAG\`; it updates /opt/ez in place and keeps
+            \`/opt/ez/conf/ezbookkeeping.ini\`, data/, storage/, log/ and nginx paths untouched.
+          - The \`conf/\` inside the archive is only the template. Never use it in production.
+          EOF
+          extra=()
+          if [[ "$TAG" == snapshot-* ]]; then
+            extra+=(--prerelease)
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" release-files/*.tar.gz --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" release-files/*.tar.gz --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG" --notes-file notes.md --target "$GITHUB_SHA" "${extra[@]}"
+          fi
+          echo "Release: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
