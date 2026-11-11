@@ -93,12 +93,11 @@ type dailyReportUserConfig struct {
 func (s *DailyReportService) RunDailyReports(c core.Context, currentUnixTime int64) error {
 	config := s.CurrentConfig()
 
-	if !config.EnableDailyReport {
-		log.Warnf(c, "[daily_reports.RunDailyReports] daily reports are skipped, because daily report is not enabled")
-		return nil
-	}
-
-	userConfigs, err := s.resolveUserConfigs(c, config)
+	// the per-user daily report settings managed in the web ui are independent of the
+	// server-wide switch, so the job also runs when only a user has enabled the report; the
+	// switch only enables the fallback webhook of the users listed in the server-wide
+	// configuration
+	userConfigs, err := s.resolveUserConfigs(c, config, config.EnableDailyReport)
 
 	if err != nil {
 		log.Errorf(c, "[daily_reports.RunDailyReports] failed to resolve the daily report user configs, because %s", err.Error())
@@ -106,7 +105,7 @@ func (s *DailyReportService) RunDailyReports(c core.Context, currentUnixTime int
 	}
 
 	if len(userConfigs) < 1 {
-		log.Warnf(c, "[daily_reports.RunDailyReports] daily reports are skipped, because no user has enabled the daily report")
+		log.Debugf(c, "[daily_reports.RunDailyReports] daily reports are skipped, because no user has enabled the daily report")
 		return nil
 	}
 
@@ -126,9 +125,10 @@ func (s *DailyReportService) RunDailyReports(c core.Context, currentUnixTime int
 }
 
 // resolveUserConfigs returns the effective sending configuration of every user who should
-// receive a daily report. Users with enabled settings in the database take precedence; users
-// only listed in the server-wide configuration fall back to the server-wide webhook
-func (s *DailyReportService) resolveUserConfigs(c core.Context, config *settings.Config) ([]*dailyReportUserConfig, error) {
+// receive a daily report. Settings enabled in the database (managed in the web ui) always take
+// effect; the server-wide fallback for the users listed in the configuration is only used when
+// the daily report is enabled in the server configuration
+func (s *DailyReportService) resolveUserConfigs(c core.Context, config *settings.Config, includeGlobalFallback bool) ([]*dailyReportUserConfig, error) {
 	var userConfigs []*dailyReportUserConfig
 	uidsOwnSettings := make(map[int64]bool)
 
@@ -151,6 +151,10 @@ func (s *DailyReportService) resolveUserConfigs(c core.Context, config *settings
 
 		userConfigs = append(userConfigs, userConfig)
 		uidsOwnSettings[row.Uid] = true
+	}
+
+	if !includeGlobalFallback {
+		return userConfigs, nil
 	}
 
 	globalWebhookConfigured := config.DailyReportWebhookUrl != "" && config.DailyReportSigningSecret != ""
@@ -293,13 +297,12 @@ func (s *DailyReportService) runDailyReportForUser(c core.Context, userConfig *d
 }
 
 // SendTestReport sends a test card to the feishu webhook of the given user immediately, used by
-// the "send test message" button in the web ui. It does not touch the daily report log
+// the "send test message" button in the web ui. The webhook saved in the web ui is used even
+// when the user has not enabled the daily report yet, so the settings can be verified before
+// enabling the report, and the server-wide switch is not required for it. It does not touch the
+// daily report log
 func (s *DailyReportService) SendTestReport(c core.Context, uid int64) error {
 	config := s.CurrentConfig()
-
-	if !config.EnableDailyReport {
-		return errs.ErrDailyReportNotEnabled
-	}
 
 	row, err := s.userSettings.GetSettingByUid(c, uid)
 
@@ -307,27 +310,26 @@ func (s *DailyReportService) SendTestReport(c core.Context, uid int64) error {
 		return err
 	}
 
-	var userConfig *dailyReportUserConfig
+	var webhookUrl, signingSecret string
 
-	if row != nil && row.Enabled {
-		userConfig, err = s.buildUserConfigFromRow(c, config, row)
+	if row != nil && s.userSettings.HasWebhookUrl(row) {
+		webhookUrl, err = s.userSettings.DecryptWebhookUrl(c, row)
 
 		if err != nil {
 			return errs.ErrDailyReportSavedSecretNotDecodable
 		}
-	} else {
-		if config.DailyReportWebhookUrl == "" || config.DailyReportSigningSecret == "" {
-			return errs.ErrDailyReportNotConfigured
-		}
 
-		userConfig = &dailyReportUserConfig{
-			uid:                  uid,
-			webhookUrl:           config.DailyReportWebhookUrl,
-			signingSecret:        config.DailyReportSigningSecret,
-			keyword:              config.DailyReportKeyword,
-			sendTimeMinutesOfDay: config.DailyReportSendTimeMinutesOfDay,
-			location:             dailyReportLocation(config),
+		signingSecret, err = s.userSettings.DecryptSigningSecret(c, row)
+
+		if err != nil {
+			return errs.ErrDailyReportSavedSecretNotDecodable
 		}
+	}
+
+	userConfig, err := dailyReportResolveTestSendConfig(uid, config, row, webhookUrl, signingSecret)
+
+	if err != nil {
+		return err
 	}
 
 	now := time.Now()
@@ -335,6 +337,40 @@ func (s *DailyReportService) SendTestReport(c core.Context, uid int64) error {
 	client := s.createFeishuClientForUser(userConfig, config)
 
 	return client.SendCard(card)
+}
+
+// dailyReportResolveTestSendConfig returns the webhook used for a test message. The webhook
+// saved by the user in the web ui is preferred, even when the user has not enabled the daily
+// report yet, so the server-wide switch is not required for testing own settings. The
+// server-wide webhook is only used as a fallback when the daily report is enabled and configured
+// on the server.
+func dailyReportResolveTestSendConfig(uid int64, config *settings.Config, row *models.UserDailyReportSetting, webhookUrl string, signingSecret string) (*dailyReportUserConfig, error) {
+	if row != nil && webhookUrl != "" {
+		return dailyReportBuildUserConfig(config, row, webhookUrl, signingSecret), nil
+	}
+
+	if !config.EnableDailyReport {
+		// the user has saved settings without a webhook, so the missing webhook is the actual
+		// problem and not the server-wide switch, which the user cannot change anyway
+		if row != nil {
+			return nil, errs.ErrDailyReportNotConfigured
+		}
+
+		return nil, errs.ErrDailyReportNotEnabled
+	}
+
+	if config.DailyReportWebhookUrl == "" || config.DailyReportSigningSecret == "" {
+		return nil, errs.ErrDailyReportNotConfigured
+	}
+
+	return &dailyReportUserConfig{
+		uid:                  uid,
+		webhookUrl:           config.DailyReportWebhookUrl,
+		signingSecret:        config.DailyReportSigningSecret,
+		keyword:              config.DailyReportKeyword,
+		sendTimeMinutesOfDay: config.DailyReportSendTimeMinutesOfDay,
+		location:             dailyReportLocation(config),
+	}, nil
 }
 
 // buildDailyReportTestCard builds a simple card for testing the webhook settings

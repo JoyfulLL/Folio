@@ -415,6 +415,8 @@ type Config struct {
 	EnableCreditCardNotification     bool
 
 	// Daily Report
+	// EnableDailyReport only enables the server-wide fallback webhook of the users listed in
+	// DailyReportUids. The per-user settings managed in the web ui work independently of it.
 	EnableDailyReport               bool
 	DailyReportWebhookUrl           string
 	DailyReportSigningSecret        string
@@ -1124,7 +1126,9 @@ const (
 // loadDailyReportConfiguration loads the daily report configuration. This section is not part
 // of the shipped configuration template, so the webhook url and the signing secret are meant
 // to be provided through environment variables (EBK_DAILY_REPORT_WEBHOOK_URL etc.) or a
-// configuration file kept outside the repository
+// configuration file kept outside the repository. The "enable" switch only turns on the
+// server-wide fallback webhook of the users listed in "uids"; each user can also enable the
+// daily report with its own webhook in the web ui, which does not depend on this switch
 func loadDailyReportConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.EnableDailyReport = getConfigItemBoolValue(configFile, sectionName, "enable", false)
 	config.DailyReportWebhookUrl = getConfigItemStringValue(configFile, sectionName, "webhook_url", "")

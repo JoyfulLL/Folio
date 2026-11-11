@@ -1,9 +1,16 @@
 package services
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/mayswind/ezbookkeeping/pkg/core"
+	"github.com/mayswind/ezbookkeeping/pkg/datastore"
+	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
 	"github.com/mayswind/ezbookkeeping/pkg/settings"
 	"github.com/mayswind/ezbookkeeping/pkg/utils"
@@ -240,4 +247,207 @@ func TestDailyReportBuildUserConfig(t *testing.T) {
 	invalidTzRow := &models.UserDailyReportSetting{Uid: 3, TimezoneName: "Not/AZone"}
 	userConfig = dailyReportBuildUserConfig(config, invalidTzRow, "https://example.com/hook3", "secret3")
 	assert.Equal(t, shanghai, userConfig.location)
+}
+
+func TestDailyReportResolveTestSendConfig(t *testing.T) {
+	// the daily report switch in the server configuration is off, which is the default
+	config := &settings.Config{
+		DailyReportKeyword:              "记账",
+		DailyReportSendTimeMinutesOfDay: 300,
+		DailyReportTimezoneName:         "Asia/Shanghai",
+	}
+
+	// a user who saved the webhook in the web ui can always test it, even when the daily report
+	// is not enabled on the server and the user has not enabled it yet
+	row := &models.UserDailyReportSetting{
+		Uid:                  7,
+		Enabled:              false,
+		Keyword:              "日报",
+		SendTimeMinutesOfDay: 791,
+	}
+
+	userConfig, err := dailyReportResolveTestSendConfig(7, config, row, "https://example.com/hook7", "secret7")
+	assert.Nil(t, err)
+	assert.Equal(t, int64(7), userConfig.uid)
+	assert.Equal(t, "https://example.com/hook7", userConfig.webhookUrl)
+	assert.Equal(t, "secret7", userConfig.signingSecret)
+	assert.Equal(t, "日报", userConfig.keyword)
+	assert.Equal(t, 791, userConfig.sendTimeMinutesOfDay)
+
+	// without a saved webhook, the server-wide configuration is the only fallback
+	_, err = dailyReportResolveTestSendConfig(7, config, nil, "", "")
+	assert.Equal(t, errs.ErrDailyReportNotEnabled, err)
+
+	// the user has saved settings but no webhook yet, so the missing webhook is reported instead
+	// of the server-wide switch
+	_, err = dailyReportResolveTestSendConfig(7, config, &models.UserDailyReportSetting{Uid: 7}, "", "")
+	assert.Equal(t, errs.ErrDailyReportNotConfigured, err)
+
+	// the server-wide switch is on, but the server-wide webhook is not configured
+	config.EnableDailyReport = true
+	_, err = dailyReportResolveTestSendConfig(7, config, nil, "", "")
+	assert.Equal(t, errs.ErrDailyReportNotConfigured, err)
+
+	// the server-wide webhook is used as the fallback
+	config.DailyReportWebhookUrl = "https://example.com/global"
+	config.DailyReportSigningSecret = "globalsecret"
+
+	userConfig, err = dailyReportResolveTestSendConfig(9, config, nil, "", "")
+	assert.Nil(t, err)
+	assert.Equal(t, int64(9), userConfig.uid)
+	assert.Equal(t, "https://example.com/global", userConfig.webhookUrl)
+	assert.Equal(t, "globalsecret", userConfig.signingSecret)
+	assert.Equal(t, "记账", userConfig.keyword)
+	assert.Equal(t, 300, userConfig.sendTimeMinutesOfDay)
+}
+
+// dailyReportTestDatabase is a minimal in-memory database which only returns one saved daily
+// report setting, so the test does not need a real database
+type dailyReportTestDatabase struct {
+	datastore.Database
+	setting *models.UserDailyReportSetting
+}
+
+type dailyReportTestSession struct {
+	datastore.DatabaseSession
+	database *dailyReportTestDatabase
+	query    any
+	args     []any
+}
+
+func (db *dailyReportTestDatabase) NewSession(c core.Context) datastore.DatabaseSession {
+	return &dailyReportTestSession{
+		database: db,
+	}
+}
+
+func (db *dailyReportTestDatabase) DoTransaction(c core.Context, fn func(datastore.DatabaseSession) error) error {
+	return fn(db.NewSession(c))
+}
+
+func (s *dailyReportTestSession) Where(query any, args ...any) datastore.DatabaseSession {
+	s.query = query
+	s.args = args
+	return s
+}
+
+func (s *dailyReportTestSession) Get(beans ...any) (bool, error) {
+	if len(beans) != 1 {
+		return false, nil
+	}
+
+	setting, ok := beans[0].(*models.UserDailyReportSetting)
+
+	if !ok || setting == nil {
+		return false, nil
+	}
+
+	if s.query != "uid=?" || len(s.args) != 1 {
+		return false, nil
+	}
+
+	uid, ok := s.args[0].(int64)
+
+	if !ok || s.database.setting == nil || s.database.setting.Uid != uid {
+		return false, nil
+	}
+
+	*setting = *s.database.setting
+	return true, nil
+}
+
+// TestDailyReportSendTestReportWithPerUserSettings verifies the whole "send test message" path
+// of the web ui when the daily report is not enabled in the server configuration, which is the
+// default: the webhook saved by the user must be used and must actually receive the test card
+func TestDailyReportSendTestReportWithPerUserSettings(t *testing.T) {
+	received := make(chan map[string]any, 1)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		payload := make(map[string]any)
+		_ = json.Unmarshal(body, &payload)
+		received <- payload
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":0}`))
+	}))
+	defer server.Close()
+
+	const secretKey = "daily-report-test-server-secret"
+
+	encryptionKey := utils.DeriveStorageEncryptionKey(secretKey, dailyReportSettingEncryptionDomain)
+
+	webhookUrl, err := utils.EncryptStringWithAESGCM(encryptionKey, dailyReportSettingWebhookUrlAdditionalData, server.URL)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signingSecret, err := utils.EncryptStringWithAESGCM(encryptionKey, dailyReportSettingSigningSecretAdditionalData, "test-signing-secret")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// EnableDailyReport is false on purpose, because the per-user settings must work without it
+	config := &settings.Config{
+		SecretKey:                       secretKey,
+		DailyReportSendTimeMinutesOfDay: 300,
+		DailyReportTimezoneName:         "Asia/Shanghai",
+		DailyReportRequestTimeout:       5000,
+		DailyReportProxy:                "none",
+	}
+	assert.False(t, config.EnableDailyReport)
+
+	configContainer := settings.NewConfigContainer(config)
+
+	userDataStore, err := datastore.NewDataStore(&dailyReportTestDatabase{
+		setting: &models.UserDailyReportSetting{
+			SettingId:            1,
+			Uid:                  42,
+			Enabled:              true,
+			WebhookUrl:           webhookUrl,
+			SigningSecret:        signingSecret,
+			Keyword:              "记账日报",
+			SendTimeMinutesOfDay: 791,
+		},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userSettings := &UserDailyReportSettingsService{
+		ServiceUsingDB:     NewServiceUsingDB(&datastore.DataStoreContainer{UserDataStore: userDataStore}),
+		ServiceUsingConfig: NewServiceUsingConfig(configContainer),
+	}
+
+	service := &DailyReportService{
+		ServiceUsingConfig: NewServiceUsingConfig(configContainer),
+		userSettings:       userSettings,
+	}
+
+	err = service.SendTestReport(core.NewNullContext(), 42)
+	assert.Nil(t, err)
+
+	select {
+	case payload := <-received:
+		assert.Equal(t, "interactive", payload["msg_type"])
+		assert.NotEmpty(t, payload["sign"])
+
+		card, ok := payload["card"].(map[string]any)
+		assert.True(t, ok)
+
+		elements, ok := card["elements"].([]any)
+		assert.True(t, ok)
+		assert.NotEmpty(t, elements)
+
+		keywordElement, ok := elements[0].(map[string]any)
+		assert.True(t, ok)
+
+		keywordText, ok := keywordElement["text"].(map[string]any)
+		assert.True(t, ok)
+		assert.Equal(t, "[记账日报]", keywordText["content"])
+	case <-time.After(5 * time.Second):
+		t.Fatal("the test message was not received by the webhook")
+	}
 }

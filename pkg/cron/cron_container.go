@@ -89,9 +89,10 @@ func (c *CronJobSchedulerContainer) registerAllJobs(ctx core.Context, config *se
 		Container.registerIntervalJob(ctx, CreditCardNotificationJob)
 	}
 
-	if config.EnableDailyReport {
-		Container.registerIntervalJob(ctx, DailyReportJob)
-	}
+	// the daily report job is always registered, because users can enable the report in the web
+	// ui at any time and the per-user settings do not depend on the server-wide switch; the job
+	// skips itself when no user has enabled the report
+	Container.registerIntervalJob(ctx, DailyReportJob)
 }
 
 func (c *CronJobSchedulerContainer) registerIntervalJob(ctx core.Context, job *CronJob) {
