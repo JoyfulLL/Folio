@@ -414,6 +414,19 @@ type Config struct {
 	EnableCreateScheduledTransaction bool
 	EnableCreditCardNotification     bool
 
+	// Daily Report
+	EnableDailyReport               bool
+	DailyReportWebhookUrl           string
+	DailyReportSigningSecret        string
+	DailyReportKeyword              string
+	DailyReportUids                 string
+	DailyReportTimezoneName         string
+	DailyReportUtcOffsetMinutes     int16
+	DailyReportSendTimeMinutesOfDay int
+	DailyReportMaxRetryCount        int16
+	DailyReportRequestTimeout       uint32
+	DailyReportProxy                string
+
 	// Secret
 	SecretKeyNoSet                             bool
 	SecretKey                                  string
@@ -618,6 +631,12 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 	}
 
 	err = loadCronConfiguration(config, cfgFile, "cron")
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = loadDailyReportConfiguration(config, cfgFile, "daily_report")
 
 	if err != nil {
 		return nil, err
@@ -1089,6 +1108,35 @@ func loadCronConfiguration(config *Config, configFile *ini.File, sectionName str
 	config.EnableRemoveExpiredTokens = getConfigItemBoolValue(configFile, sectionName, "enable_remove_expired_tokens", false)
 	config.EnableCreateScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_create_scheduled_transaction", false)
 	config.EnableCreditCardNotification = getConfigItemBoolValue(configFile, sectionName, "enable_credit_card_notification", false)
+
+	return nil
+}
+
+const (
+	defaultDailyReportTimezoneName         = "Asia/Shanghai"
+	defaultDailyReportUtcOffsetMinutes     = int16(480)
+	defaultDailyReportSendTimeMinutesOfDay = uint32(300)
+	defaultDailyReportMaxRetryCount        = int16(8)
+	defaultDailyReportRequestTimeout       = uint32(12000)
+	defaultDailyReportProxy                = "none"
+)
+
+// loadDailyReportConfiguration loads the daily report configuration. This section is not part
+// of the shipped configuration template, so the webhook url and the signing secret are meant
+// to be provided through environment variables (EBK_DAILY_REPORT_WEBHOOK_URL etc.) or a
+// configuration file kept outside the repository
+func loadDailyReportConfiguration(config *Config, configFile *ini.File, sectionName string) error {
+	config.EnableDailyReport = getConfigItemBoolValue(configFile, sectionName, "enable", false)
+	config.DailyReportWebhookUrl = getConfigItemStringValue(configFile, sectionName, "webhook_url", "")
+	config.DailyReportSigningSecret = getConfigItemStringValue(configFile, sectionName, "signing_secret", "")
+	config.DailyReportKeyword = getConfigItemStringValue(configFile, sectionName, "keyword", "")
+	config.DailyReportUids = getConfigItemStringValue(configFile, sectionName, "uids", "")
+	config.DailyReportTimezoneName = getConfigItemStringValue(configFile, sectionName, "timezone_name", defaultDailyReportTimezoneName)
+	config.DailyReportUtcOffsetMinutes = getConfigItemInt16Value(configFile, sectionName, "utc_offset_minutes", defaultDailyReportUtcOffsetMinutes)
+	config.DailyReportSendTimeMinutesOfDay = int(getConfigItemUint32Value(configFile, sectionName, "send_time_minutes_of_day", defaultDailyReportSendTimeMinutesOfDay))
+	config.DailyReportMaxRetryCount = getConfigItemInt16Value(configFile, sectionName, "max_retry_count", defaultDailyReportMaxRetryCount)
+	config.DailyReportRequestTimeout = getConfigItemUint32Value(configFile, sectionName, "request_timeout", defaultDailyReportRequestTimeout)
+	config.DailyReportProxy = getConfigItemStringValue(configFile, sectionName, "proxy", defaultDailyReportProxy)
 
 	return nil
 }
@@ -1587,6 +1635,29 @@ func getConfigItemUint16Value(configFile *ini.File, sectionName string, itemName
 
 	if err == nil {
 		return uint16(value)
+	}
+
+	return defaultValue
+}
+
+// getConfigItemInt16Value returns the int16 value of the specified config item, which supports
+// negative values such as timezone offsets to the west of UTC
+func getConfigItemInt16Value(configFile *ini.File, sectionName string, itemName string, defaultValue int16) int16 {
+	environmentValue := getConfigItemValueFromEnvironment(sectionName, itemName)
+
+	if len(environmentValue) > 0 {
+		value, err := strconv.ParseInt(environmentValue, 10, 16)
+
+		if err == nil {
+			return int16(value)
+		}
+	}
+
+	section := configFile.Section(sectionName)
+	value, err := strconv.ParseInt(section.Key(itemName).Value(), 10, 16)
+
+	if err == nil {
+		return int16(value)
 	}
 
 	return defaultValue

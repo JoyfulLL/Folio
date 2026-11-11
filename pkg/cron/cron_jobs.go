@@ -42,3 +42,15 @@ var CreditCardNotificationJob = &CronJob{
 		return services.CreditCardNotifications.RunCreditCardNotifications(c, time.Now().Unix())
 	},
 }
+
+// DailyReportJob represents the cron job which periodically sends the daily income and expense report to the Feishu webhook
+var DailyReportJob = &CronJob{
+	Name:        "DailyReport",
+	Description: "Periodically send the daily income and expense report to the Feishu webhook.",
+	Period: CronJobEvery15MinutesPeriod{
+		Second: 0,
+	},
+	Run: func(c *core.CronContext) error {
+		return services.DailyReports.RunDailyReports(c, time.Now().Unix())
+	},
+}

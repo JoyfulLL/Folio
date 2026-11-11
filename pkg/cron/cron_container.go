@@ -88,6 +88,10 @@ func (c *CronJobSchedulerContainer) registerAllJobs(ctx core.Context, config *se
 	if config.EnableCreditCardNotification {
 		Container.registerIntervalJob(ctx, CreditCardNotificationJob)
 	}
+
+	if config.EnableDailyReport {
+		Container.registerIntervalJob(ctx, DailyReportJob)
+	}
 }
 
 func (c *CronJobSchedulerContainer) registerIntervalJob(ctx core.Context, job *CronJob) {
