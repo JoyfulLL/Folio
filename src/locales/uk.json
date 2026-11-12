@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Посилання для активації облікового запису було надіслано на вашу електронну адресу: {email}. Якщо ви не отримали лист, введіть пароль ще раз і натисніть кнопку нижче, щоб надіслати лист повторно.",
             "resendValidationEmailTip": "Якщо ви не отримали лист, введіть пароль ще раз і натисніть кнопку нижче, щоб надіслати лист повторно на адресу: {email}",
-            "oauth2bindTip": "Ви входите як користувач {userName}, використовуючи {providerName}. Введіть пароль ezBookkeeping для підтвердження."
+            "oauth2bindTip": "Ви входите як користувач {userName}, використовуючи {providerName}. Введіть пароль Folio для підтвердження."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Григоріанський",
@@ -1815,8 +1815,8 @@
     "Change Language": "Змінити мову",
     "Date is too early": "Дата занадто рання",
     "User Canceled": "Скасовано користувачем",
-    "Welcome to ezBookkeeping": "Ласкаво просимо до ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Будь ласка, увійдіть до свого облікового запису ezBookkeeping",
+    "Welcome to Folio": "Ласкаво просимо до Folio",
+    "Please log in with your Folio account": "Будь ласка, увійдіть до свого облікового запису Folio",
     "Unlock Application": "Розблокувати застосунок",
     "Please enter your PIN code or use WebAuthn to unlock application": "Будь ласка, введіть PIN-код або скористайтеся WebAuthn для розблокування застосунку",
     "Please enter your PIN code to unlock application": "Будь ласка, введіть PIN-код для розблокування застосунку",
@@ -2283,13 +2283,13 @@
     "Filter Description": "Опис фільтра",
     "How to import this file?": "Як імпортувати цей файл?",
     "How to export this file?": "Як експортувати цей файл?",
-    "ezBookkeeping File Format": "Формат файлу ezBookkeeping",
+    "Folio File Format": "Формат файлу Folio",
     "Custom File Format": "Власний формат файлу",
     "General Data Exchange Format": "Загальний формат обміну даними",
     "General Bank Statement Format": "Загальний формат банківської виписки",
     "Other Bank/Payment App Statement File": "Виписка іншого банку або платіжного застосунку",
     "Other Finance App File Format": "Формат іншого фінансового застосунку",
-    "ezbookkeeping Data Export File": "Файл експорту даних ezbookkeeping",
+    "Folio Data Export File": "Файл експорту даних Folio",
     "Excel Workbook File": "Файл книги Excel",
     "Excel Workbook File (.xlsx)": "Файл книги Excel (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Файл книги Excel 97-2003 (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "Неправильний параметр",
     "Numeric Overflow": "Числове переповнення",
     "Invalid date range": "Invalid date range",
-    "Click to close": "Натисніть, щоб закрити"
+    "Click to close": "Натисніть, щоб закрити",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

@@ -14,11 +14,11 @@ export const IMPORT_FILE_PRESET_TYPE: string = 'preset';
 
 export const SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES: ImportFileCategoryAndTypes[] = [
     {
-        categoryName: 'ezBookkeeping File Format',
+        categoryName: 'Folio File Format',
         fileTypes: [
             {
                 type: 'ezbookkeeping',
-                name: 'ezbookkeeping Data Export File',
+                name: 'Folio Data Export File',
                 extensions: '.csv,.tsv',
                 subTypes: [
                     {

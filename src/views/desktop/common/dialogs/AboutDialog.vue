@@ -24,7 +24,7 @@
                                     <v-col cols="12" md="2">
                                         <span class="text-body-large">{{ tt('Version') }}</span>
                                     </v-col>
-                                    <v-col cols="12" md="10" class="mb-6">
+                                    <v-col cols="12" md="10" :class="{ 'mb-6': clientBuildTime }">
                                         <span class="text-body-large">{{ clientVersion }}</span>
                                     </v-col>
                                 </v-row>
@@ -32,38 +32,8 @@
                                     <v-col cols="12" md="2">
                                         <span class="text-body-large">{{ tt('Build Time') }}</span>
                                     </v-col>
-                                    <v-col cols="12" md="10" class="mb-6">
-                                        <span class="text-body-large">{{ clientBuildTime }}</span>
-                                    </v-col>
-                                </v-row>
-                                <v-row no-gutters>
-                                    <v-col cols="12" md="2">
-                                        <span class="text-body-large">{{ tt('Official Website') }}</span>
-                                    </v-col>
-                                    <v-col cols="12" md="10" class="mb-6">
-                                        <a class="text-body-large link-no-color" href="https://github.com/mayswind/ezbookkeeping" target="_blank">
-                                            https://github.com/mayswind/ezbookkeeping
-                                        </a>
-                                    </v-col>
-                                </v-row>
-                                <v-row no-gutters>
-                                    <v-col cols="12" md="2">
-                                        <span class="text-body-large">{{ tt('Report Issue') }}</span>
-                                    </v-col>
-                                    <v-col cols="12" md="10" class="mb-6">
-                                        <a class="text-body-large link-no-color" href="https://github.com/mayswind/ezbookkeeping/issues" target="_blank">
-                                            https://github.com/mayswind/ezbookkeeping/issues
-                                        </a>
-                                    </v-col>
-                                </v-row>
-                                <v-row no-gutters>
-                                    <v-col cols="12" md="2">
-                                        <span class="text-body-large">{{ tt('Getting help') }}</span>
-                                    </v-col>
                                     <v-col cols="12" md="10">
-                                        <a class="text-body-large link-no-color" href="https://ezbookkeeping.mayswind.net" target="_blank">
-                                            https://ezbookkeeping.mayswind.net
-                                        </a>
+                                        <span class="text-body-large">{{ clientBuildTime }}</span>
                                     </v-col>
                                 </v-row>
                             </v-card-text>
@@ -118,7 +88,7 @@
                                         <v-divider/>
                                         <br/>
                                         <div>
-                                            <span>ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
+                                            <span>This application builds on an open-source codebase and community-contributed translations. Thanks to the following contributors:</span>
                                         </div>
                                         <div class="mt-4">
                                             <strong>Project Maintainer</strong>
@@ -175,7 +145,7 @@
                                         </table>
 
                                         <div class="my-4">
-                                            <span>ezBookkeeping also contains additional third party software and illustration.</span><br/>
+                                            <span>Folio also contains additional third party software and illustration.</span><br/>
                                             <span>All the third party software / illustration included or linked is redistributed under the terms and conditions of their original licenses.</span>
                                         </div>
                                         <div class="py-2" :key="licenseInfo.name" v-for="licenseInfo in thirdPartyLicenses">

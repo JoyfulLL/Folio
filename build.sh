@@ -29,7 +29,7 @@ check_dependency() {
 
 show_help() {
     cat <<-EOF
-ezBookkeeping build script
+Folio build script
 
 Usage:
     build.sh type [options]
@@ -221,9 +221,9 @@ build_frontend() {
     echo "Building frontend files ($RELEASE_TYPE)..."
 
     if [ "$RELEASE" = "0" ]; then
-        buildUnixTime=$BUILD_UNIXTIME npm run build
+        VERSION="$VERSION" buildUnixTime=$BUILD_UNIXTIME npm run build
     else
-        npm run build
+        VERSION="$VERSION" npm run build
     fi
 }
 

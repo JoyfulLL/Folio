@@ -1,5 +1,5 @@
 [Unit]
-Description=ezBookkeeping is an open source, powerful, self-hosted personal finance app that is easy to use.
+Description=Folio is a lightweight, self-hosted personal finance app.
 After=syslog.target
 After=network.target
 After=mariadb.service mysqld.service postgresql.service

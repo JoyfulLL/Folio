@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Linkul de activare a contului a fost trimis la adresa ta de email: {email}. Dacă nu primești mesajul, te rugăm să introduci din nou parola și să faci clic pe butonul de mai jos pentru a retrimite emailul de validare.",
             "resendValidationEmailTip": "Dacă nu primești mesajul, te rugăm să introduci din nou parola și să faci clic pe butonul de mai jos pentru a retrimite emailul de validare la: {email}",
-            "oauth2bindTip": "Te autentifici în contul de utilizator {userName} folosind {providerName}. Te rugăm să introduci parola ezBookkeeping pentru verificare."
+            "oauth2bindTip": "Te autentifici în contul de utilizator {userName} folosind {providerName}. Te rugăm să introduci parola Folio pentru verificare."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_date",
-        "exportFilename": "ezBookkeeping_{nickname}_export_date",
-        "defaultExportStatisticsFileName": "ezBookkeeping_date_statistici",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_date_statistici",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_situatii_reconciliere",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_situatii_reconciliere",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_asociere_date_import",
-        "defaultImportHandlingScript": "ezBookkeeping_script_procesare",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_regula_inlocuire_import",
-        "defaultImportCheckResultFileName": "ezBookkeeping_rezultat_verificare_import",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_date",
+        "exportFilename": "Folio_{nickname}_export_date",
+        "defaultExportStatisticsFileName": "Folio_date_statistici",
+        "exportStatisticsFileName": "Folio_{nickname}_date_statistici",
+        "defaultExportReconciliationStatementsFileName": "Folio_situatii_reconciliere",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_situatii_reconciliere",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_asociere_date_import",
+        "defaultImportHandlingScript": "Folio_script_procesare",
+        "defaultImportReplaceRuleFileName": "Folio_regula_inlocuire_import",
+        "defaultImportCheckResultFileName": "Folio_rezultat_verificare_import",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregorian",
@@ -1815,8 +1815,8 @@
     "Change Language": "Schimbă limba",
     "Date is too early": "Data este prea timpurie",
     "User Canceled": "Anulat de utilizator",
-    "Welcome to ezBookkeeping": "Bun venit la ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Te rugăm să te autentifici cu contul ezBookkeeping",
+    "Welcome to Folio": "Bun venit la Folio",
+    "Please log in with your Folio account": "Te rugăm să te autentifici cu contul Folio",
     "Unlock Application": "Deblochează aplicația",
     "Please enter your PIN code or use WebAuthn to unlock application": "Te rugăm să introduci codul PIN sau să folosești WebAuthn pentru a debloca aplicația",
     "Please enter your PIN code to unlock application": "Te rugăm să introduci codul PIN pentru a debloca aplicația",
@@ -2283,13 +2283,13 @@
     "Filter Description": "Filtrează după descriere",
     "How to import this file?": "Cum se importă acest fișier?",
     "How to export this file?": "Cum se exportă acest fișier?",
-    "ezBookkeeping File Format": "Format fișier ezBookkeeping",
+    "Folio File Format": "Format fișier Folio",
     "Custom File Format": "Format fișier personalizat",
     "General Data Exchange Format": "Format general de schimb de date",
     "General Bank Statement Format": "Format general pentru extras de cont",
     "Other Bank/Payment App Statement File": "Alt fișier extras bancă/aplicație de plată",
     "Other Finance App File Format": "Format fișier altă aplicație financiară",
-    "ezbookkeeping Data Export File": "Fișier export date ezBookkeeping",
+    "Folio Data Export File": "Fișier export date Folio",
     "Excel Workbook File": "Fișier registru Excel",
     "Excel Workbook File (.xlsx)": "Fișier registru Excel (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Fișier registru Excel 97-2003 (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "Parametru nevalid",
     "Numeric Overflow": "Depășire numerică (Overflow)",
     "Invalid date range": "Invalid date range",
-    "Click to close": "Fă clic pentru a închide"
+    "Click to close": "Fă clic pentru a închide",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

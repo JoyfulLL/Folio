@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "Počet pravidiel: {count}",
             "accountActivationAndResendValidationEmailTip": "Odkaz na aktiváciu účtu bol odoslaný na váš e-mail: {email}. Ak e-mail nedostanete, zadajte znova heslo a kliknutím na tlačidlo nižšie ho pošlite znova.",
             "resendValidationEmailTip": "Ak e-mail nedostanete, zadajte znova heslo a kliknutím na tlačidlo nižšie pošlite overovací e-mail znova na: {email}",
-            "oauth2bindTip": "Prihlasujete sa k používateľovi {userName} cez {providerName}. Pre overenie zadajte svoje heslo do ezBookkeeping."
+            "oauth2bindTip": "Prihlasujete sa k používateľovi {userName} cez {providerName}. Pre overenie zadajte svoje heslo do Folio."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregoriánsky",
@@ -1815,8 +1815,8 @@
     "Change Language": "Zmeniť jazyk",
     "Date is too early": "Dátum je príliš skorý",
     "User Canceled": "Zrušené používateľom",
-    "Welcome to ezBookkeeping": "Vitajte v ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Prihláste sa svojím účtom ezBookkeeping",
+    "Welcome to Folio": "Vitajte v Folio",
+    "Please log in with your Folio account": "Prihláste sa svojím účtom Folio",
     "Unlock Application": "Odomknúť aplikáciu",
     "Please enter your PIN code or use WebAuthn to unlock application": "Na odomknutie zadajte PIN alebo použite WebAuthn",
     "Please enter your PIN code to unlock application": "Na odomknutie zadajte PIN",
@@ -2283,13 +2283,13 @@
     "Filter Description": "Filtrovať popis",
     "How to import this file?": "Ako importovať tento súbor?",
     "How to export this file?": "Ako exportovať tento súbor?",
-    "ezBookkeeping File Format": "Formát ezBookkeeping",
+    "Folio File Format": "Formát Folio",
     "Custom File Format": "Vlastný formát",
     "General Data Exchange Format": "Všeobecný formát výmeny údajov",
     "General Bank Statement Format": "Všeobecný formát bankového výpisu",
     "Other Bank/Payment App Statement File": "Výpis z inej banky / platobnej aplikácie",
     "Other Finance App File Format": "Formát inej finančnej aplikácie",
-    "ezbookkeeping Data Export File": "Export údajov ezBookkeeping",
+    "Folio Data Export File": "Export údajov Folio",
     "Excel Workbook File": "Zošit Excel",
     "Excel Workbook File (.xlsx)": "Zošit Excel (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Zošit Excel 97-2003 (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "Neplatný parameter",
     "Numeric Overflow": "Číselné pretečenie",
     "Invalid date range": "Neplatný rozsah dátumov",
-    "Click to close": "Kliknutím zavriete"
+    "Click to close": "Kliknutím zavriete",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

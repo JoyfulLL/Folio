@@ -627,6 +627,7 @@
                 type="time"
                 :disabled="dailyReportLoading || dailyReportSaving || dailyReportTesting"
                 :label="tt('Daily Report Send Time')"
+                :info="tt('Local time of the report timezone, 00:00 means following the server default')"
                 v-model:value="dailyReport.sendTime"
             ></f7-list-input>
         </f7-list>

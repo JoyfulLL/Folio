@@ -405,7 +405,7 @@ func (s *DailyReportService) failDailyReport(c core.Context, userConfig *dailyRe
 	}
 
 	reportDateText := utils.FormatNumericYearMonthDayToLongDate(reportLog.ReportDate)
-	alertText := "ezBookkeeping 日报任务失败\n" +
+	alertText := "Folio 日报任务失败\n" +
 		"目标日期：" + reportDateText + "\n" +
 		"最近错误：\n" +
 		dailyReportTrimLastError(sendErr.Error()) + "\n" +

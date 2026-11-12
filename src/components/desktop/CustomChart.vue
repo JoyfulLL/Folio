@@ -176,7 +176,7 @@ const userStore = useUserStore();
 const explorersStore = useExplorersStore();
 const exchangeRatesStore = useExchangeRatesStore();
 
-const sandboxMessageSignature: string = '#ezBookkeeping-sandbox-message#';
+const sandboxMessageSignature: string = '#Folio-sandbox-message#';
 const sandboxBuildinScripts: string = `
 <script>
 window.TransactionType = {
@@ -231,7 +231,7 @@ const cancelAIGeneratingUuid = ref<string | undefined>(undefined);
 const displayLayout = computed<TransactionExplorerCustomChartDisplayLayout>(() => TransactionExplorerCustomChartDisplayLayout.valueOf(props.displayLayout) ?? TransactionExplorerCustomChartDisplayLayout.Default);
 
 const customChartEditorExtraLibs = computed<CodeEditorExtraLib[]>(() => [{
-    filePath: 'inmemory://model/ezbookkeeping-custom-chart.d.ts',
+    filePath: 'inmemory://model/folio-custom-chart.d.ts',
     content: `
 /** ${tt('sample.insightsExplorerCustomChart.customChartTransactionDescription')} */
 interface CustomChartTransaction {

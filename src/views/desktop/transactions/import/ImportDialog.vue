@@ -643,7 +643,15 @@ const supportedImportFileExtensions = computed<string | undefined>(() => {
     return allSupportedImportFileTypesMap.value[fileType.value]?.extensions;
 });
 
+// White-label: set this to your own documentation base URL to re-enable the
+// "How to export this file?" guide link. Leave it empty to hide the link.
+const exportFileGuideDocumentBaseUrl = '';
+
 const exportFileGuideDocumentUrl = computed<string | undefined>(() => {
+    if (!exportFileGuideDocumentBaseUrl) {
+        return undefined;
+    }
+
     const document = allSupportedImportFileTypesMap.value[fileType.value]?.document;
 
     if (!document) {
@@ -652,7 +660,7 @@ const exportFileGuideDocumentUrl = computed<string | undefined>(() => {
 
     const language = document.language ? document.language + '/' : '';
     const anchor = document.anchor ? '#' + document.anchor : '';
-    return `https://ezbookkeeping.mayswind.net/${language}export_and_import${anchor}`;
+    return `${exportFileGuideDocumentBaseUrl}/${language}export_and_import${anchor}`;
 });
 
 const exportFileGuideDocumentLanguageName = computed<string | undefined>(() => allSupportedImportFileTypesMap.value[fileType.value]?.document?.displayLanguageName);

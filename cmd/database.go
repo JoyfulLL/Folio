@@ -13,7 +13,7 @@ import (
 // Database represents the database command
 var Database = &cli.Command{
 	Name:  "database",
-	Usage: "ezBookkeeping database maintenance",
+	Usage: "Folio database maintenance",
 	Commands: []*cli.Command{
 		{
 			Name:   "update",

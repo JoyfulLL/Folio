@@ -148,8 +148,7 @@
     color: var(--f7-block-footer-text-color);
 }
 
-.login-page-powered-by > a.link {
-    display: inline !important;
+.login-page-powered-by > span.app-name {
     color: var(--f7-theme-color);
     font-size: var(--f7-block-footer-font-size);
     padding: 0 6px;

@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "ಖಾತೆ ಸಕ್ರಿಯಗೊಳಿಸುವ ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಈಮೇಲ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ: {email}. ನೀವು ಇಮೇಲ್ ಪಡೆಯದಿದ್ದರೆ, ದಯವಿಟ್ಟು ಪಾಸ್‌ವರ್ಡ್ ಮರು ನಮೂದಿಸಿ ಮತ್ತು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ ಸರೀಕರಿಸುವ ಇಮೇಲ್ ಮರು ಕಳುಹಿಸಿ.",
             "resendValidationEmailTip": "ನೀವು ಇಮೇಲ್ ಪಡೆಯದಿದ್ದರೆ, ದಯವಿಟ್ಟು ಪಾಸ್‌ವರ್ಡ್ ಮರು ನಮೂದಿಸಿ ಮತ್ತು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ ಮರು ಸರೀಕರಿಸುವ ಇಮೇಲ್ ಕಳುಹಿಸಲಾಗುವುದು: {email}",
-            "oauth2bindTip": "ನೀವು {providerName} ಬಳಸಿ {userName} ಬಳಕೆದಾರರಾಗಿ ಲಾಗಿನ್ ಆಗುತ್ತಿದ್ದೀರಿ. ದೃಢೀಕರಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ezBookkeeping ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ."
+            "oauth2bindTip": "ನೀವು {providerName} ಬಳಸಿ {userName} ಬಳಕೆದಾರರಾಗಿ ಲಾಗಿನ್ ಆಗುತ್ತಿದ್ದೀರಿ. ದೃಢೀಕರಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ Folio ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "ಗ್ರೆಗೋರಿಯನ್",
@@ -1815,8 +1815,8 @@
     "Change Language": "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
     "Date is too early": "ದಿನಾಂಕ ಬಹಳ ಬೇಗಿದೆ",
     "User Canceled": "ಬಳಕೆದಾರನು ರದ್ದುಗೊಳಿಸಿದ್ದಾರೆ",
-    "Welcome to ezBookkeeping": "ezBookkeeping ಗೆ ಸ್ವಾಗತ",
-    "Please log in with your ezBookkeeping account": "ದಯವಿಟ್ಟು ನಿಮ್ಮ ezBookkeeping ಖಾತೆಯಿಂದ ಲಾಗಿನ್ ಆಗಿ",
+    "Welcome to Folio": "Folio ಗೆ ಸ್ವಾಗತ",
+    "Please log in with your Folio account": "ದಯವಿಟ್ಟು ನಿಮ್ಮ Folio ಖಾತೆಯಿಂದ ಲಾಗಿನ್ ಆಗಿ",
     "Unlock Application": "ಅನ್ವಯವನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
     "Please enter your PIN code or use WebAuthn to unlock application": "PIN ನಮೂದಿಸಿ ಅಥವಾ WebAuthn ಬಳಸಿ ಅನ್ವಯವನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
     "Please enter your PIN code to unlock application": "ಅನ್ವಯವನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಲು PIN ನಮೂದಿಸಿ",
@@ -2283,13 +2283,13 @@
     "Filter Description": "ಫಿಲ್ಟರ್ ವಿವರಣೆ",
     "How to import this file?": "ಈ ಫೈಲ್ ಅನ್ನು ಹೇಗೆ ಆಮದು ಮಾಡುವುದು?",
     "How to export this file?": "ಈ ಫೈಲ್ ಅನ್ನು ಹೇಗೆ ರಫ್ತು ಮಾಡುವುದು?",
-    "ezBookkeeping File Format": "ezBookkeeping ಫೈಲ್ ರೂಪ",
+    "Folio File Format": "Folio ಫೈಲ್ ರೂಪ",
     "Custom File Format": "ಕಸ್ಟಮ್ ಫೈಲ್ ರೂಪ",
     "General Data Exchange Format": "ಸಾಮಾನ್ಯ ಡೇಟಾ ವಿನಿಮಯ ರೂಪ",
     "General Bank Statement Format": "ಸಾಮಾನ್ಯ ಬ್ಯಾಂಕ್ ಸ್ಟೇಟ್ಮೆಂಟ್ ರೂಪ",
     "Other Bank/Payment App Statement File": "ಇತರೆ ಬ್ಯಾಂಕ್/ಪಾವತಿ ಅಪ್ ಸ್ಟೇಟ್ಮೆಂಟ್ ಫೈಲ್",
     "Other Finance App File Format": "ಇತರೆ ಹಣಕಾಸು ಅಪ್ ಫೈಲ್ ರೂಪ",
-    "ezbookkeeping Data Export File": "ezBookkeeping ಡೇಟಾ ರಫ್ತು ಫೈಲ್",
+    "Folio Data Export File": "Folio ಡೇಟಾ ರಫ್ತು ಫೈಲ್",
     "Excel Workbook File": "Excel ವರ್ಕ್‌ಬುಕ್ ಫೈಲ್",
     "Excel Workbook File (.xlsx)": "Excel Workbook File (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 Workbook File (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "ಅಮಾನ್ಯವಾದ ಪ್ಯಾರಾಮೀಟರ್",
     "Numeric Overflow": "ಸಂಖ್ಯಾ ಓವರ್‌ಫ್ಲೋ",
     "Invalid date range": "Invalid date range",
-    "Click to close": "ಮುಚ್ಚಲು ಕ್ಲಿಕ್ ಮಾಡಿ"
+    "Click to close": "ಮುಚ್ಚಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

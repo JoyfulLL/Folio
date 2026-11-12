@@ -33,7 +33,7 @@ func (h *mcpQueryAllTransactionCategoriesToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpQueryAllTransactionCategoriesToolHandler) Description() string {
-	return "Query all transaction categories for the current user in ezBookkeeping."
+	return "Query all transaction categories for the current user in Folio."
 }
 
 // InputType returns the input type for the MCP tool request

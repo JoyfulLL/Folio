@@ -111,13 +111,13 @@ export default defineConfig(() => {
         publicDir: PUBLIC_DIR,
         base: './',
         define: {
-            __EZBOOKKEEPING_IS_PRODUCTION__: process.env['NODE_ENV'] === 'production',
-            __EZBOOKKEEPING_VERSION__: JSON.stringify(packageFile.version),
-            __EZBOOKKEEPING_BUILD_UNIX_TIME__: JSON.stringify(buildUnixTime),
-            __EZBOOKKEEPING_BUILD_COMMIT_HASH__: JSON.stringify(git.short()),
-            __EZBOOKKEEPING_CONTRIBUTORS__: JSON.stringify(contributorsFile),
-            __EZBOOKKEEPING_LICENSE__: JSON.stringify(licenseContent),
-            __EZBOOKKEEPING_THIRD_PARTY_LICENSES__: JSON.stringify(thirdPartyLicenseFile)
+            __FOLIO_IS_PRODUCTION__: process.env['NODE_ENV'] === 'production',
+            __FOLIO_VERSION__: JSON.stringify(process.env['VERSION'] || packageFile.version),
+            __FOLIO_BUILD_UNIX_TIME__: JSON.stringify(buildUnixTime),
+            __FOLIO_BUILD_COMMIT_HASH__: JSON.stringify(git.short()),
+            __FOLIO_CONTRIBUTORS__: JSON.stringify(contributorsFile),
+            __FOLIO_LICENSE__: JSON.stringify(licenseContent),
+            __FOLIO_THIRD_PARTY_LICENSES__: JSON.stringify(thirdPartyLicenseFile)
         },
         plugins: [
             vue({
@@ -157,9 +157,9 @@ export default defineConfig(() => {
                 injectRegister: false,
                 manifestFilename: 'manifest.json',
                 manifest: {
-                    name: 'ezBookkeeping',
-                    short_name: 'ezBookkeeping',
-                    description: 'An open source, powerful, self-hosted personal finance app that is easy to use.',
+                    name: 'Folio',
+                    short_name: 'Folio',
+                    description: 'A lightweight, self-hosted personal finance app.',
                     theme_color: '#C67E48',
                     background_color: '#F6F7F8',
                     start_url: './',
@@ -169,12 +169,12 @@ export default defineConfig(() => {
                     prefer_related_applications: false,
                     icons: [
                         {
-                            src: 'img/ezbookkeeping-192.png',
+                            src: 'img/folio-192.png',
                             sizes: '192x192',
                             type: 'image/png'
                         },
                         {
-                            src: 'img/ezbookkeeping-512.png',
+                            src: 'img/folio-512.png',
                             sizes: '512x512',
                             type: 'image/png'
                         }

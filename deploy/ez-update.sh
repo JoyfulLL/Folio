@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ez-update.sh - in-place, pull-based deploy for the custom ezBookkeeping build.
+# ez-update.sh - in-place, pull-based deploy for the custom Folio build.
 #
 # Works on any Linux (Ubuntu, Debian, RHEL-family / Oracle Linux 10, ...).
 # On RHEL-family systems SELinux is enforcing by default, so replacements keep

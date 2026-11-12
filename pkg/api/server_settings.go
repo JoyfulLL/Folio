@@ -10,14 +10,14 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/utils"
 )
 
-const ezbookkeepingServerSettingsGlobalVariableName = "EZBOOKKEEPING_SERVER_SETTINGS"
-const ezbookkeepingServerSettingsGlobalVariableFullName = "window." + ezbookkeepingServerSettingsGlobalVariableName
-const ezbookkeepingServerSettingsGlobalVariableAlias = "_"
-const ezbookkeepingServerSettingsJavascriptFileHeader = "(function () {\n" +
-	ezbookkeepingServerSettingsGlobalVariableFullName +
-	"=" + ezbookkeepingServerSettingsGlobalVariableFullName + "||{};\n" +
-	"const " + ezbookkeepingServerSettingsGlobalVariableAlias + "=" + ezbookkeepingServerSettingsGlobalVariableFullName + ";\n"
-const ezbookkeepingServerSettingsJavascriptFileFooter = "})();\n"
+const appServerSettingsGlobalVariableName = "FOLIO_SERVER_SETTINGS"
+const appServerSettingsGlobalVariableFullName = "window." + appServerSettingsGlobalVariableName
+const appServerSettingsGlobalVariableAlias = "_"
+const appServerSettingsJavascriptFileHeader = "(function () {\n" +
+	appServerSettingsGlobalVariableFullName +
+	"=" + appServerSettingsGlobalVariableFullName + "||{};\n" +
+	"const " + appServerSettingsGlobalVariableAlias + "=" + appServerSettingsGlobalVariableFullName + ";\n"
+const appServerSettingsJavascriptFileFooter = "})();\n"
 
 // ServerSettingsApi represents server settings api
 type ServerSettingsApi struct {
@@ -37,7 +37,7 @@ var (
 func (a *ServerSettingsApi) ServerSettingsJavascriptHandler(c *core.WebContext) ([]byte, string, *errs.Error) {
 	config := a.CurrentConfig()
 	builder := &strings.Builder{}
-	builder.WriteString(ezbookkeepingServerSettingsJavascriptFileHeader)
+	builder.WriteString(appServerSettingsJavascriptFileHeader)
 
 	a.appendBooleanSetting(builder, "a", config.EnableInternalAuth)
 	a.appendBooleanSetting(builder, "o", config.EnableOAuth2Login)
@@ -152,13 +152,13 @@ func (a *ServerSettingsApi) ServerSettingsJavascriptHandler(c *core.WebContext) 
 
 	a.appendBooleanSetting(builder, "dlp", config.EnableLanguagePreview)
 
-	builder.WriteString(ezbookkeepingServerSettingsJavascriptFileFooter)
+	builder.WriteString(appServerSettingsJavascriptFileFooter)
 
 	return []byte(builder.String()), "", nil
 }
 
 func (a *ServerSettingsApi) appendStringSetting(builder *strings.Builder, key string, value string) {
-	builder.WriteString(ezbookkeepingServerSettingsGlobalVariableAlias)
+	builder.WriteString(appServerSettingsGlobalVariableAlias)
 	builder.WriteString("[")
 	a.appendEncodedString(builder, key)
 	builder.WriteString("]=")
@@ -169,7 +169,7 @@ func (a *ServerSettingsApi) appendStringSetting(builder *strings.Builder, key st
 }
 
 func (a *ServerSettingsApi) appendMultiLanguageTipSetting(builder *strings.Builder, key string, value settings.MultiLanguageContentConfig) {
-	builder.WriteString(ezbookkeepingServerSettingsGlobalVariableAlias)
+	builder.WriteString(appServerSettingsGlobalVariableAlias)
 	builder.WriteString("[")
 	a.appendEncodedString(builder, key)
 	builder.WriteString("]={\n")
@@ -189,7 +189,7 @@ func (a *ServerSettingsApi) appendMultiLanguageTipSetting(builder *strings.Build
 }
 
 func (a *ServerSettingsApi) appendBooleanSetting(builder *strings.Builder, key string, value bool) {
-	builder.WriteString(ezbookkeepingServerSettingsGlobalVariableAlias)
+	builder.WriteString(appServerSettingsGlobalVariableAlias)
 	builder.WriteString("[")
 	a.appendEncodedString(builder, key)
 	builder.WriteString("]=")
@@ -204,7 +204,7 @@ func (a *ServerSettingsApi) appendBooleanSetting(builder *strings.Builder, key s
 }
 
 func (a *ServerSettingsApi) appendIntegerSetting(builder *strings.Builder, key string, value int) {
-	builder.WriteString(ezbookkeepingServerSettingsGlobalVariableAlias)
+	builder.WriteString(appServerSettingsGlobalVariableAlias)
 	builder.WriteString("[")
 	a.appendEncodedString(builder, key)
 	builder.WriteString("]=")

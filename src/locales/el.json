@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Ο σύνδεσμος ενεργοποίησης λογαριασμού στάλθηκε στη διεύθυνση email σας: {email}. Αν δεν λάβετε το email, συμπληρώστε ξανά τον κωδικό πρόσβασης και κάντε κλικ στο παρακάτω κουμπί για επανάληψη αποστολής του email επαλήθευσης.",
             "resendValidationEmailTip": "Αν δεν λάβετε το email, συμπληρώστε ξανά τον κωδικό πρόσβασης και κάντε κλικ στο παρακάτω κουμπί για επανάληψη αποστολής του email επαλήθευσης στο: {email}",
-            "oauth2bindTip": "Συνδέεστε στον χρήστη {userName} μέσω {providerName}. Εισαγάγετε τον κωδικό πρόσβασης ezBookkeeping για επαλήθευση."
+            "oauth2bindTip": "Συνδέεστε στον χρήστη {userName} μέσω {providerName}. Εισαγάγετε τον κωδικό πρόσβασης Folio για επαλήθευση."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Γρηγοριανό",
@@ -1815,8 +1815,8 @@
     "Change Language": "Αλλαγή γλώσσας",
     "Date is too early": "Η ημερομηνία είναι υπερβολικά πρώιμη",
     "User Canceled": "Ακυρώθηκε από τον χρήστη",
-    "Welcome to ezBookkeeping": "Καλώς ήρθατε στο ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Συνδεθείτε με τον λογαριασμό σας στο ezBookkeeping",
+    "Welcome to Folio": "Καλώς ήρθατε στο Folio",
+    "Please log in with your Folio account": "Συνδεθείτε με τον λογαριασμό σας στο Folio",
     "Unlock Application": "Ξεκλείδωμα εφαρμογής",
     "Please enter your PIN code or use WebAuthn to unlock application": "Εισαγάγετε τον κωδικό PIN ή χρησιμοποιήστε WebAuthn για να ξεκλειδώσετε την εφαρμογή",
     "Please enter your PIN code to unlock application": "Εισαγάγετε τον κωδικό PIN για να ξεκλειδώσετε την εφαρμογή",
@@ -2283,13 +2283,13 @@
     "Filter Description": "Φιλτράρισμα περιγραφής",
     "How to import this file?": "Πώς να εισαγάγετε αυτό το αρχείο;",
     "How to export this file?": "Πώς να εξαγάγετε αυτό το αρχείο;",
-    "ezBookkeeping File Format": "Μορφή αρχείου ezBookkeeping",
+    "Folio File Format": "Μορφή αρχείου Folio",
     "Custom File Format": "Προσαρμοσμένη μορφή αρχείου",
     "General Data Exchange Format": "Γενική μορφή ανταλλαγής δεδομένων",
     "General Bank Statement Format": "Γενική μορφή τραπεζικής κίνησης",
     "Other Bank/Payment App Statement File": "Αρχείο κίνησης άλλης τράπεζας/εφαρμογής πληρωμών",
     "Other Finance App File Format": "Μορφή αρχείου άλλης οικονομικής εφαρμογής",
-    "ezbookkeeping Data Export File": "Αρχείο εξαγωγής δεδομένων ezBookkeeping",
+    "Folio Data Export File": "Αρχείο εξαγωγής δεδομένων Folio",
     "Excel Workbook File": "Αρχείο βιβλίου εργασίας Excel",
     "Excel Workbook File (.xlsx)": "Αρχείο βιβλίου εργασίας Excel (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Αρχείο βιβλίου εργασίας Excel 97-2003 (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "Μη έγκυρη παράμετρος",
     "Numeric Overflow": "Αριθμητική υπερχείλιση",
     "Invalid date range": "Invalid date range",
-    "Click to close": "Κάντε κλικ για κλείσιμο"
+    "Click to close": "Κάντε κλικ για κλείσιμο",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

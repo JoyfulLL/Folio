@@ -33,7 +33,7 @@
 # Keep [security] secret_key in /opt/ez/conf/ezbookkeeping.ini unchanged forever.
 
 [Unit]
-Description=ezBookkeeping (custom build)
+Description=Folio (custom build)
 After=syslog.target network.target network-online.target mariadb.service mysqld.service postgresql.service
 Wants=network-online.target
 

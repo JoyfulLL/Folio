@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Account activation link has been sent to your email address: {email}, If you don't receive the mail, please fill password again and click the button below to resend the validation mail.",
             "resendValidationEmailTip": "If you don't receive the mail, please fill password again and click the button below to resend the validation mail to: {email}",
-            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezBookkeeping password to verify."
+            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your Folio password to verify."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregorian",
@@ -1815,8 +1815,8 @@
     "Change Language": "Change Language",
     "Date is too early": "Date is too early",
     "User Canceled": "User Canceled",
-    "Welcome to ezBookkeeping": "Welcome to ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Please log in with your ezBookkeeping account",
+    "Welcome to Folio": "Welcome to Folio",
+    "Please log in with your Folio account": "Please log in with your Folio account",
     "Unlock Application": "Unlock Application",
     "Please enter your PIN code or use WebAuthn to unlock application": "Please enter your PIN code or use WebAuthn to unlock application",
     "Please enter your PIN code to unlock application": "Please enter your PIN code to unlock application",
@@ -2152,7 +2152,7 @@
     "Leave blank to keep the saved secret": "Leave blank to keep the saved secret",
     "Encrypted with the server secret key before being stored": "Encrypted with the server secret key before being stored",
     "Required when the bot enables the keyword check, leave blank otherwise": "Required when the bot enables the keyword check, leave blank otherwise",
-    "Local time of the report timezone, 00:00 means following the server default": "Local time of the report timezone, 00:00 means following the server default",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default.",
     "Save Daily Report Settings": "Save",
     "Send Test Message": "Send Test Message",
     "Daily report settings have been saved": "Daily report settings have been saved",
@@ -2304,13 +2304,13 @@
     "Filter Description": "Filter Description",
     "How to import this file?": "How to import this file?",
     "How to export this file?": "How to export this file?",
-    "ezBookkeeping File Format": "ezBookkeeping File Format",
+    "Folio File Format": "Folio File Format",
     "Custom File Format": "Custom File Format",
     "General Data Exchange Format": "General Data Exchange Format",
     "General Bank Statement Format": "General Bank Statement Format",
     "Other Bank/Payment App Statement File": "Other Bank/Payment App Statement File",
     "Other Finance App File Format": "Other Finance App File Format",
-    "ezbookkeeping Data Export File": "ezbookkeeping Data Export File",
+    "Folio Data Export File": "Folio Data Export File",
     "Excel Workbook File": "Excel Workbook File",
     "Excel Workbook File (.xlsx)": "Excel Workbook File (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 Workbook File (.xls)",
@@ -3066,5 +3066,32 @@
     "Parameter Invalid": "Parameter Invalid",
     "Numeric Overflow": "Numeric Overflow",
     "Invalid date range": "Invalid date range",
-    "Click to close": "Click to close"
+    "Click to close": "Click to close",
+    "Card Picture": "Card Picture",
+    "Upload Picture": "Upload Picture",
+    "Replace Picture": "Replace Picture",
+    "The same shared pool limit stated by the bank in this card currency": "The same shared pool limit stated by the bank in this card currency",
+    "Final Repayment Date": "Final Repayment Date",
+    "Days After Statement Date": "Days After Statement Date",
+    "Fixed Day Each Month": "Fixed Day Each Month",
+    "Repayment Day of Month": "Repayment Day of Month",
+    "Include Statement Date Transactions": "Include Statement Date Transactions",
+    "When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill": "When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill",
+    "Email Notifications": "Email Notifications",
+    "Statement Date Reminder": "Statement Date Reminder",
+    "Send an email on each statement date": "Send an email on each statement date",
+    "Statement Email": "Statement Email",
+    "Send an email containing all transactions of the just-ended billing cycle": "Send an email containing all transactions of the just-ended billing cycle",
+    "Repayment Date Reminder": "Repayment Date Reminder",
+    "Send an email before and on each repayment date": "Send an email before and on each repayment date",
+    "Days Before Repayment Date": "Days Before Repayment Date",
+    "Notification Time": "Notification Time",
+    "Notifications are sent at this time in your timezone": "Notifications are sent at this time in your timezone",
+    "Credit Card Notification Check Interval": "Credit Card Notification Check Interval",
+    "15 Minutes": "15 Minutes",
+    "30 Minutes": "30 Minutes",
+    "1 Hour": "1 Hour",
+    "3 Hours": "3 Hours",
+    "6 Hours": "6 Hours",
+    "12 Hours": "12 Hours"
 }

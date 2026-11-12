@@ -28,12 +28,12 @@ export class FileCacheType implements KeyAndName {
     private static readonly allInstances: FileCacheType[] = [];
     private static readonly allInstancesByKey: Record<string, FileCacheType> = {};
 
-    public static readonly ApplicationCode = new FileCacheType('ezbookkeeping-code-cache', 'Application Code', ['workbox-runtime-']);
-    public static readonly ResourceFiles = new FileCacheType('ezbookkeeping-assets-cache', 'Resource Files', ['workbox-precache-v2-']);
-    public static readonly MapData = new FileCacheType('ezbookkeeping-map-cache', 'Map Data', []);
-    public static readonly UserAvatars = new FileCacheType('ezbookkeeping-user-avatar-cache', 'User Avatars', []);
-    public static readonly TransactionPictures = new FileCacheType('ezbookkeeping-transaction-picture-cache', 'Transaction Pictures', []);
-    public static readonly CustomIcons = new FileCacheType('ezbookkeeping-custom-icon-cache', 'Custom Icons', []);
+    public static readonly ApplicationCode = new FileCacheType('folio-code-cache', 'Application Code', ['workbox-runtime-']);
+    public static readonly ResourceFiles = new FileCacheType('folio-assets-cache', 'Resource Files', ['workbox-precache-v2-']);
+    public static readonly MapData = new FileCacheType('folio-map-cache', 'Map Data', []);
+    public static readonly UserAvatars = new FileCacheType('folio-user-avatar-cache', 'User Avatars', []);
+    public static readonly TransactionPictures = new FileCacheType('folio-transaction-picture-cache', 'Transaction Pictures', []);
+    public static readonly CustomIcons = new FileCacheType('folio-custom-icon-cache', 'Custom Icons', []);
 
     public readonly key: string;
     public readonly name: string;

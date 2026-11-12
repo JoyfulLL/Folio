@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} 条规则",
             "accountActivationAndResendValidationEmailTip": "账号激活链接已经发送到您的邮箱地址：{email}，如果您没有收到邮件，请再次输入密码并点击下方的按钮重新发送验证邮件。",
             "resendValidationEmailTip": "如果您没有收到邮件，请再次输入密码并点击下方的按钮重新发送验证邮件到：{email}",
-            "oauth2bindTip": "您正在使用 {providerName} 登录 \"{userName}\" 用户，请输入你的 ezBookkeeping 的密码进行验证。"
+            "oauth2bindTip": "您正在使用 {providerName} 登录 \"{userName}\" 用户，请输入你的 Folio 的密码进行验证。"
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_导出数据",
-        "exportFilename": "ezBookkeeping_{nickname}_导出数据",
-        "defaultExportStatisticsFileName": "ezBookkeeping_统计数据",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_统计数据",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_对账单",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_对账单",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_洞察探索查询",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_洞察探索查询",
-        "defaultImportDataMappingFileName": "ezBookkeeping_导入数据映射文件",
-        "defaultImportHandlingScript": "ezBookkeeping_导入处理脚本",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_导入替换规则文件",
-        "defaultImportCheckResultFileName": "ezBookkeeping_导入检查结果",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_总览布局"
+        "defaultExportFilename": "Folio_导出数据",
+        "exportFilename": "Folio_{nickname}_导出数据",
+        "defaultExportStatisticsFileName": "Folio_统计数据",
+        "exportStatisticsFileName": "Folio_{nickname}_统计数据",
+        "defaultExportReconciliationStatementsFileName": "Folio_对账单",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_对账单",
+        "defaultInsightsExplorerQueryFileName": "Folio_洞察探索查询",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_洞察探索查询",
+        "defaultImportDataMappingFileName": "Folio_导入数据映射文件",
+        "defaultImportHandlingScript": "Folio_导入处理脚本",
+        "defaultImportReplaceRuleFileName": "Folio_导入替换规则文件",
+        "defaultImportCheckResultFileName": "Folio_导入检查结果",
+        "defaultOverviewLayoutFileName": "Folio_总览布局"
     },
     "calendar": {
         "Gregorian": "公历",
@@ -1815,8 +1815,8 @@
     "Change Language": "修改语言",
     "Date is too early": "日期过早",
     "User Canceled": "用户已取消",
-    "Welcome to ezBookkeeping": "欢迎使用 ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "请使用您的 ezBookkeeping 账号登录",
+    "Welcome to Folio": "欢迎使用 Folio",
+    "Please log in with your Folio account": "请使用您的 Folio 账号登录",
     "Unlock Application": "解锁应用",
     "Please enter your PIN code or use WebAuthn to unlock application": "请输入您的 PIN 码，或使用 WebAuthn 解锁应用",
     "Please enter your PIN code to unlock application": "请输入您的 PIN 码解锁应用",
@@ -2152,7 +2152,7 @@
     "Leave blank to keep the saved secret": "留空则保持已保存的密钥不变",
     "Encrypted with the server secret key before being stored": "保存前会使用服务器密钥加密存储",
     "Required when the bot enables the keyword check, leave blank otherwise": "机器人开启关键字校验时必填，未开启留空即可",
-    "Local time of the report timezone, 00:00 means following the server default": "报表时区的本地时间，00:00 表示跟随服务器默认值",
+    "Local time of the report timezone, 00:00 means following the server default": "报表时区的本地时间。日报会在此时间之后的第一个 15 分钟检查点发送，因此最多可能延迟 15 分钟。00:00 表示使用服务器默认值",
     "Save Daily Report Settings": "保存日报设置",
     "Send Test Message": "发送测试消息",
     "Daily report settings have been saved": "日报设置已保存",
@@ -2304,13 +2304,13 @@
     "Filter Description": "过滤描述",
     "How to import this file?": "如何导入该文件？",
     "How to export this file?": "如何导出该文件？",
-    "ezBookkeeping File Format": "ezBookkeeping 文件格式",
+    "Folio File Format": "Folio 文件格式",
     "Custom File Format": "自定义文件格式",
     "General Data Exchange Format": "通用数据交换格式",
     "General Bank Statement Format": "通用银行对账单格式",
     "Other Bank/Payment App Statement File": "其他银行/支付应用对账单文件",
     "Other Finance App File Format": "其他金融应用文件格式",
-    "ezbookkeeping Data Export File": "ezbookkeeping 数据导出文件",
+    "Folio Data Export File": "Folio 数据导出文件",
     "Excel Workbook File": "Excel 工作簿文件",
     "Excel Workbook File (.xlsx)": "Excel 工作簿文件 (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 工作簿文件 (.xls)",
@@ -3066,5 +3066,32 @@
     "Parameter Invalid": "参数错误",
     "Numeric Overflow": "数值溢出",
     "Invalid date range": "无效的日期范围",
-    "Click to close": "点击关闭"
+    "Click to close": "点击关闭",
+    "Card Picture": "卡面图片",
+    "Upload Picture": "上传图片",
+    "Replace Picture": "更换图片",
+    "The same shared pool limit stated by the bank in this card currency": "与银行标明的本卡币种共享额度保持一致",
+    "Final Repayment Date": "最后还款日",
+    "Days After Statement Date": "账单日后天数",
+    "Fixed Day Each Month": "每月固定日期",
+    "Repayment Day of Month": "每月还款日",
+    "Include Statement Date Transactions": "包含账单日当天交易",
+    "When enabled, transactions on the statement date are included in the current bill; otherwise they are included in the next bill": "开启后，账单日当天的交易计入本期账单；关闭则计入下期账单",
+    "Email Notifications": "邮件通知",
+    "Statement Date Reminder": "账单日提醒",
+    "Send an email on each statement date": "每个账单日发送邮件提醒",
+    "Statement Email": "账单邮件",
+    "Send an email containing all transactions of the just-ended billing cycle": "邮件包含刚结束账单周期的全部交易",
+    "Repayment Date Reminder": "还款日提醒",
+    "Send an email before and on each repayment date": "还款日前及当天发送邮件提醒",
+    "Days Before Repayment Date": "还款日前提醒天数",
+    "Notification Time": "通知时间",
+    "Notifications are sent at this time in your timezone": "通知按您所在时区的该时间发送",
+    "Credit Card Notification Check Interval": "信用卡通知检查间隔",
+    "15 Minutes": "每 15 分钟",
+    "30 Minutes": "每 30 分钟",
+    "1 Hour": "每 1 小时",
+    "3 Hours": "每 3 小时",
+    "6 Hours": "每 6 小时",
+    "12 Hours": "每 12 小时"
 }

@@ -188,7 +188,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > notes.md <<EOF
-          Custom ezBookkeeping build \`$VERSION\`.
+          Custom Folio build \`$VERSION\`.
 
           - Commit: \`$GITHUB_SHA\`
           - Assets: one tar.gz per architecture, named \`ezbookkeeping-$TAG-linux-<arch>.tar.gz\`

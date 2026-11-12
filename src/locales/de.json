@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Ein Aktivierungslink wurde an Ihre E-Mail-Adresse gesendet: {email}. Wenn Sie die E-Mail nicht erhalten haben, geben Sie bitte das Passwort erneut ein und klicken Sie auf die Schaltfläche unten, um die Bestätigungs-E-Mail erneut zu senden.",
             "resendValidationEmailTip": "Wenn Sie die E-Mail nicht erhalten haben, geben Sie bitte das Passwort erneut ein und klicken Sie auf die Schaltfläche unten, um die Bestätigungs-E-Mail an: {email} erneut zu senden.",
-            "oauth2bindTip": "Sie melden sich beim Benutzer {userName} mit {providerName} an. Bitte geben Sie Ihr ezBookkeeping-Passwort zur Bestätigung ein."
+            "oauth2bindTip": "Sie melden sich beim Benutzer {userName} mit {providerName} an. Bitte geben Sie Ihr Folio-Passwort zur Bestätigung ein."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Gregorianisch",
@@ -1815,8 +1815,8 @@
     "Change Language": "Sprache ändern",
     "Date is too early": "Datum ist zu früh",
     "User Canceled": "Benutzer hat abgebrochen",
-    "Welcome to ezBookkeeping": "Willkommen bei ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Bitte melden Sie sich mit Ihrem ezBookkeeping-Konto an",
+    "Welcome to Folio": "Willkommen bei Folio",
+    "Please log in with your Folio account": "Bitte melden Sie sich mit Ihrem Folio-Konto an",
     "Unlock Application": "Anwendung entsperren",
     "Please enter your PIN code or use WebAuthn to unlock application": "Bitte geben Sie Ihren PIN-Code ein oder verwenden Sie WebAuthn, um die Anwendung zu entsperren",
     "Please enter your PIN code to unlock application": "Bitte geben Sie Ihren PIN-Code ein, um die Anwendung zu entsperren",
@@ -2283,13 +2283,13 @@
     "Filter Description": "Filterbeschreibung",
     "How to import this file?": "Wie importiere ich diese Datei?",
     "How to export this file?": "Wie exportiere ich diese Datei?",
-    "ezBookkeeping File Format": "ezBookkeeping-Dateiformat",
+    "Folio File Format": "Folio-Dateiformat",
     "Custom File Format": "Benutzerdefiniertes Dateiformat",
     "General Data Exchange Format": "Allgemeines Datenaustauschformat",
     "General Bank Statement Format": "Allgemeines Kontoauszugsformat",
     "Other Bank/Payment App Statement File": "Andere Bank-/Zahlungs-App-Kontoauszugsdatei",
     "Other Finance App File Format": "Anderes Finanz-App-Dateiformat",
-    "ezbookkeeping Data Export File": "ezBookkeeping-Datenexportdatei",
+    "Folio Data Export File": "Folio-Datenexportdatei",
     "Excel Workbook File": "Excel-Arbeitsmappendatei",
     "Excel Workbook File (.xlsx)": "Excel-Arbeitsmappendatei (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 Arbeitsmappendatei (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "Parameter ungültig",
     "Numeric Overflow": "Numerischer Überlauf",
     "Invalid date range": "Ungültiger Datumsbereich",
-    "Click to close": "Zum Schließen klicken"
+    "Click to close": "Zum Schließen klicken",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

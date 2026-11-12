@@ -1,13 +1,13 @@
 declare module 'vuetify/styles';
 declare module 'framework7-icons';
 
-declare const __EZBOOKKEEPING_IS_PRODUCTION__: boolean;
-declare const __EZBOOKKEEPING_VERSION__: string;
-declare const __EZBOOKKEEPING_BUILD_UNIX_TIME__: string;
-declare const __EZBOOKKEEPING_BUILD_COMMIT_HASH__: string;
-declare const __EZBOOKKEEPING_LICENSE__: string;
-declare const __EZBOOKKEEPING_CONTRIBUTORS__: ContributorInfo;
-declare const __EZBOOKKEEPING_THIRD_PARTY_LICENSES__: LicenseInfo[];
+declare const __FOLIO_IS_PRODUCTION__: boolean;
+declare const __FOLIO_VERSION__: string;
+declare const __FOLIO_BUILD_UNIX_TIME__: string;
+declare const __FOLIO_BUILD_COMMIT_HASH__: string;
+declare const __FOLIO_LICENSE__: string;
+declare const __FOLIO_CONTRIBUTORS__: ContributorInfo;
+declare const __FOLIO_THIRD_PARTY_LICENSES__: LicenseInfo[];
 
 declare interface ContributorInfo {
     code: string[];
@@ -23,7 +23,7 @@ declare interface LicenseInfo {
 }
 
 interface Window {
-    EZBOOKKEEPING_SERVER_SETTINGS?: {
+    FOLIO_SERVER_SETTINGS?: {
         [key: string]: string | number | boolean | undefined | null;
     };
 }

@@ -14,9 +14,6 @@
         <f7-list strong inset dividers>
             <f7-list-item :title="tt('Version')" :after="clientVersion" @click="showVersion"></f7-list-item>
             <f7-list-item :title="tt('Build Time')" :after="clientBuildTime" v-if="clientBuildTime"></f7-list-item>
-            <f7-list-item :title="tt('Official Website')" link="#" @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')"></f7-list-item>
-            <f7-list-item :title="tt('Report Issue')" link="#" @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping/issues')"></f7-list-item>
-            <f7-list-item :title="tt('Getting help')" link="#" popup-open=".document-popup"></f7-list-item>
             <f7-list-item :title="tt('License')" link="#" popup-open=".license-popup"></f7-list-item>
         </f7-list>
 
@@ -49,7 +46,7 @@
                     </p>
                     <hr/>
                     <p>
-                        <span>ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
+                        <span>This application builds on an open-source codebase and community-contributed translations. Thanks to the following contributors:</span>
                     </p>
                     <div>
                         <strong>Project Maintainer</strong>
@@ -105,7 +102,7 @@
                         </tbody>
                     </table>
                     <p class="margin-top margin-bottom">
-                        <span>ezBookkeeping also contains additional third party software and illustration.</span><br/>
+                        <span>Folio also contains additional third party software and illustration.</span><br/>
                         <span>All the third party software / illustration included or linked is redistributed under the terms and conditions of their original licenses.</span>
                     </p>
                     <p :key="licenseInfo.name" v-for="licenseInfo in thirdPartyLicenses">
@@ -115,22 +112,6 @@
                         <br v-if="licenseInfo.url"/><span class="work-break-all" v-if="licenseInfo.url">{{ licenseInfo.url }}</span>
                     </p>
                 </f7-block>
-            </f7-page>
-        </f7-popup>
-
-        <f7-popup push swipe-to-close class="document-popup" @popup:open="onDocumentPopupOpen">
-            <f7-page>
-                <f7-navbar>
-                    <f7-nav-left>
-                        <f7-link popup-close icon-f7="xmark" :aria-label="tt('Close')"></f7-link>
-                    </f7-nav-left>
-                    <f7-nav-title class="license-title">{{ tt('Documentation') }}</f7-nav-title>
-                    <f7-nav-right class="navbar-compact-icons">
-                        <f7-link icon-f7="globe" :aria-label="tt('Open in Browser')" @click="openExternalUrl(documentIframe?.src || documentUrl)"></f7-link>
-                    </f7-nav-right>
-                </f7-navbar>
-                <iframe ref="documentIframe" class="document-iframe" src="about:blank" :style="documentLoading ? 'display: none' : ''"></iframe>
-                <f7-preloader class="document-preloader" size="36" v-if="documentLoading"></f7-preloader>
             </f7-page>
         </f7-popup>
 
@@ -157,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, useTemplateRef, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 
 import type { LanguageOption } from '@/locales/index.ts';
 import { useI18n } from '@/locales/helpers.ts';
@@ -167,7 +148,7 @@ import { useAboutPageBase } from '@/views/base/AboutPageBase.ts';
 import { isWebAuthnCompletelySupported } from '@/lib/webauthn.ts';
 import { getStringifiedServerSetting } from '@/lib/server_settings.ts';
 
-const { tt, getCurrentLanguageTag, getAllLanguageOptions } = useI18n();
+const { tt, getAllLanguageOptions } = useI18n();
 const { showAlert, showToast, openExternalUrl } = useI18nUIComponents();
 const {
     clientVersion,
@@ -185,29 +166,18 @@ const {
     init
 } = useAboutPageBase();
 
-const documentIframe = useTemplateRef<HTMLIFrameElement>('documentIframe');
-
 const showDiagnosisActionSheet = ref<boolean>(false);
 const versionClickCount = ref<number>(0);
-const documentLoading = ref<boolean>(true);
 const diagnosisInformation = ref<string>('');
 const showDiagnosisInformationSheet = ref<boolean>(false);
 
 const allLanguages = computed<LanguageOption[]>(() => getAllLanguageOptions(false));
 const forceShowRefreshBrowserCacheMenu = computed<boolean>(() => versionClickCount.value >= 5);
 
-const documentUrl = computed<string>(() => {
-    if (getCurrentLanguageTag() === 'zh-Hans' || getCurrentLanguageTag() === 'zh-Hant') {
-        return 'https://ezbookkeeping.mayswind.net/zh_Hans/faq/';
-    } else {
-        return 'https://ezbookkeeping.mayswind.net/faq/';
-    }
-});
-
 function updateDiagnosisInformation(supportsWebAuthn: boolean, hasClipboardPermission: boolean, hasGeolocationPermission: boolean): void {
     diagnosisInformation.value =
-        `ezBookkeeping Frontend Version: ${clientVersion}\n` +
-        `ezBookkeeping Backend Version: ${serverDisplayVersion.value}\n` +
+        `Folio Frontend Version: ${clientVersion}\n` +
+        `Folio Backend Version: ${serverDisplayVersion.value}\n` +
         `User Agent: ${navigator.userAgent}\n` +
         `Security Context: ${window.isSecureContext}\n` +
         `Standalone: ${isiOSHomeScreenMode()}\n` +
@@ -220,7 +190,7 @@ function updateDiagnosisInformation(supportsWebAuthn: boolean, hasClipboardPermi
         `Clipboard Permission Granted: ${hasClipboardPermission}\n` +
         `Geolocation API Supported: ${!!navigator.geolocation}\n` +
         `Geolocation Permission Granted: ${hasGeolocationPermission}\n` +
-        `ezBookkeeping Server Settings:\n${getStringifiedServerSetting()}`;
+        `Folio Server Settings:\n${getStringifiedServerSetting()}`;
 }
 
 function showDiagnosisInformation(): void {
@@ -281,27 +251,9 @@ function showVersion(): void {
     }
 }
 
-function onDocumentPopupOpen(): void {
-    documentLoading.value = true;
-
-    if (documentIframe.value) {
-        documentIframe.value.src = documentUrl.value;
-    }
-}
-
 function onDiagnosisInformationCopied(): void {
     showToast('Data copied');
 }
-
-
-onMounted(() => {
-    if (documentIframe.value) {
-        documentIframe.value.onload = () => {
-            documentLoading.value = false;
-            documentIframe.value?.contentWindow?.scrollTo(0, 0);
-        };
-    }
-});
 
 init();
 </script>
@@ -318,19 +270,6 @@ init();
     .license-content {
         font-size: var(--ebk-license-content-font-size);
     }
-}
-
-.document-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.document-preloader {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
 }
 
 .contributors-table {

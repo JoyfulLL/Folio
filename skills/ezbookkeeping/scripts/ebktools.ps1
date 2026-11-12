@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 
-# ezBookkeeping API Tools
-# A command-line tool for calling ezBookkeeping APIs
+# Folio API Tools
+# A command-line tool for calling Folio APIs
 
 param(
     [Parameter(Position=0)]
@@ -528,7 +528,7 @@ $API_CONFIGS = @(
     }
     @{
         Name = "server-version"
-        Description = "Retrieve ezBookkeeping server version information"
+        Description = "Retrieve Folio server version information"
         Method = "GET"
         Path = "systems/version.json"
         RequiresTimezone = $false
@@ -1152,16 +1152,16 @@ function Show-Help {
     $exampleTimezoneName = Get-ExampleTimezoneName
     $exampleTimezoneOffset = Get-ExampleTimezoneOffset
 
-    Write-Host "ezBookkeeping API Tools"
+    Write-Host "Folio API Tools"
     Write-Host ""
-    Write-Host "A command-line tool for calling ezBookkeeping APIs"
+    Write-Host "A command-line tool for calling Folio APIs"
     Write-Host ""
     Write-Host "Usage:"
     Write-Host "    ebktools.ps1 [-tzName <name>] [-tzOffset <offset>] [-rawResponse] <command> [command-options]"
     Write-Host ""
     Write-Host "Environment Variables (Required):"
-    Write-Host "    EBKTOOL_SERVER_BASEURL      ezBookkeeping server base URL (e.g., http://localhost:8080)"
-    Write-Host "    EBKTOOL_TOKEN               ezBookkeeping API token"
+    Write-Host "    EBKTOOL_SERVER_BASEURL      Folio server base URL (e.g., http://localhost:8080)"
+    Write-Host "    EBKTOOL_TOKEN               Folio API token"
     Write-Host ""
     Write-Host "    You can also set the above environment variables in a '.env' file located in the current directory, parent directory or home directory."
     Write-Host ""
@@ -1369,7 +1369,7 @@ function Invoke-Api {
 
     if (-not $serverBaseUrl) {
         Write-Red "Error: Environment variable 'EBKTOOL_SERVER_BASEURL' is not set."
-        Write-Host "Please set it to your ezBookkeeping server base URL (e.g., http://localhost:8080)"
+        Write-Host "Please set it to your Folio server base URL (e.g., http://localhost:8080)"
         exit 1
     }
 

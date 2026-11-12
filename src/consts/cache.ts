@@ -1,4 +1,4 @@
-export const SW_SHARE_CACHE_NAME: string = 'ezbookkeeping-share-cache';
+export const SW_SHARE_CACHE_NAME: string = 'folio-share-cache';
 
 export const SW_MESSAGE_TYPE_UPDATE_MAP_CACHE_CONFIG: string = 'UPDATE_MAP_CACHE_CONFIG';
 export const SW_MESSAGE_TYPE_UPDATE_MAP_CACHE_CONFIG_RESPONSE: string = 'UPDATE_MAP_CACHE_CONFIG_RESPONSE';

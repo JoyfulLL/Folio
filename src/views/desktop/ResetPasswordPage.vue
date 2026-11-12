@@ -90,7 +90,7 @@
 
                             <div class="auth-powered-by text-center">
                                 <span>Powered by </span>
-                                <a href="https://github.com/mayswind/ezbookkeeping" target="_blank">ezBookkeeping</a>&nbsp;<span>{{ version }}</span>
+                                <span>Folio</span>&nbsp;<span>{{ version }}</span>
                             </div>
                         </v-card-text>
                     </v-card>

@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "ลิงก์สำหรับเปิดใช้งานบัญชีได้ถูกส่งไปยังอีเมลของคุณแล้ว: {email} หากคุณไม่ได้รับอีเมล โปรดกรอกรหัสผ่านอีกครั้งแล้วกดปุ่มด้านล่างเพื่อส่งอีเมลยืนยันอีกครั้ง",
             "resendValidationEmailTip": "หากคุณไม่ได้รับอีเมล โปรดกรอกรหัสผ่านอีกครั้งแล้วกดปุ่มด้านล่างเพื่อส่งอีเมลยืนยันไปยัง: {email}",
-            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezBookkeeping password to verify."
+            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your Folio password to verify."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_export_data",
+        "exportFilename": "Folio_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Folio_statistics_data",
+        "exportStatisticsFileName": "Folio_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Folio_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_import_data_mapping",
+        "defaultImportHandlingScript": "Folio_handling_script",
+        "defaultImportReplaceRuleFileName": "Folio_import_replace_rule",
+        "defaultImportCheckResultFileName": "Folio_import_check_result",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "เกรกอเรียน",
@@ -1815,8 +1815,8 @@
     "Change Language": "เปลี่ยนภาษา",
     "Date is too early": "วันที่เร็วเกินไป",
     "User Canceled": "User Canceled",
-    "Welcome to ezBookkeeping": "ยินดีต้อนรับสู่ ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "กรุณาเข้าสู่ระบบด้วยบัญชี ezBookkeeping ของคุณ",
+    "Welcome to Folio": "ยินดีต้อนรับสู่ Folio",
+    "Please log in with your Folio account": "กรุณาเข้าสู่ระบบด้วยบัญชี Folio ของคุณ",
     "Unlock Application": "ปลดล็อกแอปพลิเคชัน",
     "Please enter your PIN code or use WebAuthn to unlock application": "กรุณาใส่รหัส PIN หรือใช้ WebAuthn เพื่อปลดล็อกแอปพลิเคชัน",
     "Please enter your PIN code to unlock application": "กรุณาใส่รหัส PIN เพื่อปลดล็อกแอปพลิเคชัน",
@@ -2283,13 +2283,13 @@
     "Filter Description": "กรองคำอธิบาย",
     "How to import this file?": "วิธีการนำเข้าไฟล์นี้?",
     "How to export this file?": "วิธีการส่งออกไฟล์นี้?",
-    "ezBookkeeping File Format": "รูปแบบไฟล์ ezBookkeeping",
+    "Folio File Format": "รูปแบบไฟล์ Folio",
     "Custom File Format": "รูปแบบไฟล์กำหนดเอง",
     "General Data Exchange Format": "รูปแบบแลกเปลี่ยนข้อมูลทั่วไป",
     "General Bank Statement Format": "รูปแบบรายการบัญชีธนาคารทั่วไป",
     "Other Bank/Payment App Statement File": "ไฟล์รายการธนาคาร/แอปชำระเงินอื่น",
     "Other Finance App File Format": "รูปแบบไฟแอปการเงินอื่น",
-    "ezbookkeeping Data Export File": "ไฟล์ส่งออกข้อมูล ezBookkeeping",
+    "Folio Data Export File": "ไฟล์ส่งออกข้อมูล Folio",
     "Excel Workbook File": "ไฟล์ Excel",
     "Excel Workbook File (.xlsx)": "Excel Workbook File (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 Workbook File (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "พารามิเตอร์ไม่ถูกต้อง",
     "Numeric Overflow": "ตัวเลขล้น",
     "Invalid date range": "Invalid date range",
-    "Click to close": "คลิกเพื่อปิด"
+    "Click to close": "คลิกเพื่อปิด",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

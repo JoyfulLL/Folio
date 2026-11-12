@@ -31,8 +31,8 @@ func main() {
 	core.BuildTime = BuildUnixTime
 
 	cmd := &cli.Command{
-		Name:    "ezBookkeeping",
-		Usage:   "An open source, powerful, self-hosted personal finance app that is easy to use.",
+		Name:    "Folio",
+		Usage:   "A lightweight, self-hosted personal finance app.",
 		Version: GetFullVersion(),
 		Commands: []*cli.Command{
 			cmd.WebServer,
@@ -57,7 +57,7 @@ func main() {
 	err := cmd.Run(context.Background(), os.Args)
 
 	if err != nil {
-		log.Fatalf("Failed to run ezBookkeeping with %s: %v", os.Args, err)
+		log.Fatalf("Failed to run Folio with %s: %v", os.Args, err)
 	}
 }
 

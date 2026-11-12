@@ -39,7 +39,7 @@ func (h *mcpDeleteTransactionToolHandler) Name() string {
 
 // Description returns the description of the MCP tool
 func (h *mcpDeleteTransactionToolHandler) Description() string {
-	return "Delete an existing transaction in ezBookkeeping."
+	return "Delete an existing transaction in Folio."
 }
 
 // InputType returns the input type for the MCP tool request

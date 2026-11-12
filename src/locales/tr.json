@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Folio"
         }
     },
     "language": {
@@ -180,23 +180,23 @@
             "ruleCount": "{count} rules",
             "accountActivationAndResendValidationEmailTip": "Hesap aktivasyon bağlantısı e-posta adresinize ({email}) gönderildi. Eğer e-postayı almadıysanız, lütfen şifrenizi tekrar girin ve doğrulama postasını yeniden göndermek için aşağıdaki butona tıklayın.",
             "resendValidationEmailTip": "Eğer e-postayı almadıysanız, lütfen şifrenizi tekrar girin ve doğrulama postasını şu adrese yeniden göndermek için aşağıdaki butona tıklayın: {email}",
-            "oauth2bindTip": "{providerName} kullanarak {userName} hesabına giriş yapıyorsunuz. Doğrulamak için lütfen ezBookkeeping şifrenizi girin."
+            "oauth2bindTip": "{providerName} kullanarak {userName} hesabına giriş yapıyorsunuz. Doğrulamak için lütfen Folio şifrenizi girin."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_disa_aktarim_verisi",
-        "exportFilename": "ezBookkeeping_{nickname}_disa_aktarim_verisi",
-        "defaultExportStatisticsFileName": "ezBookkeeping_istatistik_verisi",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_istatistik_verisi",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_mutabakat_ekstreleri",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_mutabakat_ekstreleri",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_ice_aktarim_eslemesi",
-        "defaultImportHandlingScript": "ezBookkeeping_isleme_betigi",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_ice_aktarim_degistirme_kurali",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_kontrol_sonucu",
-        "defaultOverviewLayoutFileName": "ezBookkeeping_overview_layout"
+        "defaultExportFilename": "Folio_disa_aktarim_verisi",
+        "exportFilename": "Folio_{nickname}_disa_aktarim_verisi",
+        "defaultExportStatisticsFileName": "Folio_istatistik_verisi",
+        "exportStatisticsFileName": "Folio_{nickname}_istatistik_verisi",
+        "defaultExportReconciliationStatementsFileName": "Folio_mutabakat_ekstreleri",
+        "exportReconciliationStatementsFileName": "Folio_{nickname}_mutabakat_ekstreleri",
+        "defaultInsightsExplorerQueryFileName": "Folio_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Folio_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Folio_ice_aktarim_eslemesi",
+        "defaultImportHandlingScript": "Folio_isleme_betigi",
+        "defaultImportReplaceRuleFileName": "Folio_ice_aktarim_degistirme_kurali",
+        "defaultImportCheckResultFileName": "Folio_import_kontrol_sonucu",
+        "defaultOverviewLayoutFileName": "Folio_overview_layout"
     },
     "calendar": {
         "Gregorian": "Miladi",
@@ -1815,8 +1815,8 @@
     "Change Language": "Dili Değiştir",
     "Date is too early": "Tarih çok erken",
     "User Canceled": "Kullanıcı İptal Etti",
-    "Welcome to ezBookkeeping": "ezBookkeeping'e Hoş Geldiniz",
-    "Please log in with your ezBookkeeping account": "Lütfen ezBookkeeping hesabınızla giriş yapın",
+    "Welcome to Folio": "Folio'e Hoş Geldiniz",
+    "Please log in with your Folio account": "Lütfen Folio hesabınızla giriş yapın",
     "Unlock Application": "Uygulamanın Kilidini Aç",
     "Please enter your PIN code or use WebAuthn to unlock application": "Uygulamanın kilidini açmak için PIN kodunuzu girin veya WebAuthn kullanın",
     "Please enter your PIN code to unlock application": "Uygulamanın kilidini açmak için PIN kodunuzu girin",
@@ -2283,13 +2283,13 @@
     "Filter Description": "Açıklamayı Filtrele",
     "How to import this file?": "Bu dosya nasıl içe aktarılır?",
     "How to export this file?": "Bu dosya nasıl dışa aktarılır?",
-    "ezBookkeeping File Format": "ezBookkeeping Dosya Formatı",
+    "Folio File Format": "Folio Dosya Formatı",
     "Custom File Format": "Özel Dosya Formatı",
     "General Data Exchange Format": "Genel Veri Değişim Formatı",
     "General Bank Statement Format": "Genel Banka Ekstresi Formatı",
     "Other Bank/Payment App Statement File": "Diğer Banka/Ödeme Uygulaması Ekstre Dosyası",
     "Other Finance App File Format": "Diğer Finans Uygulaması Dosya Formatı",
-    "ezbookkeeping Data Export File": "ezBookkeeping Veri Dışa Aktarım Dosyası",
+    "Folio Data Export File": "Folio Veri Dışa Aktarım Dosyası",
     "Excel Workbook File": "Excel Çalışma Kitabı Dosyası",
     "Excel Workbook File (.xlsx)": "Excel Workbook File (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 Workbook File (.xls)",
@@ -3045,5 +3045,6 @@
     "Parameter Invalid": "Parametre Geçersiz",
     "Numeric Overflow": "Sayısal Taşma",
     "Invalid date range": "Invalid date range",
-    "Click to close": "Kapatmak için tıklayın"
+    "Click to close": "Kapatmak için tıklayın",
+    "Local time of the report timezone, 00:00 means following the server default": "Local time in the report timezone. The report is sent at the first 15-minute check at or after this time, so it may arrive up to 15 minutes later. 00:00 uses the server default."
 }

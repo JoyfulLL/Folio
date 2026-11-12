@@ -29,7 +29,7 @@ const script = computed<string>({
 });
 
 const customScriptEditorExtraLibs = computed<CodeEditorExtraLib[]>(() => [{
-    filePath: 'inmemory://model/ezbookkeeping-import-transaction.d.ts',
+    filePath: 'inmemory://model/folio-import-transaction.d.ts',
     content: `
 interface ParsedDateTime {
     dateTime: string;
