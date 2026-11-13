@@ -52,7 +52,9 @@ func testNotificationString(value string) *string {
 }
 
 func testNotificationPlanWindow(currentUnixTime int64) (int64, int64) {
-	return currentUnixTime - int64(creditCardNotificationCatchUpDuration.Seconds()), currentUnixTime + int64(creditCardNotificationLookAheadDuration.Seconds())
+	// These unit tests deliberately exercise a narrow window. The production reconciliation
+	// window is much wider (see creditCardNotificationBackfillDuration).
+	return currentUnixTime - int64((24 * time.Hour).Seconds()), currentUnixTime + int64((26 * time.Hour).Seconds())
 }
 
 func TestBuildNotificationPlansStatementNotifications(t *testing.T) {

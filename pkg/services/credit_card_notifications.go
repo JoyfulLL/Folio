@@ -17,12 +17,26 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/uuid"
 )
 
-// the catch up duration matches the send window, so correcting a statement date or a reminder
-// time later in the day still delivers the notification of that day
-const creditCardNotificationCatchUpDuration = 24 * time.Hour
-const creditCardNotificationLookAheadDuration = 26 * time.Hour
-const creditCardNotificationSendWindowDuration = 24 * time.Hour
-const creditCardNotificationMaxRetryCount = int16(6)
+// Every tick reconciles all notification business keys which could still be outstanding. The
+// backfill window is deliberately wide so a long service outage, a temporarily disabled SMTP
+// server, an unverified email address or a setting changed at any time can never make a
+// notification disappear. The unique index on (uid, account_id, notification_type,
+// scheduled_date) is what makes recomputing this window on every tick safe.
+const creditCardNotificationBackfillDuration = 90 * 24 * time.Hour
+const creditCardNotificationLookAheadDuration = 2 * 24 * time.Hour
+
+// Failed notifications are retried forever, but progressively less often so a permanently
+// broken mailbox does not hammer the SMTP server every 15 minutes.
+const creditCardNotificationMinRetryInterval = 15 * time.Minute
+const creditCardNotificationMediumRetryInterval = 1 * time.Hour
+const creditCardNotificationSlowRetryInterval = 6 * time.Hour
+const creditCardNotificationEarlyRetryCount = int16(3)
+const creditCardNotificationMediumRetryCount = int16(8)
+
+// Retries never stop, but the counter is capped once the slowest backoff is reached, so it can
+// never overflow and a long-lived failure keeps a stable retry cadence.
+const creditCardNotificationRetryCountCap = creditCardNotificationMediumRetryCount + 1
+
 const creditCardNotificationPageCount = 100
 const creditCardNotificationDefaultMinutesOfDay = 9 * 60
 const creditCardNotificationMaxMinutesOfDay = 24*60 - 1
@@ -32,6 +46,11 @@ const creditCardNotificationPlanMonthsBefore = 5
 const creditCardNotificationPlanMonthsAfter = 1
 const creditCardNotificationMaxLastErrorLength = 200
 const creditCardAccountListUrlFormat = "%sdesktop#/account/list"
+
+// A business key whose send time already passed before the account was first seen with
+// notifications enabled is only recorded as a baseline. It is never sent, and it is never
+// revived, so enabling a card does not produce a burst of historical statement emails.
+const creditCardNotificationBaselineReason = "baseline: configured after this date"
 
 // CreditCardNotificationService represents credit card notification service
 type CreditCardNotificationService struct {
@@ -76,16 +95,17 @@ var (
 	}
 )
 
-// RunCreditCardNotifications plans and sends the credit card notifications which belong to the
-// current time. Plans are recomputed on every scan of the accounts of a user, so correcting a
-// statement date or a reminder time still produces the notification of the current day. The unique
-// index of uid, account id, notification type and scheduled date keeps every notification sent only
-// once, so restarting the service or running the job more than once never sends the same
-// notification to the same account twice
+// RunCreditCardNotifications reconciles and sends credit card notifications by business key.
+// Plans are always recomputed and persisted, even when SMTP is unavailable; sending is the only
+// step skipped in that case. This way a disabled SMTP server never creates a gap in the ledger
+// and every outstanding notification is delivered as soon as SMTP comes back. The unique index
+// of uid, account id, notification type and scheduled date keeps every notification sent only
+// once, no matter how often the job runs or how many instances run it at the same time.
 func (s *CreditCardNotificationService) RunCreditCardNotifications(c core.Context, currentUnixTime int64) error {
-	if !s.CurrentConfig().EnableSMTP {
-		log.Warnf(c, "[credit_card_notifications.RunCreditCardNotifications] credit card notifications are skipped, because smtp server is not enabled")
-		return nil
+	smtpEnabled := s.CurrentConfig().EnableSMTP
+
+	if !smtpEnabled {
+		log.Warnf(c, "[credit_card_notifications.RunCreditCardNotifications] smtp server is not enabled, planning credit card notifications but skipping delivery until smtp is available")
 	}
 
 	var firstError error
@@ -112,11 +132,13 @@ func (s *CreditCardNotificationService) RunCreditCardNotifications(c core.Contex
 			}
 		}
 
-		if err := s.sendNotifications(c, db, currentUnixTime); err != nil {
-			log.Errorf(c, "[credit_card_notifications.RunCreditCardNotifications] failed to send credit card notifications for data store %d, because %s", i, err.Error())
+		if smtpEnabled {
+			if err := s.sendNotifications(c, db, currentUnixTime); err != nil {
+				log.Errorf(c, "[credit_card_notifications.RunCreditCardNotifications] failed to send credit card notifications for data store %d, because %s", i, err.Error())
 
-			if firstError == nil {
-				firstError = err
+				if firstError == nil {
+					firstError = err
+				}
 			}
 		}
 	}
@@ -144,15 +166,43 @@ func (s *CreditCardNotificationService) planNotifications(c core.Context, db dat
 		return err
 	}
 
-	minSendUnixTime := currentUnixTime - int64(creditCardNotificationCatchUpDuration.Seconds())
+	// Reconcile every business key whose send time falls in this wide window. Anything already
+	// sent is left untouched by the unique index, anything still outstanding is (re)created or
+	// reset to pending, so no outage can leave a notification behind.
+	minSendUnixTime := currentUnixTime - int64(creditCardNotificationBackfillDuration.Seconds())
 	maxSendUnixTime := currentUnixTime + int64(creditCardNotificationLookAheadDuration.Seconds())
 	createdCount := 0
 
 	for i := 0; i < len(accounts); i++ {
-		planItems := s.buildNotificationPlans(accounts[i], currentUnixTime, minSendUnixTime, maxSendUnixTime)
+		account := accounts[i]
+
+		// The oldest ledger row marks when this account first had notifications enabled. Keys
+		// belonging to an earlier LOCAL DAY are only recorded as a baseline, so turning the
+		// feature on never produces a burst of historical statement emails. Everything on or
+		// after that day is a real outstanding notification and is always backfilled, including
+		// a same-day send time which already passed a few minutes ago.
+		baselineUnixTime := currentUnixTime
+		var firstLogs []*models.CreditCardNotificationLog
+
+		err := db.NewSession(c).Where("uid=? AND account_id=?", account.Uid, account.AccountId).OrderBy("created_unix_time asc").Limit(1).Find(&firstLogs)
+
+		if err != nil {
+			log.Errorf(c, "[credit_card_notifications.planNotifications] failed to check the existing credit card notification logs of account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, account.Uid, err.Error())
+			return err
+		}
+
+		if len(firstLogs) > 0 && firstLogs[0].CreatedUnixTime > 0 {
+			baselineUnixTime = firstLogs[0].CreatedUnixTime
+		}
+
+		location := creditCardNotificationLocation(account.Extend)
+		baselineLocalTime := time.Unix(baselineUnixTime, 0).In(location)
+		baselineDayStartUnixTime := time.Date(baselineLocalTime.Year(), baselineLocalTime.Month(), baselineLocalTime.Day(), 0, 0, 0, 0, location).Unix()
+
+		planItems := s.buildNotificationPlans(account, currentUnixTime, minSendUnixTime, maxSendUnixTime)
 
 		for j := 0; j < len(planItems); j++ {
-			added, err := s.addNotificationPlan(c, db, planItems[j], currentUnixTime)
+			added, err := s.addNotificationPlan(c, db, planItems[j], currentUnixTime, baselineDayStartUnixTime)
 
 			if err != nil {
 				log.Errorf(c, "[credit_card_notifications.planNotifications] failed to plan credit card notification \"type:%s\" for account \"id:%d\" of user \"uid:%d\", because %s", planItems[j].NotificationType, planItems[j].AccountId, planItems[j].Uid, err.Error())
@@ -275,7 +325,7 @@ func (s *CreditCardNotificationService) buildNotificationPlans(account *models.A
 	return planItems
 }
 
-func (s *CreditCardNotificationService) addNotificationPlan(c core.Context, db datastore.Database, planItem *creditCardNotificationPlanItem, currentUnixTime int64) (bool, error) {
+func (s *CreditCardNotificationService) addNotificationPlan(c core.Context, db datastore.Database, planItem *creditCardNotificationPlanItem, currentUnixTime int64, baselineDayStartUnixTime int64) (bool, error) {
 	notification := &models.CreditCardNotificationLog{}
 	has, err := db.NewSession(c).Where("uid=? AND account_id=? AND notification_type=? AND scheduled_date=? AND deleted=?", planItem.Uid, planItem.AccountId, planItem.NotificationType, planItem.ScheduledDate, false).Get(notification)
 
@@ -284,24 +334,41 @@ func (s *CreditCardNotificationService) addNotificationPlan(c core.Context, db d
 	}
 
 	if has {
-		// a corrected reminder time still moves the notification of the planned day, but a
-		// notification which has already been sent or cancelled is never revived
-		if notification.Status != models.CREDIT_CARD_NOTIFICATION_STATUS_PENDING && notification.Status != models.CREDIT_CARD_NOTIFICATION_STATUS_FAILED {
+		// SUCCESS is the only irreversible state. A baseline row is also terminal, because it
+		// describes a date before notifications were configured on this account.
+		if notification.Status == models.CREDIT_CARD_NOTIFICATION_STATUS_SUCCESS || notification.LastError == creditCardNotificationBaselineReason {
 			return false, nil
 		}
 
-		if notification.SendUnixTime == planItem.SendUnixTime {
+		sendTimeChanged := notification.SendUnixTime != planItem.SendUnixTime
+		needsRevival := notification.Status == models.CREDIT_CARD_NOTIFICATION_STATUS_CANCELLED
+
+		if !sendTimeChanged && !needsRevival {
 			return false, nil
 		}
 
+		// Turning a switch off and back on, or correcting a statement date / reminder time,
+		// must not lose the notification of that day. A changed plan is a fresh attempt, so
+		// the row is made immediately deliverable again instead of waiting for a long backoff.
 		updateModel := &models.CreditCardNotificationLog{
 			SendUnixTime:    planItem.SendUnixTime,
+			Status:          models.CREDIT_CARD_NOTIFICATION_STATUS_PENDING,
+			RetryCount:      0,
+			LastError:       "",
 			UpdatedUnixTime: currentUnixTime,
 		}
 
-		_, err = db.NewSession(c).Cols("send_unix_time", "updated_unix_time").ID(notification.NotificationLogId).Update(updateModel)
+		_, err = db.NewSession(c).Cols("send_unix_time", "status", "retry_count", "last_error", "updated_unix_time").ID(notification.NotificationLogId).Update(updateModel)
 
 		return false, err
+	}
+
+	status := models.CREDIT_CARD_NOTIFICATION_STATUS_PENDING
+	lastError := ""
+
+	if baselineDayStartUnixTime > 0 && planItem.SendUnixTime < baselineDayStartUnixTime {
+		status = models.CREDIT_CARD_NOTIFICATION_STATUS_CANCELLED
+		lastError = creditCardNotificationBaselineReason
 	}
 
 	notificationModel := &models.CreditCardNotificationLog{
@@ -312,8 +379,9 @@ func (s *CreditCardNotificationService) addNotificationPlan(c core.Context, db d
 		NotificationType:  planItem.NotificationType,
 		ScheduledDate:     planItem.ScheduledDate,
 		SendUnixTime:      planItem.SendUnixTime,
-		Status:            models.CREDIT_CARD_NOTIFICATION_STATUS_PENDING,
+		Status:            status,
 		RetryCount:        0,
+		LastError:         lastError,
 		CreatedUnixTime:   currentUnixTime,
 		UpdatedUnixTime:   currentUnixTime,
 	}
@@ -328,19 +396,24 @@ func (s *CreditCardNotificationService) addNotificationPlan(c core.Context, db d
 }
 
 func (s *CreditCardNotificationService) sendNotifications(c core.Context, db datastore.Database, currentUnixTime int64) error {
-	minSendUnixTime := currentUnixTime - int64(creditCardNotificationSendWindowDuration.Seconds())
 	var notificationLogs []*models.CreditCardNotificationLog
 
-	err := db.NewSession(c).Where("deleted=? AND notification_type IN (?, ?, ?, ?) AND status IN (?, ?) AND send_unix_time>=? AND send_unix_time<=? AND retry_count<?", false,
+	// There is deliberately no lower bound on send_unix_time and no retry limit. A notification
+	// stays outstanding until it succeeds, no matter how long the outage, the SMTP downtime or
+	// the unverified mailbox lasted. The only throttle is a progressive backoff between two
+	// attempts; rows which have never been attempted (retry_count=0), including backfilled
+	// ones, are delivered on the very first tick.
+	minLastAttemptUnixTime := currentUnixTime - int64(creditCardNotificationMinRetryInterval.Seconds())
+
+	err := db.NewSession(c).Where("deleted=? AND notification_type IN (?, ?, ?, ?) AND status IN (?, ?) AND send_unix_time<=? AND (retry_count=0 OR updated_unix_time<=?)", false,
 		models.CREDIT_CARD_NOTIFICATION_TYPE_STATEMENT_REMINDER,
 		models.CREDIT_CARD_NOTIFICATION_TYPE_STATEMENT_EMAIL,
 		models.CREDIT_CARD_NOTIFICATION_TYPE_REPAYMENT_ADVANCE,
 		models.CREDIT_CARD_NOTIFICATION_TYPE_REPAYMENT_DUE,
 		models.CREDIT_CARD_NOTIFICATION_STATUS_PENDING,
 		models.CREDIT_CARD_NOTIFICATION_STATUS_FAILED,
-		minSendUnixTime,
 		currentUnixTime,
-		creditCardNotificationMaxRetryCount).OrderBy("send_unix_time asc").Limit(creditCardNotificationPageCount).Find(&notificationLogs)
+		minLastAttemptUnixTime).OrderBy("send_unix_time asc").Limit(creditCardNotificationPageCount).Find(&notificationLogs)
 
 	if err != nil {
 		return err
@@ -350,13 +423,36 @@ func (s *CreditCardNotificationService) sendNotifications(c core.Context, db dat
 		return nil
 	}
 
-	log.Infof(c, "[credit_card_notifications.sendNotifications] should send %d credit card notifications now", len(notificationLogs))
+	sentCount := 0
 
 	for i := 0; i < len(notificationLogs); i++ {
-		s.sendNotification(c, notificationLogs[i], currentUnixTime)
+		notification := notificationLogs[i]
+
+		if notification.RetryCount > 0 && currentUnixTime-notification.UpdatedUnixTime < creditCardNotificationRetryDelay(notification.RetryCount) {
+			continue
+		}
+
+		s.sendNotification(c, notification, currentUnixTime)
+		sentCount++
 	}
 
+	log.Infof(c, "[credit_card_notifications.sendNotifications] should send %d credit card notifications now (from %d candidates)", sentCount, len(notificationLogs))
+
 	return nil
+}
+
+// creditCardNotificationRetryDelay returns the minimum number of seconds between two attempts.
+// Retries never stop, they only become less frequent, so a permanently broken mailbox is still
+// delivered as soon as it is fixed without flooding the SMTP server in the meantime.
+func creditCardNotificationRetryDelay(retryCount int16) int64 {
+	switch {
+	case retryCount <= creditCardNotificationEarlyRetryCount:
+		return int64(creditCardNotificationMinRetryInterval.Seconds())
+	case retryCount <= creditCardNotificationMediumRetryCount:
+		return int64(creditCardNotificationMediumRetryInterval.Seconds())
+	default:
+		return int64(creditCardNotificationSlowRetryInterval.Seconds())
+	}
 }
 
 func (s *CreditCardNotificationService) sendNotification(c core.Context, notification *models.CreditCardNotificationLog, currentUnixTime int64) {
@@ -394,11 +490,13 @@ func (s *CreditCardNotificationService) sendNotification(c core.Context, notific
 		reason := "user not found"
 
 		if err == nil {
-			reason = "user cannot receive emails"
+			reason = "user cannot receive emails yet"
 		}
 
+		// An unverified, disabled or temporarily missing user is a transient condition, not a
+		// reason to give up on the notification. Keep it failed and retry until it succeeds.
 		log.Warnf(c, "[credit_card_notifications.sendNotification] credit card notification \"type:%s\" for account \"id:%d\" of user \"uid:%d\" is not sent, because %s", notification.NotificationType, notification.AccountId, notification.Uid, reason)
-		s.cancelNotification(c, notification, currentUnixTime, reason)
+		s.updateNotificationResult(c, notification, models.CREDIT_CARD_NOTIFICATION_STATUS_FAILED, reason, currentUnixTime)
 		return
 	}
 
@@ -582,7 +680,7 @@ func (s *CreditCardNotificationService) cancelNotification(c core.Context, notif
 }
 
 func (s *CreditCardNotificationService) updateNotificationResult(c core.Context, notification *models.CreditCardNotificationLog, status models.CreditCardNotificationStatus, lastError string, currentUnixTime int64) {
-	if status != models.CREDIT_CARD_NOTIFICATION_STATUS_SUCCESS {
+	if status != models.CREDIT_CARD_NOTIFICATION_STATUS_SUCCESS && notification.RetryCount < creditCardNotificationRetryCountCap {
 		notification.RetryCount++
 	}
 

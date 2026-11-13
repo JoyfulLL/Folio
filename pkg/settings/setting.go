@@ -1109,7 +1109,11 @@ func loadDuplicateCheckerConfiguration(config *Config, configFile *ini.File, sec
 func loadCronConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.EnableRemoveExpiredTokens = getConfigItemBoolValue(configFile, sectionName, "enable_remove_expired_tokens", false)
 	config.EnableCreateScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_create_scheduled_transaction", false)
-	config.EnableCreditCardNotification = getConfigItemBoolValue(configFile, sectionName, "enable_credit_card_notification", false)
+	// Credit card notifications are enabled per account in the web UI, just like daily reports.
+	// The job must be registered by default, otherwise an installation which never set this
+	// server-wide switch silently drops every statement and repayment notification. Set it to
+	// false explicitly only when the whole feature should be disabled on this server.
+	config.EnableCreditCardNotification = getConfigItemBoolValue(configFile, sectionName, "enable_credit_card_notification", true)
 
 	return nil
 }

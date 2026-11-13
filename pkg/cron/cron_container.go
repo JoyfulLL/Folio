@@ -85,8 +85,12 @@ func (c *CronJobSchedulerContainer) registerAllJobs(ctx core.Context, config *se
 		Container.registerIntervalJob(ctx, CreateScheduledTransactionJob)
 	}
 
+	// Enabled by default: the notifications themselves are switched on per account in the web
+	// UI, so a missing server-wide switch must not silently stop the whole job.
 	if config.EnableCreditCardNotification {
 		Container.registerIntervalJob(ctx, CreditCardNotificationJob)
+	} else {
+		log.Warnf(ctx, "[cron_container.registerAllJobs] credit card notifications are disabled by the server-wide cron switch, no statement or repayment notification will be sent")
 	}
 
 	// the daily report job is always registered, because users can enable the report in the web
