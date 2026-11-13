@@ -116,7 +116,7 @@
                                 <v-card border class="card-title-with-bg account-card mb-4 h-auto">
                                     <template #title>
                                         <div class="account-title d-flex align-center">
-                                            <v-icon class="disabled me-0" size="28px" :icon="mdiSquareRounded" />
+                                            <span class="account-icon-badge account-icon-badge--placeholder"></span>
                                             <span class="account-name text-truncate ms-2">
                                                 <v-skeleton-loader class="skeleton-no-margin my-1"
                                                                    width="120px" type="text" :loading="true"></v-skeleton-loader>
@@ -166,15 +166,13 @@
                                     <template #item="{ element }">
                                         <div class="list-group-item">
                                             <v-card border class="card-title-with-bg account-card mb-4 h-auto" v-if="showHidden || !element.hidden">
-                                                <div class="account-card-background"
-                                                     :style="getAccountWatermarkStyle(element)"
-                                                     v-if="getAccountWatermarkUrl(element)"></div>
                                                 <template #title>
                                                     <div class="account-title d-flex align-center">
-                                                        <ItemIcon size="1.5rem" :icon-type="getAccountIconType(element.iconType)" :icon-id="element.icon"
-                                                                  :color="element.color" :hidden-status="element.hidden" />
+                                                        <AccountIconBadge :icon-type="getAccountIconType(element.iconType)" :icon-id="element.icon"
+                                                                          :color="element.color" :default-icon-id="accountDefaultIconId(element)"
+                                                                          :hidden-status="element.hidden" />
                                                         <span class="account-name text-truncate ms-2">{{ element.name }}</span>
-                                                        <small class="account-currency text-truncate ms-2 align-self-end">
+                                                        <small class="account-currency text-truncate ms-2">
                                                             {{ accountCurrency(element) }}
                                                         </small>
                                                         <v-spacer/>
@@ -357,11 +355,9 @@ import { useAccountListPageBase } from '@/views/base/accounts/AccountListPageBas
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useAccountsStore } from '@/stores/account.ts';
-import { useUserCustomIconsStore } from '@/stores/userCustomIcon.ts';
 
 import { DateRange, DateRangeScene, type LocalizedDateRange, type TimeRangeAndDateType } from '@/core/datetime.ts';
 import { AccountType, AccountCategory } from '@/core/account.ts';
-import { IconType } from '@/core/icon.ts';
 import { DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_DESKTOP } from '@/core/statistics.ts';
 import type { Account } from '@/models/account.ts';
 
@@ -379,7 +375,6 @@ import {
     mdiEyeOffOutline,
     mdiCalculatorVariantOutline,
     mdiRefresh,
-    mdiSquareRounded,
     mdiPencilOutline,
     mdiDotsHorizontalCircleOutline,
     mdiReceiptTextCheckOutline,
@@ -428,7 +423,6 @@ const {
 const settingsStore = useSettingsStore();
 const userStore = useUserStore();
 const accountsStore = useAccountsStore();
-const customIconsStore = useUserCustomIconsStore();
 
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
@@ -527,26 +521,8 @@ function accountCurrency(account: Account): string | null {
     }
 }
 
-function getAccountWatermarkUrl(account: Account): string | undefined {
-    const currentAccount = account.getAccountOrSubAccount(activeSubAccount.value[account.id]) || account;
-
-    if (currentAccount.iconType !== IconType.UserCustom) {
-        return undefined;
-    }
-
-    return customIconsStore.getUserCustomIconUrl(currentAccount.icon);
-}
-
-function getAccountWatermarkStyle(account: Account): Record<string, string> {
-    const url = getAccountWatermarkUrl(account);
-
-    if (!url) {
-        return {};
-    }
-
-    return {
-        backgroundImage: `url("${url.replace(/"/g, '\\"')}")`
-    };
+function accountDefaultIconId(account: Account): string | undefined {
+    return AccountCategory.valueOf(account.category)?.defaultAccountIconId;
 }
 
 function accountReconciliationStatementDateRanges(account: Account): LocalizedDateRange[] {
@@ -852,11 +828,16 @@ reload(false);
 
     .account-title .account-name {
         color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
+        /* the v-spacer owns the remaining space, so the currency stays next to the name */
+        flex: 0 1 auto;
+        min-width: 0;
     }
 
     .account-currency {
         font-size: 0.8rem;
         color: rgba(var(--v-theme-on-background), var(--v-medium-emphasis-opacity));
+        flex: 0 1 auto;
+        min-width: 0;
     }
 
     .account-subaccounts {
@@ -908,43 +889,6 @@ reload(false);
     .account-balance {
         font-size: 1.25rem;
         color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
-    }
-
-    .account-card-background {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        width: 170px;
-        height: 100%;
-        background-repeat: no-repeat;
-        background-position: right 14px bottom 6px;
-        background-size: contain;
-        opacity: 0.18;
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    &:hover .account-card-background {
-        opacity: 0.32;
-    }
-
-    > .v-card-item,
-    > .v-card-text,
-    > .v-divider {
-        position: relative;
-        z-index: 1;
-    }
-}
-
-.v-theme--dark {
-    .account-card {
-        .account-card-background {
-            opacity: 0.26;
-        }
-
-        &:hover .account-card-background {
-            opacity: 0.42;
-        }
     }
 }
 </style>

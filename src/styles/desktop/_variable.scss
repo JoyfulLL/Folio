@@ -29,6 +29,13 @@
     --ebk-transition-fast: 150ms ease;
     --ebk-transition-base: 200ms cubic-bezier(0.2, 0, 0, 1);
 
+    /* Account icon badge design tokens (shared by all account types) */
+    --ebk-account-icon-badge-size: 40px;
+    --ebk-account-icon-badge-icon-size: 24px;
+    --ebk-account-icon-badge-bg-opacity: 0.10;
+    --ebk-account-icon-badge-fg-mix: 0%;
+    --ebk-account-icon-badge-rgb: var(--v-theme-primary, var(--ebk-primary-color));
+
     --ebk-surface: 255, 255, 255;
     --ebk-surface-muted: 248, 247, 245;
     --ebk-surface-raised: 255, 255, 255;
@@ -59,6 +66,10 @@
     --ebk-shadow-sm: 0 1px 2px rgba(var(--ebk-shadow-color), 0.18), 0 4px 14px rgba(var(--ebk-shadow-color), 0.14);
     --ebk-shadow-md: 0 9px 28px rgba(var(--ebk-shadow-color), 0.28);
     --ebk-shadow-lg: 0 18px 50px rgba(var(--ebk-shadow-color), 0.42);
+
+    /* Dark badge: keep the tinted surface subdued and lift the glyph contrast */
+    --ebk-account-icon-badge-bg-opacity: 0.20;
+    --ebk-account-icon-badge-fg-mix: 35%;
 }
 
 .pin-codes-input {

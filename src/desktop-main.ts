@@ -98,6 +98,7 @@ import OneColumnDialogLayout from '@/components/desktop/OneColumnDialogLayout.vu
 import TwoColumnDialogLayout from '@/components/desktop/TwoColumnDialogLayout.vue';
 import AuthIllustration from '@/components/desktop/AuthIllustration.vue';
 import ItemIcon from '@/components/desktop/ItemIcon.vue';
+import AccountIconBadge from '@/components/desktop/AccountIconBadge.vue';
 import ToggleButton from '@/components/desktop/ToggleButton.vue';
 import BtnVerticalGroup from '@/components/desktop/BtnVerticalGroup.vue';
 import NumberInput from '@/components/desktop/NumberInput.vue';
@@ -572,6 +573,7 @@ app.component('OneColumnDialogLayout', OneColumnDialogLayout);
 app.component('TwoColumnDialogLayout', TwoColumnDialogLayout);
 app.component('AuthIllustration', AuthIllustration);
 app.component('ItemIcon', ItemIcon);
+app.component('AccountIconBadge', AccountIconBadge);
 app.component('ToggleButton', ToggleButton);
 app.component('BtnVerticalGroup', BtnVerticalGroup);
 app.component('NumberInput', NumberInput);
