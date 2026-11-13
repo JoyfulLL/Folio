@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag, e.g. credit-1.0.1. Leave empty for snapshot-YYYYMMDD-<sha>'
+        description: 'Release tag, e.g. 1.0.3. Leave empty for snapshot-YYYYMMDD-<sha>'
         required: false
         default: ''
       arch:
@@ -26,7 +26,9 @@ on:
         default: ''
   push:
     tags:
-      - 'credit-*'
+      # Plain semver tags (1.0.3). Must not overlap with the upstream
+      # build-release.yml trigger ("v*.*.*"), hence no leading "v" here.
+      - '[0-9]*'
 
 permissions:
   contents: write
@@ -137,7 +139,7 @@ jobs:
           chmod +x build.sh
           # No --no-lint / --no-test: a green build.sh is what guarantees the
           # tar.gz really contains the backend binary and the frontend dist.
-          ./build.sh package --release -o "ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
+          ./build.sh package --release -o "folio-${TAG}-linux-${ARCH}.tar.gz"
 
       - name: Verify package contents
         env:
@@ -145,7 +147,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
         run: |
           set -euo pipefail
-          pkg="ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
+          pkg="folio-${TAG}-linux-${ARCH}.tar.gz"
           test -s "$pkg"
           # No "grep -q": with pipefail it can SIGPIPE tar and cause a false failure.
           tar -tzf "$pkg" | grep -x './ezbookkeeping' >/dev/null || { echo "ERROR: backend binary missing"; exit 1; }
@@ -156,7 +158,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: package-${{ matrix.arch }}
-          path: ezbookkeeping-*.tar.gz
+          path: folio-*.tar.gz
           if-no-files-found: error
           retention-days: 14
 
@@ -191,7 +193,7 @@ jobs:
           Custom Folio build \`$VERSION\`.
 
           - Commit: \`$GITHUB_SHA\`
-          - Assets: one tar.gz per architecture, named \`ezbookkeeping-$TAG-linux-<arch>.tar.gz\`
+          - Assets: one tar.gz per architecture, named \`folio-$TAG-linux-<arch>.tar.gz\`
           - Deploy with \`ez-update.sh $TAG\`; it updates /opt/ez in place and keeps
             \`/opt/ez/conf/ezbookkeeping.ini\`, data/, storage/, log/ and nginx paths untouched.
           - The \`conf/\` inside the archive is only the template. Never use it in production.

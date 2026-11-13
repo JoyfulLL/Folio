@@ -22,7 +22,7 @@ Requires Go, GCC (for SQLite), Node.js and npm.
 # Frontend + backend build
 ./build.sh all
 
-# Release package (produces ezbookkeeping-<version>-<arch>.tar.gz)
+# Release package (produces folio-<version>-<arch>.tar.gz)
 ./build.sh package --release -o folio.tar.gz
 
 # Docker image
@@ -60,6 +60,8 @@ Mount a persistent volume for `data/`, `log/` and `storage/` so data survives co
 ## Deployment helpers
 
 `deploy/ez-update.sh` performs an in-place, pull-based upgrade of a systemd installation. It replaces only the backend binary, `public/`, `templates/` and `LICENSE`, and never overwrites the real config, database or logs. See `deploy/ez-update.env.example` and `deploy/ezbookkeeping.service` for the expected layout.
+
+Release tags are plain semver (`1.0.3`, no `v` prefix, so they never collide with the upstream `v*.*.*` release workflow). The tag is also the version string reported by the binary and the web UI. Release assets are named `folio-<tag>-linux-<arch>.tar.gz`.
 
 ## License
 

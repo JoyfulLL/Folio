@@ -15,7 +15,7 @@
 # Usage:
 #   sudo ez-update.sh --check                 # dry run: show every resolved path, change nothing
 #   sudo ez-update.sh                        # deploy RELEASE_TAG from /etc/ez-update.env
-#   sudo ez-update.sh credit-1.0.1           # deploy one specific Release tag
+#   sudo ez-update.sh 1.0.3                  # deploy one specific Release tag
 #   sudo ez-update.sh latest                 # deploy the newest Release
 #   sudo ez-update.sh --rollback             # restore the most recent app backup
 #
@@ -343,6 +343,7 @@ if [ "$MODE" = "check" ]; then
     log "binary label     : $BIN_LABEL"
     log "json parser      : $JSON_TOOL"
     log "requested tag    : ${1:-${RELEASE_TAG:-latest}}"
+    log "asset names      : folio-<tag>-linux-$ARCH.tar.gz (legacy fallback: ezbookkeeping-<tag>-linux-$ARCH.tar.gz)"
     log "WILL REPLACE     : $(printf '%s ' "${ITEMS[@]}")"
     log "NEVER TOUCH      : $(printf '%s ' "${PROTECTED[@]}") (and any other file in $INSTALL_DIR)"
     log "backups go to    : $BACKUP_DIR"
@@ -379,30 +380,65 @@ if [ "$TAG" = "latest" ]; then
     log "latest release: $TAG"
 fi
 
-ASSET_NAME="ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
-log "target: $GITHUB_REPO / $TAG / $ASSET_NAME"
+PRIMARY_ASSET_NAME="folio-${TAG}-linux-${ARCH}.tar.gz"
+# Releases published before the Folio rename used the "ezbookkeeping-" prefix.
+# Keep it as a fallback so older Release tags stay deployable.
+LEGACY_ASSET_NAME="ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
+log "target: $GITHUB_REPO / $TAG / $PRIMARY_ASSET_NAME"
 
 TMP_DIR="$(mktemp -d)"
-PKG="$TMP_DIR/$ASSET_NAME"
+PKG=""
+ASSET_NAME=""
 
+# Private repos resolve the asset URL through the API. The release metadata is
+# the same for both candidate names, so fetch it once instead of once per try.
+RELEASE_JSON=""
 if [ -n "$GITHUB_TOKEN" ]; then
-    # Private repo: resolve the asset through the API, then download the binary.
     RELEASE_JSON="$(api_get "/releases/tags/$TAG")" || die "release $TAG not reachable"
-    ASSET_URL="$(printf '%s' "$RELEASE_JSON" | json_asset_url)"
-    [ -n "$ASSET_URL" ] || die "asset $ASSET_NAME not found in release $TAG"
-    curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
-        -H "Accept: application/octet-stream" \
-        -H "Authorization: Bearer $GITHUB_TOKEN" \
-        -o "$PKG" "$ASSET_URL" || die "download failed"
-else
-    curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
-        -o "$PKG" \
-        "https://github.com/$GITHUB_REPO/releases/download/$TAG/$ASSET_NAME" \
-        || die "download failed (private repo? set GITHUB_TOKEN)"
 fi
 
-[ -s "$PKG" ] || die "downloaded file is empty"
-tar -tzf "$PKG" >/dev/null || die "downloaded file is not a valid tar.gz"
+for candidate_asset_name in "$PRIMARY_ASSET_NAME" "$LEGACY_ASSET_NAME"; do
+    candidate_pkg="$TMP_DIR/$candidate_asset_name"
+    log "trying asset: $candidate_asset_name"
+    rm -f "$candidate_pkg"
+
+    if [ -n "$GITHUB_TOKEN" ]; then
+        ASSET_NAME="$candidate_asset_name"
+        ASSET_URL="$(printf '%s' "$RELEASE_JSON" | json_asset_url)"
+        if [ -z "$ASSET_URL" ]; then
+            log "asset $candidate_asset_name not found in release $TAG"
+            continue
+        fi
+        if ! curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
+            -H "Accept: application/octet-stream" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -o "$candidate_pkg" "$ASSET_URL"; then
+            log "download failed for $candidate_asset_name"
+            continue
+        fi
+    else
+        if ! curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
+            -o "$candidate_pkg" \
+            "https://github.com/$GITHUB_REPO/releases/download/$TAG/$candidate_asset_name"; then
+            log "download failed for $candidate_asset_name"
+            continue
+        fi
+    fi
+
+    # A proxy or a stale redirect can return HTTP 200 with an HTML error page.
+    # Validate the archive before accepting the candidate, otherwise the
+    # legacy fallback would never be tried.
+    if [ ! -s "$candidate_pkg" ] || ! tar -tzf "$candidate_pkg" >/dev/null 2>&1; then
+        log "$candidate_asset_name is empty or not a valid tar.gz"
+        continue
+    fi
+
+    ASSET_NAME="$candidate_asset_name"
+    PKG="$candidate_pkg"
+    break
+done
+
+[ -n "$PKG" ] || die "no downloadable asset found for release $TAG (tried $PRIMARY_ASSET_NAME and $LEGACY_ASSET_NAME)"
 # No "grep -q": with pipefail it can SIGPIPE tar and cause a false failure.
 tar -tzf "$PKG" | grep -x './ezbookkeeping' >/dev/null || die "package has no backend binary"
 log "downloaded $(du -h "$PKG" | cut -f1)"

@@ -234,7 +234,7 @@ build_package() {
         package_file_name="$package_file_name-$BUILD_DATE"
     fi
 
-    package_file_name="ezbookkeeping-$package_file_name-$(arch).tar.gz"
+    package_file_name="folio-$package_file_name-$(arch).tar.gz"
 
     if [ -n "$PACKAGE_FILENAME" ]; then
         package_file_name="$PACKAGE_FILENAME"
