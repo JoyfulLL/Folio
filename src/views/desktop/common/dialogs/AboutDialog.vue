@@ -36,6 +36,11 @@
                                         <span class="text-body-large">{{ clientBuildTime }}</span>
                                     </v-col>
                                 </v-row>
+                                <v-row no-gutters>
+                                    <v-col cols="12">
+                                        <a class="about-powered-by" target="_blank" href="https://github.com/mayswind/ezbookkeeping">{{ tt('Powered by ezBookkeeping') }}</a>
+                                    </v-col>
+                                </v-row>
                             </v-card-text>
                         </v-card>
                     </v-col>
@@ -220,6 +225,18 @@ watch(() => props.show, (newValue) => {
 </script>
 
 <style>
+.about-powered-by {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: rgba(var(--v-theme-on-surface), 0.6);
+    text-decoration: none;
+
+    &:hover {
+        color: rgba(var(--v-theme-on-surface), 0.85);
+        text-decoration: underline;
+    }
+}
+
 .contributors-table {
     border-collapse: collapse;
 

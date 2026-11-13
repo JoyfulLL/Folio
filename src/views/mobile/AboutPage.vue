@@ -17,6 +17,10 @@
             <f7-list-item :title="tt('License')" link="#" popup-open=".license-popup"></f7-list-item>
         </f7-list>
 
+        <p class="about-powered-by text-align-center">
+            <f7-link target="_blank" @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')">{{ tt('Powered by ezBookkeeping') }}</f7-link>
+        </p>
+
         <f7-block-title class="margin-top" v-if="exchangeRatesData && !isUserCustomExchangeRates">{{ tt('Exchange Rates Data') }}</f7-block-title>
         <f7-list strong inset dividers v-if="exchangeRatesData && !isUserCustomExchangeRates">
             <f7-list-item :title="tt('Provider')" :after="exchangeRatesData.dataSource" link="#"
@@ -259,6 +263,12 @@ init();
 </script>
 
 <style>
+.about-powered-by {
+    margin: 6px 16px 0 16px;
+    font-size: var(--f7-block-footer-font-size);
+    color: var(--f7-block-footer-text-color);
+}
+
 .license-popup {
     --f7-navbar-height: 60px;
 
