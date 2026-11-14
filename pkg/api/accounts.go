@@ -1086,6 +1086,210 @@ func (a *AccountsApi) SubAccountDeleteHandler(c *core.WebContext) (any, *errs.Er
 	return true, nil
 }
 
+// AccountReshapeHandler reshapes the account structure by either grouping level-one single
+// accounts into a new multi-account parent, or moving selected sub-accounts of an existing group
+// into a new multi-account parent. It is a structural-only operation and never migrates
+// transactions, so it is only supported for non credit card accounts.
+func (a *AccountsApi) AccountReshapeHandler(c *core.WebContext) (any, *errs.Error) {
+	var accountReshapeReq models.AccountReshapeRequest
+	err := c.ShouldBindJSON(&accountReshapeReq)
+
+	if err != nil {
+		log.Warnf(c, "[accounts.AccountReshapeHandler] parse request failed, because %s", err.Error())
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+
+	uid := c.GetCurrentUid()
+
+	if accountReshapeReq.Operation == models.ACCOUNT_RESHAPE_OPERATION_GROUP {
+		return a.reshapeGroupAccounts(c, uid, &accountReshapeReq)
+	} else if accountReshapeReq.Operation == models.ACCOUNT_RESHAPE_OPERATION_SPLIT {
+		return a.reshapeSplitAccounts(c, uid, &accountReshapeReq)
+	}
+
+	log.Warnf(c, "[accounts.AccountReshapeHandler] account reshape operation invalid, operation is %d", accountReshapeReq.Operation)
+	return nil, errs.ErrAccountReshapeOperationInvalid
+}
+
+func (a *AccountsApi) reshapeGroupAccounts(c *core.WebContext, uid int64, accountReshapeReq *models.AccountReshapeRequest) (any, *errs.Error) {
+	accountIds, err := utils.StringArrayToInt64Array(accountReshapeReq.AccountIds)
+
+	if err != nil {
+		return nil, errs.ErrAccountIdInvalid
+	}
+
+	if len(accountIds) < 1 {
+		return nil, errs.ErrAccountReshapeAccountCountInvalid
+	}
+
+	accounts, err := a.accounts.GetAccountsByAccountIds(c, uid, accountIds)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.AccountReshapeHandler] failed to get accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	sourceAccounts := make([]*models.Account, 0, len(accountIds))
+	var category models.AccountCategory
+	seenAccountIds := make(map[int64]bool, len(accountIds))
+
+	for i := 0; i < len(accountIds); i++ {
+		account, exists := accounts[accountIds[i]]
+
+		if !exists {
+			return nil, errs.ErrAccountNotFound
+		}
+
+		if seenAccountIds[account.AccountId] {
+			return nil, errs.ErrAccountReshapeAccountCountInvalid
+		}
+
+		seenAccountIds[account.AccountId] = true
+
+		if account.ParentAccountId != models.LevelOneAccountParentId || account.Type != models.ACCOUNT_TYPE_SINGLE_ACCOUNT {
+			log.Warnf(c, "[accounts.AccountReshapeHandler] source account \"id:%d\" is not a level-one single account", account.AccountId)
+			return nil, errs.ErrAccountReshapeSourceAccountInvalid
+		}
+
+		if account.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD {
+			return nil, errs.ErrAccountReshapeNotSupportedForCreditCard
+		}
+
+		if i == 0 {
+			category = account.Category
+		} else if account.Category != category {
+			return nil, errs.ErrAccountReshapeCategoryNotEquals
+		}
+
+		sourceAccounts = append(sourceAccounts, account)
+	}
+
+	firstAccount := sourceAccounts[0]
+	newParentName := firstAccount.Name
+
+	if accountReshapeReq.Name != "" {
+		newParentName = accountReshapeReq.Name
+	}
+
+	newParentAccount := &models.Account{
+		Category:     category,
+		Name:         newParentName,
+		Icon:         firstAccount.Icon,
+		IconType:     firstAccount.IconType,
+		Color:        firstAccount.Color,
+		Comment:      "",
+		DisplayOrder: firstAccount.DisplayOrder,
+		Hidden:       firstAccount.Hidden,
+	}
+
+	err = a.accounts.ReshapeAccounts(c, uid, newParentAccount, sourceAccounts)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.AccountReshapeHandler] failed to group accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	log.Infof(c, "[accounts.AccountReshapeHandler] user \"uid:%d\" has grouped %d accounts into new parent \"id:%d\"", uid, len(sourceAccounts), newParentAccount.AccountId)
+	return true, nil
+}
+
+func (a *AccountsApi) reshapeSplitAccounts(c *core.WebContext, uid int64, accountReshapeReq *models.AccountReshapeRequest) (any, *errs.Error) {
+	if accountReshapeReq.ParentAccountId <= 0 {
+		return nil, errs.ErrAccountIdInvalid
+	}
+
+	subAccountIds, err := utils.StringArrayToInt64Array(accountReshapeReq.SubAccountIds)
+
+	if err != nil {
+		return nil, errs.ErrAccountIdInvalid
+	}
+
+	if len(subAccountIds) < 1 {
+		return nil, errs.ErrAccountReshapeAccountCountInvalid
+	}
+
+	parentAccount, err := a.accounts.GetAccountByAccountId(c, uid, accountReshapeReq.ParentAccountId)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.AccountReshapeHandler] failed to get parent account \"id:%d\" for user \"uid:%d\", because %s", accountReshapeReq.ParentAccountId, uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	if parentAccount.Type != models.ACCOUNT_TYPE_MULTI_SUB_ACCOUNTS {
+		return nil, errs.ErrAccountReshapeSourceAccountInvalid
+	}
+
+	if parentAccount.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD {
+		return nil, errs.ErrAccountReshapeNotSupportedForCreditCard
+	}
+
+	allSubAccounts, err := a.accounts.GetSubAccountsByAccountId(c, uid, accountReshapeReq.ParentAccountId)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.AccountReshapeHandler] failed to get sub-accounts of parent \"id:%d\" for user \"uid:%d\", because %s", accountReshapeReq.ParentAccountId, uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	// the original parent must keep at least one sub-account
+	if len(subAccountIds) >= len(allSubAccounts) {
+		return nil, errs.ErrAccountHaveNoSubAccount
+	}
+
+	subAccountMap := a.accounts.GetAccountMapByList(allSubAccounts)
+	sourceAccounts := make([]*models.Account, 0, len(subAccountIds))
+	seenSubAccountIds := make(map[int64]bool, len(subAccountIds))
+
+	for i := 0; i < len(subAccountIds); i++ {
+		subAccount, exists := subAccountMap[subAccountIds[i]]
+
+		if !exists {
+			return nil, errs.ErrSubAccountNotFound
+		}
+
+		if seenSubAccountIds[subAccount.AccountId] {
+			return nil, errs.ErrAccountReshapeAccountCountInvalid
+		}
+
+		seenSubAccountIds[subAccount.AccountId] = true
+		sourceAccounts = append(sourceAccounts, subAccount)
+	}
+
+	firstAccount := sourceAccounts[0]
+	newParentName := firstAccount.Name
+
+	if accountReshapeReq.Name != "" {
+		newParentName = accountReshapeReq.Name
+	}
+
+	maxOrderId, err := a.accounts.GetMaxDisplayOrder(c, uid, parentAccount.Category)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.AccountReshapeHandler] failed to get max display order for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	newParentAccount := &models.Account{
+		Category:     parentAccount.Category,
+		Name:         newParentName,
+		Icon:         firstAccount.Icon,
+		IconType:     firstAccount.IconType,
+		Color:        firstAccount.Color,
+		Comment:      "",
+		DisplayOrder: maxOrderId + 1,
+		Hidden:       firstAccount.Hidden,
+	}
+
+	err = a.accounts.ReshapeAccounts(c, uid, newParentAccount, sourceAccounts)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.AccountReshapeHandler] failed to split accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	log.Infof(c, "[accounts.AccountReshapeHandler] user \"uid:%d\" has split %d sub-accounts from parent \"id:%d\" into new parent \"id:%d\"", uid, len(sourceAccounts), parentAccount.AccountId, newParentAccount.AccountId)
+	return true, nil
+}
+
 func (a *AccountsApi) createNewAccountModel(uid int64, accountCreateReq *models.AccountCreateRequest, balance int64, creditLimitForCreditCard *int64, isSubAccount bool, order int32) *models.Account {
 	accountExtend := &models.AccountExtend{}
 

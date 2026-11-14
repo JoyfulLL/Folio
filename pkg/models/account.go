@@ -247,6 +247,24 @@ type AccountDeleteRequest struct {
 	Id int64 `json:"id,string" binding:"required,min=1"`
 }
 
+// AccountReshapeOperation represents the account structure reshaping operation type
+type AccountReshapeOperation byte
+
+// Account reshape operations
+const (
+	ACCOUNT_RESHAPE_OPERATION_GROUP AccountReshapeOperation = 1
+	ACCOUNT_RESHAPE_OPERATION_SPLIT AccountReshapeOperation = 2
+)
+
+// AccountReshapeRequest represents all parameters of account structure reshaping request
+type AccountReshapeRequest struct {
+	Operation       AccountReshapeOperation `json:"operation" binding:"required"`
+	AccountIds      []string                `json:"accountIds" binding:"omitempty"`
+	ParentAccountId int64                   `json:"parentAccountId,string" binding:"omitempty"`
+	SubAccountIds   []string                `json:"subAccountIds" binding:"omitempty"`
+	Name            string                  `json:"name" binding:"omitempty,max=64"`
+}
+
 // AccountInfoResponse represents a view-object of account
 type AccountInfoResponse struct {
 	Id                                        int64                    `json:"id,string"`

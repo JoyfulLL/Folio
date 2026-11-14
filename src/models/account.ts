@@ -1061,6 +1061,14 @@ export interface AccountDeleteRequest {
     readonly id: string;
 }
 
+export interface AccountReshapeRequest {
+    readonly operation: number;
+    readonly accountIds?: string[];
+    readonly parentAccountId?: string;
+    readonly subAccountIds?: string[];
+    readonly name?: string;
+}
+
 export interface AccountBalance {
     readonly balance: BigDecimal;
     readonly category: number;

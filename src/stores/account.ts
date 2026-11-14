@@ -1538,6 +1538,40 @@ export const useAccountsStore = defineStore('accounts', () => {
         });
     }
 
+    function reshapeAccount({ operation, accountIds, parentAccountId, subAccountIds, name }: { operation: number, accountIds?: string[], parentAccountId?: string, subAccountIds?: string[], name?: string }): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            services.reshapeAccount({
+                operation: operation,
+                accountIds: accountIds,
+                parentAccountId: parentAccountId,
+                subAccountIds: subAccountIds,
+                name: name
+            }).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'Unable to reshape account' });
+                    return;
+                }
+
+                updateAccountListInvalidState(true);
+                overviewStore.updateTransactionOverviewInvalidState(true);
+
+                resolve(data.result);
+            }).catch(error => {
+                logger.error('failed to reshape account', error);
+
+                if (error.response && error.response.data && error.response.data.errorMessage) {
+                    reject({ error: error.response.data });
+                } else if (!error.processed) {
+                    reject({ message: 'Unable to reshape account' });
+                } else {
+                    reject(error);
+                }
+            });
+        });
+    }
+
     return {
         // states
         allAccounts,
@@ -1580,6 +1614,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         updateAccountDisplayOrders,
         hideAccount,
         deleteAccount,
-        deleteSubAccount
+        deleteSubAccount,
+        reshapeAccount
     }
 });

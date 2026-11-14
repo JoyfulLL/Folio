@@ -21,6 +21,27 @@ export class AccountType implements TypeAndName {
     }
 }
 
+export class AccountReshapeOperation implements TypeAndName {
+    private static readonly allInstances: AccountReshapeOperation[] = [];
+
+    public static readonly Group = new AccountReshapeOperation(1, 'Group');
+    public static readonly Split = new AccountReshapeOperation(2, 'Split');
+
+    public readonly type: number;
+    public readonly name: string;
+
+    private constructor(type: number, name: string) {
+        this.type = type;
+        this.name = name;
+
+        AccountReshapeOperation.allInstances.push(this);
+    }
+
+    public static values(): AccountReshapeOperation[] {
+        return AccountReshapeOperation.allInstances;
+    }
+}
+
 export class AccountCategory implements TypeAndName {
     private static readonly allInstances: AccountCategory[] = [];
     private static readonly allInstancesByType: Record<number, AccountCategory> = {};

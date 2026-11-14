@@ -669,6 +669,71 @@ func (s *AccountService) ModifyAccountDisplayOrders(c core.Context, uid int64, a
 	})
 }
 
+// ReshapeAccounts groups the given source accounts into a new multi-account parent by inserting
+// the new parent account and reparenting the source accounts under it. It only changes the
+// parent_account_id and display_order of the source accounts and inserts one new parent account,
+// and never touches transactions, balances or currencies, so all account ids are preserved and
+// every existing reference keeps working.
+func (s *AccountService) ReshapeAccounts(c core.Context, uid int64, newParentAccount *models.Account, sourceAccounts []*models.Account) error {
+	if uid <= 0 {
+		return errs.ErrUserIdInvalid
+	}
+
+	if newParentAccount == nil {
+		return errs.ErrAccountReshapeOperationInvalid
+	}
+
+	if len(sourceAccounts) < 1 {
+		return errs.ErrAccountReshapeAccountCountInvalid
+	}
+
+	newAccountUuids := s.GenerateUuids(uuid.UUID_TYPE_ACCOUNT, 1)
+
+	if len(newAccountUuids) < 1 {
+		return errs.ErrSystemIsBusy
+	}
+
+	now := time.Now().Unix()
+
+	newParentAccount.AccountId = newAccountUuids[0]
+	newParentAccount.Uid = uid
+	newParentAccount.Type = models.ACCOUNT_TYPE_MULTI_SUB_ACCOUNTS
+	newParentAccount.ParentAccountId = models.LevelOneAccountParentId
+	newParentAccount.Currency = core.AccountCurrencyNotSetValue
+	newParentAccount.Balance = 0
+	newParentAccount.Deleted = false
+	newParentAccount.CreatedUnixTime = now
+	newParentAccount.UpdatedUnixTime = now
+
+	for i := 0; i < len(sourceAccounts); i++ {
+		sourceAccount := sourceAccounts[i]
+		sourceAccount.ParentAccountId = newParentAccount.AccountId
+		sourceAccount.DisplayOrder = int32(i + 1)
+		sourceAccount.UpdatedUnixTime = now
+	}
+
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
+		_, err := sess.Insert(newParentAccount)
+
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < len(sourceAccounts); i++ {
+			account := sourceAccounts[i]
+			updatedRows, err := sess.ID(account.AccountId).Cols("parent_account_id", "display_order", "updated_unix_time").Where("uid=? AND deleted=?", uid, false).Update(account)
+
+			if err != nil {
+				return err
+			} else if updatedRows < 1 {
+				return errs.ErrAccountNotFound
+			}
+		}
+
+		return nil
+	})
+}
+
 // DeleteAccount deletes an existed account from database
 func (s *AccountService) DeleteAccount(c core.Context, uid int64, accountId int64) error {
 	if uid <= 0 {

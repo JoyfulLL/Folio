@@ -39,7 +39,8 @@ import type {
     AccountInfoResponse,
     AccountHideRequest,
     AccountMoveRequest,
-    AccountDeleteRequest
+    AccountDeleteRequest,
+    AccountReshapeRequest
 } from '@/models/account.ts';
 import type {
     AuthResponse,
@@ -583,6 +584,9 @@ export default {
     },
     deleteSubAccount: (req: AccountDeleteRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/accounts/sub_account/delete.json', req);
+    },
+    reshapeAccount: (req: AccountReshapeRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/accounts/reshape.json', req);
     },
     getTransactions: (req: TransactionListByMaxTimeRequest): ApiResponsePromise<TransactionInfoPageWrapperResponse> => {
         const tagFilter = encodeURIComponent(req.tagFilter);

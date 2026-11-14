@@ -261,7 +261,7 @@
                                                         <v-btn class="ms-1" density="comfortable" color="default" variant="text"
                                                                :class="{ 'd-none': loading, 'hover-display': !loading }"
                                                                :disabled="loading" :prepend-icon="mdiDotsHorizontalCircleOutline"
-                                                               v-if="element.type === AccountType.SingleAccount.type || element.getSubAccount(activeSubAccount[element.id])">
+                                                               v-if="isSingleAccountOrSubAccountSelected(element) || canSplitGroup(element)">
                                                             {{ tt('More') }}
                                                             <v-menu activator="parent" :open-on-hover="true">
                                                                 <v-list>
@@ -269,16 +269,29 @@
                                                                                  :title="tt('Mark as Reconciled')"
                                                                                  :prepend-icon="mdiReceiptTextCheckOutline"
                                                                                  @click="updateLastReconciledTime(element.getAccountOrSubAccount(activeSubAccount[element.id]))"
-                                                                                 v-if="useLastReconciledTime"></v-list-item>
-                                                                    <v-divider class="my-2" v-if="useLastReconciledTime" />
+                                                                                 v-if="useLastReconciledTime && isSingleAccountOrSubAccountSelected(element)"></v-list-item>
+                                                                    <v-divider class="my-2" v-if="useLastReconciledTime && isSingleAccountOrSubAccountSelected(element)" />
                                                                     <v-list-item class="text-body-medium" density="compact"
                                                                                  :title="tt('Move All Transactions')"
                                                                                  :prepend-icon="mdiSwapHorizontal"
-                                                                                 @click="moveAllTransactions(element.getAccountOrSubAccount(activeSubAccount[element.id]))"></v-list-item>
+                                                                                 @click="moveAllTransactions(element.getAccountOrSubAccount(activeSubAccount[element.id]))"
+                                                                                 v-if="isSingleAccountOrSubAccountSelected(element)"></v-list-item>
                                                                     <v-list-item class="text-body-medium" density="compact"
                                                                                  :title="tt('Clear All Transactions')"
                                                                                  :prepend-icon="mdiDeleteSweepOutline"
-                                                                                 @click="clearAllTransactions(element.getAccountOrSubAccount(activeSubAccount[element.id]))"></v-list-item>
+                                                                                 @click="clearAllTransactions(element.getAccountOrSubAccount(activeSubAccount[element.id]))"
+                                                                                 v-if="isSingleAccountOrSubAccountSelected(element)"></v-list-item>
+                                                                    <v-divider class="my-2" v-if="(element.type === AccountType.SingleAccount.type && element.category !== AccountCategory.CreditCard.type) || canSplitGroup(element)" />
+                                                                    <v-list-item class="text-body-medium" density="compact"
+                                                                                 :title="tt('Convert to Group')"
+                                                                                 :prepend-icon="mdiFolderPlusOutline"
+                                                                                 @click="reshapeAccount(element, 'group')"
+                                                                                 v-if="element.type === AccountType.SingleAccount.type && element.category !== AccountCategory.CreditCard.type"></v-list-item>
+                                                                    <v-list-item class="text-body-medium" density="compact"
+                                                                                 :title="tt('Split Group')"
+                                                                                 :prepend-icon="mdiCallSplit"
+                                                                                 @click="reshapeAccount(element, 'split')"
+                                                                                 v-if="canSplitGroup(element)"></v-list-item>
                                                                 </v-list>
                                                             </v-menu>
                                                         </v-btn>
@@ -327,6 +340,7 @@
                                      @error="onShowDateRangeError" />
     <move-all-transactions-dialog ref="moveAllTransactionsDialog" />
     <clear-all-transactions-dialog ref="clearAllTransactionsDialog" />
+    <reshape-accounts-dialog ref="reshapeAccountsDialog" />
 
     <date-range-selection-dialog :title="tt('Custom Date Range')"
                                  v-model:show="showCustomDateRangeDialog"
@@ -344,6 +358,7 @@ import EditDialog from './list/dialogs/EditDialog.vue';
 import ReconciliationStatementDialog from './list/dialogs/ReconciliationStatementDialog.vue';
 import MoveAllTransactionsDialog from '@/views/desktop/accounts/list/dialogs/MoveAllTransactionsDialog.vue';
 import ClearAllTransactionsDialog from '@/views/desktop/accounts/list/dialogs/ClearAllTransactionsDialog.vue';
+import ReshapeAccountsDialog from '@/views/desktop/accounts/list/dialogs/ReshapeAccountsDialog.vue';
 import AccountFilterSettingsDialog from '@/views/desktop/common/dialogs/AccountFilterSettingsDialog.vue';
 
 import { ref, computed, useTemplateRef, watch } from 'vue';
@@ -384,7 +399,9 @@ import {
     mdiListBoxOutline,
     mdiInvoiceListOutline,
     mdiDrag,
-    mdiDotsVertical
+    mdiDotsVertical,
+    mdiFolderPlusOutline,
+    mdiCallSplit
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
@@ -393,6 +410,7 @@ type EditDialogType = InstanceType<typeof EditDialog>;
 type ReconciliationStatementDialogType = InstanceType<typeof ReconciliationStatementDialog>;
 type MoveAllTransactionsDialogType = InstanceType<typeof MoveAllTransactionsDialog>;
 type ClearAllTransactionsDialogType = InstanceType<typeof ClearAllTransactionsDialog>;
+type ReshapeAccountsDialogType = InstanceType<typeof ReshapeAccountsDialog>;
 
 const { lgAndUp } = useDisplay();
 
@@ -430,6 +448,7 @@ const editDialog = useTemplateRef<EditDialogType>('editDialog');
 const reconciliationStatementDialog = useTemplateRef<ReconciliationStatementDialogType>('reconciliationStatementDialog');
 const moveAllTransactionsDialog = useTemplateRef<MoveAllTransactionsDialogType>('moveAllTransactionsDialog');
 const clearAllTransactionsDialog = useTemplateRef<ClearAllTransactionsDialogType>('clearAllTransactionsDialog');
+const reshapeAccountsDialog = useTemplateRef<ReshapeAccountsDialogType>('reshapeAccountsDialog');
 
 const activeAccountCategoryType = ref<number>(defaultAccountCategory.value.type);
 const activeTab = ref<string>('accountPage');
@@ -643,6 +662,26 @@ function moveAllTransactions(account: Account): void {
 function clearAllTransactions(account: Account): void {
     clearAllTransactionsDialog.value?.open(account).then(() => {
         snackbar.value?.showMessage('All transactions in this account have been cleared');
+
+        if (accountsStore.accountListStateInvalid && !loading.value) {
+            reload(false);
+        }
+    });
+}
+
+function isSingleAccountOrSubAccountSelected(account: Account): boolean {
+    return account.type === AccountType.SingleAccount.type || !!account.getSubAccount(activeSubAccount.value[account.id]);
+}
+
+function canSplitGroup(account: Account): boolean {
+    return account.type === AccountType.MultiSubAccounts.type &&
+        account.category !== AccountCategory.CreditCard.type &&
+        (account.subAccounts?.length ?? 0) >= 2;
+}
+
+function reshapeAccount(account: Account, reshapeMode: 'group' | 'split'): void {
+    reshapeAccountsDialog.value?.open(reshapeMode, account).then(() => {
+        snackbar.value?.showMessage(tt('Account group has been created'));
 
         if (accountsStore.accountListStateInvalid && !loading.value) {
             reload(false);

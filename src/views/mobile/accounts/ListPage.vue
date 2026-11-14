@@ -167,6 +167,10 @@
                     <f7-actions-button color="red" @click="showPasswordSheetForClearAllTransaction(subAccount)">{{ tt('Clear All Transactions') }}</f7-actions-button>
                 </f7-actions-group>
             </template>
+            <f7-actions-group v-if="accountForMoreActionSheet && (canConvertToGroup(accountForMoreActionSheet) || canSplitGroup(accountForMoreActionSheet))">
+                <f7-actions-button @click="reshapeAccount(accountForMoreActionSheet, 'group')" v-if="canConvertToGroup(accountForMoreActionSheet)">{{ tt('Convert to Group') }}</f7-actions-button>
+                <f7-actions-button @click="reshapeAccount(accountForMoreActionSheet, 'split')" v-if="canSplitGroup(accountForMoreActionSheet)">{{ tt('Split Group') }}</f7-actions-button>
+            </f7-actions-group>
             <f7-actions-group>
                 <f7-actions-button bold close>{{ tt('Cancel') }}</f7-actions-button>
             </f7-actions-group>
@@ -426,6 +430,30 @@ function moveAllTransactions(account: Account | null): void {
     }
 
     props.f7router.navigate('/account/move_all_transactions?fromAccountId=' + account.id);
+    showAccountMoreActionSheet.value = false;
+    accountForMoreActionSheet.value = null;
+}
+
+function canConvertToGroup(account: Account | null): boolean {
+    return !!account &&
+        account.type === AccountType.SingleAccount.type &&
+        account.category !== AccountCategory.CreditCard.type;
+}
+
+function canSplitGroup(account: Account | null): boolean {
+    return !!account &&
+        account.type === AccountType.MultiSubAccounts.type &&
+        account.category !== AccountCategory.CreditCard.type &&
+        (account.subAccounts?.length ?? 0) >= 2;
+}
+
+function reshapeAccount(account: Account | null, reshapeMode: 'group' | 'split'): void {
+    if (!account) {
+        showAlert('An error occurred');
+        return;
+    }
+
+    props.f7router.navigate('/account/reshape?mode=' + reshapeMode + '&accountId=' + account.id);
     showAccountMoreActionSheet.value = false;
     accountForMoreActionSheet.value = null;
 }
