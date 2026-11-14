@@ -32,7 +32,8 @@ export const ALL_APPLICATION_CLOUD_SETTINGS: CategorizedApplicationCloudSettingI
     {
         categoryName: 'Navigation Bar',
         items: [
-            { settingKey: 'showAddTransactionButtonInDesktopNavbar', settingName: 'Show Add Transaction Button', mobile: false, desktop: true }
+            { settingKey: 'showAddTransactionButtonInDesktopNavbar', settingName: 'Show Add Transaction Button', mobile: false, desktop: true },
+            { settingKey: 'showInsightsExplorerButtonInDesktopNavbar', settingName: 'Show Insights Explorer Button', mobile: false, desktop: true }
         ]
     },
     {

@@ -81,6 +81,12 @@
                             <v-spacer/>
                             <v-switch class="ms-4" v-model="showAddTransactionButtonInDesktopNavbar"/>
                         </div>
+
+                        <div class="setting-item">
+                            <span>{{ tt('Show Insights Explorer Button') }}</span>
+                            <v-spacer/>
+                            <v-switch class="ms-4" v-model="showInsightsExplorerButtonInDesktopNavbar"/>
+                        </div>
                     </v-card-text>
                 </v-form>
             </v-card>
@@ -573,6 +579,11 @@ const desktopOverviewPageLayoutDisplayContent = computed(() => {
 const showAddTransactionButtonInDesktopNavbar = computed<boolean>({
     get: () => settingsStore.appSettings.showAddTransactionButtonInDesktopNavbar,
     set: (value) => settingsStore.setShowAddTransactionButtonInDesktopNavbar(value)
+});
+
+const showInsightsExplorerButtonInDesktopNavbar = computed<boolean>({
+    get: () => settingsStore.appSettings.showInsightsExplorerButtonInDesktopNavbar,
+    set: (value) => settingsStore.setShowInsightsExplorerButtonInDesktopNavbar(value)
 });
 
 const rememberLastSelectedFileTypeInImportTransactionDialog = computed<boolean>({

@@ -215,6 +215,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateUserApplicationCloudSettingValue('showAddTransactionButtonInDesktopNavbar', value);
     }
 
+    function setShowInsightsExplorerButtonInDesktopNavbar(value: boolean): void {
+        updateApplicationSettingsValue('showInsightsExplorerButtonInDesktopNavbar', value);
+        appSettings.value.showInsightsExplorerButtonInDesktopNavbar = value;
+        updateUserApplicationCloudSettingValue('showInsightsExplorerButtonInDesktopNavbar', value);
+    }
+
     // Overview Page
     function setDesktopOverviewPageLayout(value: string): void {
         updateApplicationSettingsValue('desktopOverviewPageLayout', value);
@@ -650,6 +656,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setEnableApplicationLockWebAuthn,
         // -- Navigation Bar
         setShowAddTransactionButtonInDesktopNavbar,
+        setShowInsightsExplorerButtonInDesktopNavbar,
         // -- Overview Page
         setDesktopOverviewPageLayout,
         setMobileOverviewPageLayout,

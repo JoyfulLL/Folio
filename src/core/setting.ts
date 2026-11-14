@@ -51,6 +51,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     applicationLockWebAuthn: boolean;
     // Navigation Bar
     showAddTransactionButtonInDesktopNavbar: boolean;
+    showInsightsExplorerButtonInDesktopNavbar: boolean;
     // Overview Page
     desktopOverviewPageLayout: string;
     mobileOverviewPageLayout: string;
@@ -149,6 +150,7 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'chartColors': UserApplicationCloudSettingType.String,
     // Navigation Bar
     'showAddTransactionButtonInDesktopNavbar': UserApplicationCloudSettingType.Boolean,
+    'showInsightsExplorerButtonInDesktopNavbar': UserApplicationCloudSettingType.Boolean,
     // Overview Page
     'desktopOverviewPageLayout': UserApplicationCloudSettingType.String,
     'mobileOverviewPageLayout': UserApplicationCloudSettingType.String,
@@ -227,6 +229,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     applicationLockWebAuthn: false,
     // Navigation Bar
     showAddTransactionButtonInDesktopNavbar: true,
+    showInsightsExplorerButtonInDesktopNavbar: true,
     // Overview Page
     desktopOverviewPageLayout: '',
     mobileOverviewPageLayout: '',

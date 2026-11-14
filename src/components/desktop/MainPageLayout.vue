@@ -67,6 +67,7 @@
                                 </router-link>
 
                                 <router-link to="/insights/explorer"
+                                             v-if="showInsightsExplorerButtonInDesktopNavbar"
                                              :aria-current="isTopNavigationActive('/insights/explorer') ? 'page' : undefined">
                                     <v-btn class="top-navigation-button ms-1" density="comfortable" variant="text"
                                            :aria-label="tt('Insights Explorer')" :icon="true"
@@ -275,6 +276,7 @@ const currentTheme = computed<string>({
 });
 
 const showAddTransactionButtonInDesktopNavbar = computed<boolean>(() => settingsStore.appSettings.showAddTransactionButtonInDesktopNavbar);
+const showInsightsExplorerButtonInDesktopNavbar = computed<boolean>(() => settingsStore.appSettings.showInsightsExplorerButtonInDesktopNavbar);
 const isEnableApplicationLock = computed<boolean>(() => settingsStore.appSettings.applicationLock);
 
 function isTopNavigationActive(path: string): boolean {
