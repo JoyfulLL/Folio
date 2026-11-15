@@ -14,6 +14,7 @@
 #
 # Usage:
 #   sudo ez-update.sh --check                 # dry run: show every resolved path, change nothing
+#   sudo ez-update.sh --check-db              # test the DB dump only; service is NOT touched
 #   sudo ez-update.sh                        # deploy RELEASE_TAG from /etc/ez-update.env
 #   sudo ez-update.sh 1.0.3                  # deploy one specific Release tag
 #   sudo ez-update.sh latest                 # deploy the newest Release
@@ -21,14 +22,24 @@
 #
 # What an update does:
 #   1. download the arch-matched tar.gz from the GitHub Release
-#   2. stop the service, back up the database
+#   2. stop the service, back up and VERIFY the database
 #   3. back up the 4 build artifacts into /opt/ez-backups/app-<timestamp>
 #   4. replace ONLY ezbookkeeping / public / templates / LICENSE in /opt/ez
 #      (conf/, data/, storage/, log/ and every other file are untouched)
 #   5. start the service, probe /healthz.json, roll back automatically on failure
 #   6. keep the last KEEP_BACKUPS backups
+#
+# The database step is fail-closed but noise-tolerant: a dump is accepted only
+# if it really contains the schema (CREATE TABLE statements are counted), while
+# harmless mysqldump complaints about server-owned "masking policies" are
+# ignored instead of aborting the update.
+# Run "sudo ez-update.sh --check-db" to prove the dump works, with no downtime.
 set -Eeuo pipefail
 IFS=$'\n\t'
+
+# Bump on every change: printed by --check so a stale copy installed in
+# /usr/local/sbin is obvious at a glance.
+SCRIPT_REV="2026-11-15.2"
 
 CONFIG_FILE="${EZ_UPDATE_CONFIG:-/etc/ez-update.env}"
 
@@ -58,7 +69,9 @@ log() { printf '[ez-update] %s\n' "$*"; }
 die() { printf '[ez-update] ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
-    sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+    # Print the comment block at the top without hard-coding line numbers: a
+    # "sed -n '2,30p'" here silently truncated --help every time the header grew.
+    awk 'NR == 1 { next } /^set -Eeuo pipefail$/ { exit } { sub(/^# ?/, ""); print }' "$0"
     exit 0
 }
 
@@ -85,9 +98,10 @@ trap cleanup EXIT INT TERM
 # ---- mode ------------------------------------------------------------------
 MODE="update"
 case "${1:-}" in
-    --check)    MODE="check";    shift ;;
-    --rollback) MODE="rollback"; shift ;;
-    --help|-h)  usage ;;
+    --check)                MODE="check";    shift ;;
+    --check-db|--db-check)  MODE="db-check"; shift ;;
+    --rollback)             MODE="rollback"; shift ;;
+    --help|-h)              usage ;;
 esac
 
 # ---- load config -----------------------------------------------------------
@@ -314,9 +328,112 @@ rollback() {
     exit 1
 }
 
+# ---- database backup -------------------------------------------------------
+# Two independent safety nets, because "mysqldump exited 0" is NOT proof of a
+# usable backup:
+#
+#   1. stderr classification. A "mysqldump: Error" line means something was
+#      left out of the dump, and such a dump is worse than none: the gap is
+#      only discovered during a rollback. The single exception is the server's
+#      own masking-policy probe (mysql.column_masking_policy). That object is
+#      owned by the server, is never Folio data, may not even exist, and a
+#      least-privilege backup account is SUPPOSED to be denied on it, so it is
+#      reported as a note and never blocks an update.
+#
+#   2. content check. Count the CREATE TABLE statements that actually landed in
+#      the finished dump; an empty or truncated dump is refused even when the
+#      command exited 0 and stderr was clean.
+#
+# Set DB_TABLE_COUNT_CMD to also compare that count with the live schema.
+DB_ERR_LINE="^(mysqldump|mariadb-dump): (Error|Couldn't execute)"
+DB_MASKING_NOISE='when trying to dump masking policies'
+DB_FATAL_ERR=""
+
+db_dump_table_count() {
+    local n
+    n="$(gzip -dc -- "$1" 2>/dev/null | grep -c '^CREATE TABLE' || true)"
+    printf '%s' "${n:-0}"
+}
+
+db_expected_table_count() {
+    # Empty output means "unknown", which downgrades the comparison to the
+    # plain "must contain at least one table" check.
+    [ -n "${DB_TABLE_COUNT_CMD:-}" ] || return 0
+    bash -c "$DB_TABLE_COUNT_CMD" 2>/dev/null \
+        | awk 'NF { gsub(/[^0-9]/, ""); if ($0 != "") { print; exit } }'
+}
+
+# take_db_backup <dump.gz> <stderr-file> ; returns 0 only for a verified dump
+take_db_backup() {
+    local dest="$1" errfile="$2" count expected
+    rm -f -- "$dest"
+    : > "$errfile"
+
+    if ! bash -c "$DB_BACKUP_CMD" 2>"$errfile" | gzip -9 > "$dest"; then
+        sed 's/^/  | /' "$errfile" >&2 || true
+        # By far the most common cause of a failed dump on an otherwise working
+        # install: the dump account is a plain DML user. Say so instead of
+        # leaving the operator to decode the mysqldump error above.
+        log "hint: if mysqldump said 'FLUSH ... TABLES: Access denied', the dump account"
+        log "      needs the global RELOAD (or FLUSH_TABLES) privilege; add PROCESS too,"
+        log "      or keep --no-tablespaces, to avoid a tablespace privilege error."
+        log "      See the PRIVILEGES notes in deploy/ez-update.env.example."
+        rm -f -- "$dest"
+        return 1
+    fi
+
+    if [ ! -s "$dest" ]; then
+        log "database backup is empty"
+        return 1
+    fi
+    if ! gzip -t "$dest" 2>/dev/null; then
+        log "database backup is not a valid gzip stream"
+        return 1
+    fi
+
+    if [ -s "$errfile" ]; then
+        log "mysqldump reported:"
+        sed 's/^/  | /' "$errfile"
+    fi
+    if grep -qF -- "$DB_MASKING_NOISE" "$errfile"; then
+        log "note: server-owned masking-policy objects were skipped (never Folio data, no action needed)"
+    fi
+
+    # A dump that contains no table definition is useless as a rollback source,
+    # whatever the exit code said.
+    count="$(db_dump_table_count "$dest")"
+    if [ "$count" -eq 0 ]; then
+        log "dump contains no CREATE TABLE statement - refusing it as empty/truncated"
+        return 1
+    fi
+    log "dump contains $count table definition(s)"
+
+    expected="$(db_expected_table_count)"
+    if [ -n "$expected" ] && [ "$count" -lt "$expected" ]; then
+        if [ "${ALLOW_PARTIAL_DB_BACKUP:-0}" != "1" ]; then
+            log "dump is missing tables: live schema has $expected, dump has $count"
+            return 1
+        fi
+        log "WARNING: dump has FEWER tables than the live schema ($count < $expected)"
+    fi
+
+    DB_FATAL_ERR="$(grep -E -- "$DB_ERR_LINE" "$errfile" 2>/dev/null \
+                    | grep -vF -- "$DB_MASKING_NOISE" || true)"
+    if [ -n "$DB_FATAL_ERR" ]; then
+        if [ "${ALLOW_PARTIAL_DB_BACKUP:-0}" != "1" ]; then
+            log "these dump errors mean part of the backup is missing:"
+            printf '%s\n' "$DB_FATAL_ERR" | sed 's/^/  | /'
+            return 1
+        fi
+        log "WARNING: continuing with a PARTIAL database backup (ALLOW_PARTIAL_DB_BACKUP=1)"
+    fi
+    return 0
+}
+
 # ---- --check : read-only inspection ---------------------------------------
 if [ "$MODE" = "check" ]; then
     log "MODE: check (nothing will be changed)"
+    log "script           : $0  (rev $SCRIPT_REV)"
     log "install dir      : $INSTALL_DIR  ($([ -d "$INSTALL_DIR" ] && echo exists || echo MISSING))"
     log "config file      : $CONF_FILE  ($([ -f "$CONF_FILE" ] && echo exists || echo MISSING))"
     log "binary           : $INSTALL_DIR/ezbookkeeping  ($([ -f "$INSTALL_DIR/ezbookkeeping" ] && echo exists || echo MISSING))"
@@ -327,6 +444,7 @@ if [ "$MODE" = "check" ]; then
     log "current health   : $(curl -fsSk --noproxy '*' --max-time 3 "$HEALTH_URL" 2>/dev/null || echo 'not reachable')"
     log "database type    : $(ini_get database type 2>/dev/null || echo '?')"
     log "db backup cmd    : ${DB_BACKUP_CMD:-<EMPTY - will only copy sqlite db if present>}"
+    log "db dump self-test: sudo $0 --check-db   (dump only, service untouched)"
     log "sqlite db        : $SQLITE_DB_PATH  ($([ -f "$SQLITE_DB_PATH" ] && echo exists || echo 'not used'))"
     log "repository       : $GITHUB_REPO   token: $([ -n "$GITHUB_TOKEN" ] && echo set || echo none)"
     log "cpu / package    : $(uname -m) -> linux-$ARCH"
@@ -348,6 +466,32 @@ if [ "$MODE" = "check" ]; then
     log "NEVER TOUCH      : $(printf '%s ' "${PROTECTED[@]}") (and any other file in $INSTALL_DIR)"
     log "backups go to    : $BACKUP_DIR"
     exit 0
+fi
+
+# ---- --check-db : prove the dump works, touch nothing ---------------------
+# Same code path as a real update uses, but the service is never stopped and
+# the dump goes to a temp dir that cleanup() removes. This is the command to
+# run when an update aborted on the database step.
+if [ "$MODE" = "db-check" ]; then
+    log "MODE: check-db (dump only, service untouched)"
+    log "script        : $0  (rev $SCRIPT_REV)"
+    log "db backup cmd : ${DB_BACKUP_CMD:-<EMPTY>}"
+    if [ -z "$DB_BACKUP_CMD" ]; then
+        if [ -f "$SQLITE_DB_PATH" ]; then
+            log "no DB_BACKUP_CMD set; this install uses sqlite ($SQLITE_DB_PATH) and is copied, not dumped"
+            exit 0
+        fi
+        die "DB_BACKUP_CMD is empty in $CONFIG_FILE (see deploy/ez-update.env.example)"
+    fi
+    TMP_DIR="$(mktemp -d)"
+    CHECK_DUMP="$TMP_DIR/db-check.sql.gz"
+    if take_db_backup "$CHECK_DUMP" "$TMP_DIR/db-check.err"; then
+        log "OK: dump verified - $(db_dump_table_count "$CHECK_DUMP") tables, $(du -h "$CHECK_DUMP" | cut -f1) gzipped"
+        log "an update would now proceed past the database step"
+        exit 0
+    fi
+    log "service was never stopped; this was a dry run"
+    die "database backup check FAILED"
 fi
 
 # ---- --rollback : restore last app backup ---------------------------------
@@ -463,36 +607,12 @@ fi
 DB_BACKUP="$BACKUP_DIR/db-$TS.sql.gz"
 DB_BACKUP_ERR="$TMP_DIR/db-dump.err"
 if [ -n "$DB_BACKUP_CMD" ]; then
-    # Fail-closed: no valid dump -> no deployment. cleanup() restarts the
+    # Fail-closed: no VERIFIED dump -> no deployment. cleanup() restarts the
     # service on any non-zero exit, so a broken mysqldump never means downtime.
-    if ! bash -c "$DB_BACKUP_CMD" 2>"$DB_BACKUP_ERR" | gzip -9 > "$DB_BACKUP"; then
+    if ! take_db_backup "$DB_BACKUP" "$DB_BACKUP_ERR"; then
         rm -f -- "$DB_BACKUP"
-        sed 's/^/  | /' "$DB_BACKUP_ERR" >&2 || true
-        # By far the most common cause of a failed dump on an otherwise working
-        # install: the dump account is a plain DML user. Say so instead of
-        # leaving the operator to decode the mysqldump error above.
-        log "hint: if mysqldump said 'FLUSH ... TABLES: Access denied', the dump account"
-        log "      needs the global RELOAD (or FLUSH_TABLES) privilege; add PROCESS too,"
-        log "      or pass --no-tablespaces, to avoid a later tablespace privilege error."
-        log "      See the PRIVILEGES notes in deploy/ez-update.env.example."
+        log "hint: 'sudo $0 --check-db' runs the exact same dump without stopping the service"
         die "database backup failed (service was NOT modified and will be restarted)"
-    fi
-    [ -s "$DB_BACKUP" ] || die "database backup is empty"
-    gzip -t "$DB_BACKUP" || die "database backup is not a valid gzip stream"
-    # mysqldump can exit 0 *after* complaining about objects it could not read,
-    # e.g. "Error ... when trying to dump masking policies". Such a dump is
-    # silently INCOMPLETE, which is worse than having no backup at all, because
-    # it would only be discovered during a rollback. Refuse it by default.
-    if [ -s "$DB_BACKUP_ERR" ]; then
-        log "mysqldump reported:"
-        sed 's/^/  | /' "$DB_BACKUP_ERR"
-    fi
-    if grep -q '^mysqldump: Error' "$DB_BACKUP_ERR"; then
-        if [ "${ALLOW_PARTIAL_DB_BACKUP:-0}" != "1" ]; then
-            rm -f -- "$DB_BACKUP"
-            die "database backup is incomplete (set ALLOW_PARTIAL_DB_BACKUP=1 to accept it anyway)"
-        fi
-        log "WARNING: continuing with a PARTIAL database backup (ALLOW_PARTIAL_DB_BACKUP=1)"
     fi
     log "database dumped to $DB_BACKUP"
 elif [ -f "$SQLITE_DB_PATH" ]; then
