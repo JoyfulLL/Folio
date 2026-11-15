@@ -2475,6 +2475,7 @@
     "Remove Picture": "Remove Picture",
     "Are you sure you want to remove this transaction picture?": "Are you sure you want to remove this transaction picture?",
     "Unable to upload transaction picture": "Unable to upload transaction picture",
+    "Unable to convert HEIC image": "Unable to convert HEIC image",
     "Unable to remove transaction picture": "Unable to remove transaction picture",
     "Transaction picture is disabled": "Transaction picture is disabled",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.",

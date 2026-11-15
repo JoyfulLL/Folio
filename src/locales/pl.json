@@ -2446,6 +2446,7 @@
     "Remove Picture": "Usuń zdjęcie",
     "Are you sure you want to remove this transaction picture?": "Czy na pewno chcesz usunąć to zdjęcie transakcji?",
     "Unable to upload transaction picture": "Nie można przesłać zdjęcia transakcji",
+    "Unable to convert HEIC image": "Nie można przekonwertować obrazu HEIC",
     "Unable to remove transaction picture": "Nie można usunąć transakcja zdjęcie",
     "Transaction picture is disabled": "Zdjęcia transakcji są wyłączone",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Nie udało się wczytać obrazu. Sprawdź, czy ustawienia „domain” i „root_url” są poprawne.",

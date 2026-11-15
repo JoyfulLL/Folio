@@ -2467,6 +2467,7 @@
     "Remove Picture": "画像の削除",
     "Are you sure you want to remove this transaction picture?": "この取引画像を削除しますか？",
     "Unable to upload transaction picture": "取引画像をアップロードできません",
+    "Unable to convert HEIC image": "HEIC 画像を変換できません",
     "Unable to remove transaction picture": "取引画像を削除できません",
     "Transaction picture is disabled": "取引画像は無効です",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "画像の読み込みに失敗しました。設定「domain」と「root_url」が正しく設定されているか確認してください。",

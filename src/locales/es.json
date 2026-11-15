@@ -2467,6 +2467,7 @@
     "Remove Picture": "Eliminar Imagen",
     "Are you sure you want to remove this transaction picture?": "¿Seguro que deseas eliminar la imagen de esta transacción?",
     "Unable to upload transaction picture": "No se puede cargar la imagen de la transacción",
+    "Unable to convert HEIC image": "No se puede convertir la imagen HEIC",
     "Unable to remove transaction picture": "No se puede eliminar la imagen de la transacción",
     "Transaction picture is disabled": "Transaction picture is disabled",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.",

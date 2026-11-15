@@ -2475,6 +2475,7 @@
     "Remove Picture": "删除图片",
     "Are you sure you want to remove this transaction picture?": "您确定要删除这张交易图片？",
     "Unable to upload transaction picture": "无法上传交易图片",
+    "Unable to convert HEIC image": "无法转换 HEIC 图片",
     "Unable to remove transaction picture": "无法删除交易图片",
     "Transaction picture is disabled": "交易图片已禁用",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "无法加载图片，请检查配置 \"domain\" 和 \"root_url\" 是否设置正确。",

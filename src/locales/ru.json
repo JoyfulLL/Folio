@@ -2446,6 +2446,7 @@
     "Remove Picture": "Удалить изображение",
     "Are you sure you want to remove this transaction picture?": "Вы уверены, что хотите удалить это изображение транзакции?",
     "Unable to upload transaction picture": "Не удалось загрузить изображение транзакции",
+    "Unable to convert HEIC image": "Не удалось преобразовать изображение HEIC",
     "Unable to remove transaction picture": "Не удалось удалить изображение транзакции",
     "Transaction picture is disabled": "Изображения транзакций отключены",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Не удалось загрузить изображение, пожалуйста убедитесь что параметры \"domain\" и \"root_url\" настроены корректно.",

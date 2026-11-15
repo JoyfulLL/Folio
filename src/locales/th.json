@@ -2446,6 +2446,7 @@
     "Remove Picture": "ลบรูปภาพ",
     "Are you sure you want to remove this transaction picture?": "คุณแน่ใจหรือว่าต้องการลบรูปภาพรายการนี้?",
     "Unable to upload transaction picture": "ไม่สามารถอัปโหลดรูปภาพรายการได้",
+    "Unable to convert HEIC image": "ไม่สามารถแปลงรูปภาพ HEIC ได้",
     "Unable to remove transaction picture": "ไม่สามารถลบรูปภาพรายการได้",
     "Transaction picture is disabled": "Transaction picture is disabled",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "โหลดรูปภาพล้มเหลว กรุณาตรวจสอบการตั้งค่า \"domain\" และ \"root_url\"",

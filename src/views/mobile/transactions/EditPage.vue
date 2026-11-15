@@ -515,7 +515,7 @@
         <f7-photo-browser ref="pictureBrowser" type="popup" navbar-of-text="/"
                           :navbar-show-count="true" :exposition="false"
                           :photos="transactionPictures" :thumbs="transactionThumbs" />
-        <input ref="pictureInput" type="file" style="display: none" :accept="`${SUPPORTED_IMAGE_EXTENSIONS};capture=camera`" @change="onUploadPicture($event)" />
+        <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS" @change="onUploadPicture($event)" />
     </f7-page>
 </template>
 
@@ -553,7 +553,7 @@ import { KnownFileType } from '@/core/file.ts';
 
 import { TRANSACTION_MAX_AMOUNT, TRANSACTION_MIN_AMOUNT } from '@/consts/transaction.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
+import { SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS } from '@/consts/file.ts';
 
 import { TransactionTemplate } from '@/models/transaction_template.ts';
 import type { TransactionPictureInfoBasicResponse } from '@/models/transaction_picture_info.ts';
@@ -575,6 +575,7 @@ import {
     getMapProvider
 } from '@/lib/server_settings.ts';
 import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
+import { normalizeImageToJpeg, getImageUploadErrorMessage } from '@/lib/heic.ts';
 import logger from '@/lib/logger.ts';
 
 const props = defineProps<{
@@ -1378,7 +1379,9 @@ function uploadPicture(file: File): void {
     uploadingPicture.value = true;
     submitting.value = true;
 
-    compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => {
+    normalizeImageToJpeg(file, file.name).then(image => {
+        return compressJpgImageByQuality(image, imageUploadQualityType.value);
+    }).then(blob => {
         return transactionsStore.uploadTransactionPicture({
             pictureFile: KnownFileType.JPG.createFileFromBlob(blob, "image")
         });
@@ -1390,8 +1393,13 @@ function uploadPicture(file: File): void {
         uploadingPicture.value = false;
         submitting.value = false;
 
-        if (!error.processed) {
-            showToast(error.message || error);
+        if (!error || !error.processed) {
+            if (error && error.error) {
+                // keep the server error response so te() can render its localized message
+                showToast(error);
+            } else {
+                showToast(getImageUploadErrorMessage(error, 'Unable to upload transaction picture'));
+            }
         }
     });
 }

@@ -1,5 +1,17 @@
 export const SUPPORTED_IMAGE_EXTENSIONS: string = '.jpg,.jpeg,.png,.gif,.webp';
 
+// HEIC/HEIF needs a browser-side decoder before it can be stored as a transaction picture.
+// Phase 1 only enables it for transaction pictures, other image entry points keep the
+// original whitelist. The conversion helper lives in @/lib/heic.ts.
+export const HEIC_IMAGE_EXTENSIONS: readonly string[] = ['heic', 'heif'];
+export const HEIC_IMAGE_MIME_TYPES: readonly string[] = ['image/heic', 'image/heif'];
+
+export const SUPPORTED_TRANSACTION_PICTURE_EXTENSIONS: string = [
+    SUPPORTED_IMAGE_EXTENSIONS,
+    ...HEIC_IMAGE_EXTENSIONS.map(extension => `.${extension}`),
+    ...HEIC_IMAGE_MIME_TYPES
+].join(',');
+
 export const UTF_8 = 'utf-8';
 
 export const SUPPORTED_FILE_ENCODINGS: string[] = [

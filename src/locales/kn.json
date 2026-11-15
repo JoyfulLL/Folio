@@ -2446,6 +2446,7 @@
     "Remove Picture": "ಚಿತ್ರ ತೆಗೆದುಹಾಕಿ",
     "Are you sure you want to remove this transaction picture?": "ಈ ವಹಿವಾಟಿನ ಚಿತ್ರವನ್ನು ತೆಗೆದುಹಾಕಲು ನೀವು ಖಚಿತವೇ?",
     "Unable to upload transaction picture": "ವಹಿವಾಟಿನ ಚಿತ್ರವನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ",
+    "Unable to convert HEIC image": "HEIC ಚಿತ್ರವನ್ನು ಪರಿವರ್ತಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
     "Unable to remove transaction picture": "ವಹಿವಾಟಿನ ಚಿತ್ರವನ್ನು ತೆಗೆದುಹಾಕಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ",
     "Transaction picture is disabled": "Transaction picture is disabled",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "ಚಿತ್ರ ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ, ದಯವಿಟ್ಟು \"domain\" ಮತ್ತು \"root_url\" ಸಂರಚನೆ ಸರಿಯಾಗಿದೆಯೇ ಎಂದು ಪರಿಶೀಲಿಸಿ.",

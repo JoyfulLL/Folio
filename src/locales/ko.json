@@ -2446,6 +2446,7 @@
     "Remove Picture": "사진 제거",
     "Are you sure you want to remove this transaction picture?": "이 거래 사진을 제거하시겠습니까?",
     "Unable to upload transaction picture": "거래 사진을 업로드할 수 없습니다",
+    "Unable to convert HEIC image": "HEIC 이미지를 변환할 수 없습니다",
     "Unable to remove transaction picture": "거래 사진을 제거할 수 없습니다",
     "Transaction picture is disabled": "거래 사진이 비활성화되었습니다",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "이미지를 로드하지 못했습니다. \"domain\" 및 \"root_url\" 구성이 올바르게 설정되었는지 확인하십시오.",

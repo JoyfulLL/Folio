@@ -2446,6 +2446,7 @@
     "Remove Picture": "Αφαίρεση εικόνας",
     "Are you sure you want to remove this transaction picture?": "Θέλετε σίγουρα να αφαιρέσετε αυτήν την εικόνα συναλλαγής;",
     "Unable to upload transaction picture": "Δεν είναι δυνατή η μεταφόρτωση της εικόνας συναλλαγής",
+    "Unable to convert HEIC image": "Δεν είναι δυνατή η μετατροπή εικόνας HEIC",
     "Unable to remove transaction picture": "Δεν είναι δυνατή η αφαίρεση της εικόνας συναλλαγής",
     "Transaction picture is disabled": "Οι εικόνες συναλλαγών είναι απενεργοποιημένες",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Αποτυχία φόρτωσης εικόνας, ελέγξτε αν οι ρυθμίσεις \"domain\" και \"root_url\" είναι σωστά ορισμένες.",

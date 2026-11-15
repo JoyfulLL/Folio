@@ -2446,6 +2446,7 @@
     "Remove Picture": "Odstrani sliko",
     "Are you sure you want to remove this transaction picture?": "Ali ste prepričani, da želite odstraniti to sliko transakcije?",
     "Unable to upload transaction picture": "Slike transakcije ni mogoče naložiti",
+    "Unable to convert HEIC image": "Slike HEIC ni mogoče pretvoriti",
     "Unable to remove transaction picture": "Slike transakcije ni mogoče odstraniti",
     "Transaction picture is disabled": "Slike transakcij so onemogočene",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Slike ni mogoče naložiti; preverite, ali sta parametra 'domain' in 'root_url' pravilno nastavljena.",

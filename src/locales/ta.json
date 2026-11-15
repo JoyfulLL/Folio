@@ -2446,6 +2446,7 @@
     "Remove Picture": "படம் அகற்று",
     "Are you sure you want to remove this transaction picture?": "இந்த பரிவர்த்தனையின் படம்வை அகற்ற நீங்கள் உறுதியா?",
     "Unable to upload transaction picture": "பரிவர்த்தனையின் படம்வை பதிவேற்று செய்ய முடியவில்லை",
+    "Unable to convert HEIC image": "HEIC படத்தை மாற்ற முடியவில்லை",
     "Unable to remove transaction picture": "பரிவர்த்தனையின் படம்வை அகற்ற முடியவில்லை",
     "Transaction picture is disabled": "பரிவர்த்தனை படம் முடக்கப்பட்டுள்ளது",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "படம் ஏற்று செய்ய தோல்விஆக உள்ளது, தயவுசெய்து \"domain\" மற்றும் \"root_url\" உள்ளமைவு சரிஆக உள்ளதா என்று சரிபார்.",

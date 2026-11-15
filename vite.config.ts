@@ -318,6 +318,10 @@ export default defineConfig(() => {
                                 }
                             },
                             {
+                                name:  'heic-decoder',
+                                test: /[\\/]node_modules[\\/]heic-to[\\/]/i
+                            },
+                            {
                                 name:  'vendor-common',
                                 test: /[\\/]node_modules[\\/]/i
                             },

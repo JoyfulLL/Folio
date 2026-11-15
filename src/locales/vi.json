@@ -2446,6 +2446,7 @@
     "Remove Picture": "Xóa ảnh",
     "Are you sure you want to remove this transaction picture?": "Bạn có chắc chắn muốn xóa ảnh giao dịch này không?",
     "Unable to upload transaction picture": "Không thể tải lên ảnh giao dịch",
+    "Unable to convert HEIC image": "Không thể chuyển đổi ảnh HEIC",
     "Unable to remove transaction picture": "Không thể xóa ảnh giao dịch",
     "Transaction picture is disabled": "Transaction picture is disabled",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.",

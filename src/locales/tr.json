@@ -2446,6 +2446,7 @@
     "Remove Picture": "Resmi Kaldır",
     "Are you sure you want to remove this transaction picture?": "Bu işlem resmini kaldırmak istediğinize emin misiniz?",
     "Unable to upload transaction picture": "İşlem resmi yüklenemedi",
+    "Unable to convert HEIC image": "HEIC görüntüsü dönüştürülemedi",
     "Unable to remove transaction picture": "İşlem resmi kaldırılamadı",
     "Transaction picture is disabled": "İşlem görseli devre dışı",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Görüntü yüklenemedi, lütfen \"domain\" ve \"root_url\" ayarlarının doğru yapılandırıldığını kontrol edin.",

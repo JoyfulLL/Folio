@@ -2446,6 +2446,7 @@
     "Remove Picture": "चित्र हटाएँ",
     "Are you sure you want to remove this transaction picture?": "क्या आप वाक़ई इस लेन-देन का चित्र हटाना चाहते हैं?",
     "Unable to upload transaction picture": "लेन-देन चित्र अपलोड नहीं हो सका",
+    "Unable to convert HEIC image": "HEIC छवि को परिवर्तित नहीं किया जा सका",
     "Unable to remove transaction picture": "लेन-देन चित्र हटाया नहीं जा सका",
     "Transaction picture is disabled": "लेन-देन चित्र सुविधा अक्षम है",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "इमेज लोड नहीं हो सकी, कृपया जाँचें कि कॉन्फ़िग \"domain\" और \"root_url\" सही सेट हैं या नहीं।",

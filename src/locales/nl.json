@@ -2446,6 +2446,7 @@
     "Remove Picture": "Afbeelding verwijderen",
     "Are you sure you want to remove this transaction picture?": "Weet je zeker dat je deze transactie-afbeelding wilt verwijderen?",
     "Unable to upload transaction picture": "Kan transactie-afbeelding niet uploaden",
+    "Unable to convert HEIC image": "Kan HEIC-afbeelding niet converteren",
     "Unable to remove transaction picture": "Kan transactie-afbeelding niet verwijderen",
     "Transaction picture is disabled": "Transaction picture is disabled",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Afbeelding laden mislukt; controleer of de configuratie-waarden \"domain\" en \"root_url\" correct zijn ingesteld.",

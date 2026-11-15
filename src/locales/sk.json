@@ -2446,6 +2446,7 @@
     "Remove Picture": "Odobrať obrázok",
     "Are you sure you want to remove this transaction picture?": "Naozaj chcete odobrať tento obrázok transakcie?",
     "Unable to upload transaction picture": "Obrázok transakcie sa nepodarilo nahrať",
+    "Unable to convert HEIC image": "Nepodarilo sa previesť obrázok HEIC",
     "Unable to remove transaction picture": "Obrázok transakcie sa nepodarilo odobrať",
     "Transaction picture is disabled": "Obrázky transakcií sú vypnuté",
     "Failed to load image, please check whether the config \"domain\" and \"root_url\" are set correctly.": "Obrázok sa nepodarilo načítať, skontrolujte, či sú správne nastavené „domain“ a „root_url“.",
