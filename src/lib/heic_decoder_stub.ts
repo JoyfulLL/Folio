@@ -12,6 +12,7 @@
  * adapter in src/lib/heic.ts does not need to know which build it is in.
  * See public/licenses/NOTICE.txt for the full license and replacement notes.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function heicTo(_options?: { blob: Blob, type: string, quality: number }): Promise<Blob> {
     throw new Error('HEIC decoder is not included in this build');
 }
