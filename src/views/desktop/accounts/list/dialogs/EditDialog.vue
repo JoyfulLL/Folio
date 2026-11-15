@@ -229,25 +229,6 @@
                                     ></v-autocomplete>
                                 </v-col>
                                 </template>
-                                <v-col cols="12" v-if="account.category === AccountCategory.CreditCard.type">
-                                    <div class="text-subtitle-2 mb-2">{{ tt('Card Picture') }}</div>
-                                    <v-img v-if="selectedAccount.creditCardPictureUrl"
-                                           :src="selectedAccount.creditCardPictureUrl"
-                                           max-width="320"
-                                           max-height="200"
-                                           contain
-                                           class="mb-2"></v-img>
-                                    <div>
-                                        <v-btn size="small" :disabled="loading || submitting" @click="showOpenCreditCardPictureDialog(selectedAccount)">
-                                            {{ selectedAccount.creditCardPictureUrl ? tt('Replace Picture') : tt('Upload Picture') }}
-                                        </v-btn>
-                                        <v-btn size="small" class="ms-2" :disabled="loading || submitting"
-                                               v-if="selectedAccount.creditCardPictureUrl"
-                                               @click="removeAccountCreditCardPicture(selectedAccount)">
-                                            {{ tt('Remove Picture') }}
-                                        </v-btn>
-                                    </div>
-                                </v-col>
                                 <!-- Credit limit and billing cycle -->
                                 <v-col cols="12" md="6" v-if="currentAccountIndex < 0 && account.category === AccountCategory.CreditCard.type">
                                     <amount-input :disabled="loading || submitting"
@@ -351,7 +332,7 @@
                                     ></v-autocomplete>
                                 </v-col>
                                 <!-- Credit card email notifications -->
-                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type">
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && canShowCreditCardNotifications">
                                     <div class="text-subtitle-2 mb-2">{{ tt('Email Notifications') }}</div>
                                     <v-switch :disabled="loading || submitting"
                                               :label="tt('Statement Date Reminder')"
@@ -369,7 +350,7 @@
                                               persistent-hint
                                               v-model="selectedAccount.creditCardRepaymentReminderEnabled"/>
                                 </v-col>
-                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && selectedAccount.creditCardRepaymentReminderEnabled">
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && canShowCreditCardNotifications && selectedAccount.creditCardRepaymentReminderEnabled">
                                     <v-autocomplete
                                         item-title="displayName"
                                         item-value="type"
@@ -384,7 +365,7 @@
                                         @update:model-value="setAccountRepaymentReminderDaysBefore(selectedAccount, $event)"
                                     ></v-autocomplete>
                                 </v-col>
-                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && hasAccountCreditCardNotificationEnabled(selectedAccount)">
+                                <v-col cols="12" md="6" v-if="account.category === AccountCategory.CreditCard.type && canShowCreditCardNotifications && hasAccountCreditCardNotificationEnabled(selectedAccount)">
                                     <v-autocomplete
                                         item-title="displayName"
                                         item-value="type"
@@ -442,7 +423,6 @@
 
     <confirm-dialog ref="confirmDialog"/>
     <snack-bar ref="snackbar" />
-    <input ref="creditCardPictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="onUploadCreditCardPicture($event)" />
 </template>
 
 <script setup lang="ts">
@@ -462,7 +442,6 @@ import { AccountType, AccountCategory } from '@/core/account.ts';
 import { ALL_ACCOUNT_ICONS } from '@/consts/icon.ts';
 import { ALL_ACCOUNT_COLORS } from '@/consts/color.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 
 import { Account } from '@/models/account.ts';
 
@@ -511,16 +490,13 @@ const {
     getAccountRepaymentReminderDaysBefore,
     setAccountRepaymentReminderDaysBefore,
     notificationTimezoneName,
+    isCreditCardLimitPoolMainAccount,
     getCurrentUnixTimeForNewAccount,
     getDefaultTimezoneOffsetMinutes,
     getAccountCreditCardCreditLimitDisplayValue,
     updateAccountBalanceTime,
     updateAccountLastReconciledTime,
     fillCreditCardNotificationSettings,
-    updateAccountCreditCardPicture,
-    removeAccountCreditCardPicture,
-    discardUploadedUnboundCreditCardPicture,
-    confirmUploadedCreditCardPicture,
     isNewAccount,
     addSubAccount,
     setAccount
@@ -531,7 +507,6 @@ const accountsStore = useAccountsStore();
 
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
-const creditCardPictureInput = useTemplateRef<HTMLInputElement>('creditCardPictureInput');
 
 let resolveFunc: ((value: AccountEditResponse) => void) | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
@@ -545,6 +520,8 @@ const currentAccountIndex = ref<number>(-1);
 
 const canShowBalanceTime = computed<boolean>(() => (!editAccountId.value || isNewAccount(selectedAccount.value)) && (account.value.type === AccountType.SingleAccount.type || currentAccountIndex.value >= 0));
 const canShowLastReconciledTime = computed<boolean>(() => useLastReconciledTime.value && !!editAccountId.value && !isNewAccount(selectedAccount.value) && (account.value.type === AccountType.SingleAccount.type || currentAccountIndex.value >= 0));
+
+const canShowCreditCardNotifications = computed<boolean>(() => currentAccountIndex.value >= 0 || !isCreditCardLimitPoolMainAccount.value);
 
 const selectedAccount = computed<Account>(() => {
     if (currentAccountIndex.value < 0) {
@@ -574,7 +551,6 @@ function open(options?: { id?: string, currentAccount?: Account, category?: numb
     showState.value = true;
     loading.value = true;
     submitting.value = false;
-    discardUploadedUnboundCreditCardPicture();
 
     if (isNumber(options?.category) && AccountCategory.valueOf(options.category)) {
         initAccountCategory.value = AccountCategory.valueOf(options.category)!;
@@ -645,7 +621,6 @@ function save(): void {
         clientSessionId: clientSessionId.value
     }).then(() => {
         submitting.value = false;
-        confirmUploadedCreditCardPicture();
 
         let message = 'You have saved this account';
 
@@ -679,39 +654,8 @@ function removeSubAccount(currentSubAccount: Account): void {
 }
 
 function cancel(): void {
-    discardUploadedUnboundCreditCardPicture();
     rejectFunc?.();
     showState.value = false;
-}
-
-const pictureTargetAccount = ref<Account | null>(null);
-
-function showOpenCreditCardPictureDialog(targetAccount?: Account): void {
-    if (loading.value || submitting.value) {
-        return;
-    }
-
-    pictureTargetAccount.value = targetAccount || account.value;
-    creditCardPictureInput.value?.click();
-}
-
-function onUploadCreditCardPicture(event: Event): void {
-    if (!event || !event.target) {
-        return;
-    }
-
-    const el = event.target as HTMLInputElement;
-
-    if (!el.files || !el.files.length || !el.files[0]) {
-        return;
-    }
-
-    const pictureFile = el.files[0] as File;
-
-    el.value = '';
-    updateAccountCreditCardPicture(pictureFile, pictureTargetAccount.value || account.value).catch(error => {
-        snackbar.value?.showError(error);
-    });
 }
 
 function onShowDateTimeError(error: string): void {

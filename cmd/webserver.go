@@ -211,12 +211,6 @@ func startWebServer(c *core.CliContext) error {
 		}
 	}
 
-	creditCardPictureRoute := router.Group("/credit_card_pictures")
-	creditCardPictureRoute.Use(bindMiddleware(middlewares.TokenAuthorizationByQueryString(config, core.NormalTokenScopeCreditCardPicture), config))
-	{
-		creditCardPictureRoute.GET("/:fileName", bindImage(api.CreditCardPictures.CreditCardPictureGetHandler, config))
-	}
-
 	router.GET("/healthz.json", bindApi(api.Healths.HealthStatusHandler, config))
 
 	proxyRoute := router.Group("/proxy")
@@ -413,10 +407,6 @@ func startWebServer(c *core.CliContext) error {
 			apiV1Route.POST("/accounts/delete.json", bindApi(api.Accounts.AccountDeleteHandler, config))
 			apiV1Route.POST("/accounts/sub_account/delete.json", bindApi(api.Accounts.SubAccountDeleteHandler, config))
 			apiV1Route.POST("/accounts/reshape.json", bindApi(api.Accounts.AccountReshapeHandler, config))
-
-			// Credit Card Pictures
-			apiV1Route.POST("/credit_card/pictures/upload.json", bindApi(api.CreditCardPictures.CreditCardPictureUploadHandler, config))
-			apiV1Route.POST("/credit_card/pictures/remove_unused.json", bindApi(api.CreditCardPictures.CreditCardPictureRemoveUnusedHandler, config))
 
 			// Transactions
 			apiV1Route.GET("/transactions/count.json", bindApi(api.Transactions.TransactionCountHandler, config))

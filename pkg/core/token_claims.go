@@ -67,7 +67,6 @@ const (
 	USER_AVATAR_DERIVED_NORMAL_TOKEN         TextualDerivedTokenType = "a"
 	USER_CUSTOM_ICON_DERIVED_NORMAL_TOKEN    TextualDerivedTokenType = "i"
 	TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN TextualDerivedTokenType = "p"
-	CREDIT_CARD_PICTURE_DERIVED_NORMAL_TOKEN TextualDerivedTokenType = "c"
 )
 
 // ValidTextualDerivedTokenTypes contains all supported textual derived token types
@@ -75,7 +74,6 @@ var ValidTextualDerivedTokenTypes = map[TextualDerivedTokenType]bool{
 	USER_AVATAR_DERIVED_NORMAL_TOKEN:         true,
 	USER_CUSTOM_ICON_DERIVED_NORMAL_TOKEN:    true,
 	TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN: true,
-	CREDIT_CARD_PICTURE_DERIVED_NORMAL_TOKEN: true,
 }
 
 // UserTokenClaims represents user token
@@ -104,10 +102,9 @@ const (
 	NormalTokenScopeUserAvatar         NormalTokenScope = 2
 	NormalTokenScopeUserCustomIcon     NormalTokenScope = 3
 	NormalTokenScopeTransactionPicture NormalTokenScope = 4
-	NormalTokenScopeCreditCardPicture  NormalTokenScope = 5
 
 	NormalTokenScopeMinValue NormalTokenScope = NormalTokenScopeAll
-	NormalTokenScopeMaxValue NormalTokenScope = NormalTokenScopeCreditCardPicture
+	NormalTokenScopeMaxValue NormalTokenScope = NormalTokenScopeTransactionPicture
 )
 
 // NormalTokenScopeDerivedTokenTypeMap maps normal token scopes to their corresponding derived token types
@@ -115,7 +112,6 @@ var NormalTokenScopeDerivedTokenTypeMap = map[NormalTokenScope]TextualDerivedTok
 	NormalTokenScopeUserAvatar:         USER_AVATAR_DERIVED_NORMAL_TOKEN,
 	NormalTokenScopeUserCustomIcon:     USER_CUSTOM_ICON_DERIVED_NORMAL_TOKEN,
 	NormalTokenScopeTransactionPicture: TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN,
-	NormalTokenScopeCreditCardPicture:  CREDIT_CARD_PICTURE_DERIVED_NORMAL_TOKEN,
 }
 
 // String returns a textual representation of the token type enum

@@ -35,7 +35,6 @@ var (
 	ErrMustSetParentAccountCurrencyWhenSetCreditLimit  = NewNormalError(NormalSubcategoryAccount, 29, http.StatusBadRequest, "must set parent account currency when set credit limit")
 	ErrCannotSetCreditCardProfileForNonCreditCard      = NewNormalError(NormalSubcategoryAccount, 30, http.StatusBadRequest, "cannot set credit card profile for non credit card account")
 	ErrCannotSetCreditCardProfileForSubAccount         = NewNormalError(NormalSubcategoryAccount, 31, http.StatusBadRequest, "cannot set credit card profile for sub account")
-	ErrCreditCardPictureInvalid                        = NewNormalError(NormalSubcategoryAccount, 32, http.StatusBadRequest, "credit card picture is invalid")
 	ErrCannotSetCreditCardNotificationForNonCreditCard = NewNormalError(NormalSubcategoryAccount, 33, http.StatusBadRequest, "cannot set credit card notification for non credit card account")
 	ErrCannotSetCreditCardNotificationForSubAccount    = NewNormalError(NormalSubcategoryAccount, 34, http.StatusBadRequest, "cannot set credit card notification for sub account")
 	ErrCreditCardNotificationTimezoneInvalid           = NewNormalError(NormalSubcategoryAccount, 35, http.StatusBadRequest, "credit card notification timezone is invalid")

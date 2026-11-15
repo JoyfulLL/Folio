@@ -121,10 +121,6 @@ import type {
     TransactionPictureInfoBasicResponse
 } from '@/models/transaction_picture_info.ts';
 import type {
-    CreditCardPictureUnusedDeleteRequest,
-    CreditCardPictureInfoBasicResponse
-} from '@/models/credit_card_picture_info.ts';
-import type {
     TransactionTagGroupCreateRequest,
     TransactionTagGroupModifyRequest,
     TransactionTagGroupMoveRequest,
@@ -558,17 +554,6 @@ export default {
     },
     modifyAccount: (req: AccountModifyRequest): ApiResponsePromise<AccountInfoResponse> => {
         return axios.post<ApiResponse<AccountInfoResponse>>('v1/accounts/modify.json', req);
-    },
-    uploadCreditCardPicture: ({ pictureFile, clientSessionId }: { pictureFile: File, clientSessionId?: string }): ApiResponsePromise<CreditCardPictureInfoBasicResponse> => {
-        return axios.postForm<ApiResponse<CreditCardPictureInfoBasicResponse>>('v1/credit_card/pictures/upload.json', {
-            picture: pictureFile,
-            clientSessionId: clientSessionId
-        }, {
-            timeout: DEFAULT_UPLOAD_API_TIMEOUT
-        } as ApiRequestConfig);
-    },
-    removeUnusedCreditCardPicture: (req: CreditCardPictureUnusedDeleteRequest): ApiResponsePromise<boolean> => {
-        return axios.post<ApiResponse<boolean>>('v1/credit_card/pictures/remove_unused.json', req);
     },
     updateAccountLastReconciledTime: (req: AccountUpdateLastReconciledTimeRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/accounts/update/last_reconciled_time.json', req);

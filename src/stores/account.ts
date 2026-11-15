@@ -19,7 +19,6 @@ import {
     type AccountShowingIds,
     Account
 } from '@/models/account.ts';
-import type { CreditCardPictureInfoBasicResponse } from '@/models/credit_card_picture_info.ts';
 
 import { isArray, isEquals, arrayItemToObjectField } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
@@ -1271,56 +1270,6 @@ export const useAccountsStore = defineStore('accounts', () => {
         });
     }
 
-    function uploadCreditCardPicture({ pictureFile, clientSessionId }: { pictureFile: File, clientSessionId?: string }): Promise<CreditCardPictureInfoBasicResponse> {
-        return new Promise((resolve, reject) => {
-            services.uploadCreditCardPicture({ pictureFile, clientSessionId }).then(response => {
-                const data = response.data;
-
-                if (!data || !data.success || !data.result) {
-                    reject({ message: 'Unable to upload credit card picture' });
-                    return;
-                }
-
-                resolve(data.result);
-            }).catch(error => {
-                logger.error('failed to upload credit card picture', error);
-
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to upload credit card picture' });
-                } else {
-                    reject(error);
-                }
-            });
-        });
-    }
-
-    function removeUnusedCreditCardPicture({ pictureId }: { pictureId: string }): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            services.removeUnusedCreditCardPicture({ id: pictureId }).then(response => {
-                const data = response.data;
-
-                if (!data || !data.success || !data.result) {
-                    reject({ message: 'Unable to remove credit card picture' });
-                    return;
-                }
-
-                resolve(data.result);
-            }).catch(error => {
-                logger.error('failed to remove credit card picture', error);
-
-                if (error.response && error.response.data && error.response.data.errorMessage) {
-                    reject({ error: error.response.data });
-                } else if (!error.processed) {
-                    reject({ message: 'Unable to remove credit card picture' });
-                } else {
-                    reject(error);
-                }
-            });
-        });
-    }
-
     function updateAccountLastReconciledTime(accountId: string, lastReconciledTime: number): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const account = allAccountsMap.value[accountId];
@@ -1607,8 +1556,6 @@ export const useAccountsStore = defineStore('accounts', () => {
         loadAllAccounts,
         getAccount,
         saveAccount,
-        uploadCreditCardPicture,
-        removeUnusedCreditCardPicture,
         updateAccountLastReconciledTime,
         changeAccountDisplayOrder,
         updateAccountDisplayOrders,

@@ -20,7 +20,6 @@ import (
 
 const internalUserCustomIconUrlFormat = "%sicons/%d.%s"
 const internalTransactionPictureUrlFormat = "%spictures/%d.%s"
-const internalCreditCardPictureUrlFormat = "%scredit_card_pictures/%d.%s"
 
 // ApiUsingConfig represents an api that need to use config
 type ApiUsingConfig struct {
@@ -55,12 +54,6 @@ func (a *ApiUsingConfig) GetTransactionPictureInfoResponseList(pictureInfos []*m
 	sort.Sort(pictureInfoResps)
 
 	return pictureInfoResps
-}
-
-// GetCreditCardPictureInfoResponse returns the view-object of credit card picture basic info according to the credit card picture model
-func (a *ApiUsingConfig) GetCreditCardPictureInfoResponse(pictureInfo *models.CreditCardPictureInfo, pictureToken string) *models.CreditCardPictureInfoBasicResponse {
-	originalUrl := fmt.Sprintf(internalCreditCardPictureUrlFormat, a.CurrentConfig().RootUrl, pictureInfo.PictureId, pictureInfo.PictureExtension)
-	return pictureInfo.ToCreditCardPictureInfoBasicResponse(originalUrl, pictureToken)
 }
 
 // GetAfterRegisterNotificationContent returns the notification content displayed each time users register

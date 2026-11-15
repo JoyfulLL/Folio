@@ -342,26 +342,6 @@
                 </f7-accordion-content>
             </f7-list-item>
 
-            <f7-list-item
-                link="#"
-                class="list-item-with-header-and-title"
-                :header="tt('Card Picture')"
-                v-if="account.category === AccountCategory.CreditCard.type"
-                @click="showOpenCreditCardPictureDialog"
-            >
-                <template #title>
-                    <img v-if="account.creditCardPictureUrl" :src="account.creditCardPictureUrl" style="max-width: 100%; max-height: 160px" />
-                    <span v-else>{{ tt('Not set') }}</span>
-                </template>
-            </f7-list-item>
-
-            <f7-list-item
-                link="#"
-                :title="tt('Remove Picture')"
-                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardPictureUrl"
-                @click="removeAccountCreditCardPicture"
-            ></f7-list-item>
-
             <f7-list-input
                 type="text"
                 autocomplete="off"
@@ -747,26 +727,6 @@
                 </f7-accordion-content>
             </f7-list-item>
 
-            <f7-list-item
-                link="#"
-                class="list-item-with-header-and-title"
-                :header="tt('Card Picture')"
-                v-if="account.category === AccountCategory.CreditCard.type"
-                @click="showOpenCreditCardPictureDialog"
-            >
-                <template #title>
-                    <img v-if="account.creditCardPictureUrl" :src="account.creditCardPictureUrl" style="max-width: 100%; max-height: 160px" />
-                    <span v-else>{{ tt('Not set') }}</span>
-                </template>
-            </f7-list-item>
-
-            <f7-list-item
-                link="#"
-                :title="tt('Remove Picture')"
-                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardPictureUrl"
-                @click="removeAccountCreditCardPicture"
-            ></f7-list-item>
-
             <!-- Card identity -->
             <f7-list-item :title="tt('Physical Card')" v-if="account.category === AccountCategory.CreditCard.type">
                 <template #after>
@@ -899,7 +859,7 @@
             </f7-list-item>
 
             <!-- Credit card email notifications -->
-            <f7-list-item :title="tt('Statement Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+            <f7-list-item :title="tt('Statement Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type && !isCreditCardLimitPoolMainAccount">
                 <template #after>
                     <f7-toggle :checked="account.creditCardStatementReminderEnabled" @toggle:change="account.creditCardStatementReminderEnabled = $event"></f7-toggle>
                 </template>
@@ -908,7 +868,7 @@
                 </template>
             </f7-list-item>
 
-            <f7-list-item :title="tt('Statement Email')" v-if="account.category === AccountCategory.CreditCard.type">
+            <f7-list-item :title="tt('Statement Email')" v-if="account.category === AccountCategory.CreditCard.type && !isCreditCardLimitPoolMainAccount">
                 <template #after>
                     <f7-toggle :checked="account.creditCardStatementEmailEnabled" @toggle:change="account.creditCardStatementEmailEnabled = $event"></f7-toggle>
                 </template>
@@ -917,7 +877,7 @@
                 </template>
             </f7-list-item>
 
-            <f7-list-item :title="tt('Repayment Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type">
+            <f7-list-item :title="tt('Repayment Date Reminder')" v-if="account.category === AccountCategory.CreditCard.type && !isCreditCardLimitPoolMainAccount">
                 <template #after>
                     <f7-toggle :checked="account.creditCardRepaymentReminderEnabled" @toggle:change="account.creditCardRepaymentReminderEnabled = $event"></f7-toggle>
                 </template>
@@ -931,7 +891,7 @@
                 class="list-item-with-header-and-title list-item-no-item-after"
                 :header="tt('Days Before Repayment Date')"
                 :title="notificationRepaymentDaysBefore ? notificationRepaymentDaysBefore.toString(10) : tt('None')"
-                v-if="account.category === AccountCategory.CreditCard.type && account.creditCardRepaymentReminderEnabled"
+                v-if="account.category === AccountCategory.CreditCard.type && !isCreditCardLimitPoolMainAccount && account.creditCardRepaymentReminderEnabled"
                 @click="accountContext.showCreditCardRepaymentReminderDaysPopup = true"
             >
                 <list-item-selection-popup value-type="item"
@@ -952,7 +912,7 @@
                 class="list-item-with-header-and-title list-item-no-item-after"
                 :header="tt('Notification Time')"
                 :title="getAccountCreditCardNotificationTime(account.creditCardNotificationMinutesOfDay)"
-                v-if="hasCreditCardNotificationEnabled"
+                v-if="hasCreditCardNotificationEnabled && !isCreditCardLimitPoolMainAccount"
                 @click="accountContext.showCreditCardNotificationTimePopup = true"
             >
                 <template #footer>
@@ -1260,27 +1220,6 @@
 
             <f7-list-item
                 link="#"
-                class="list-item-with-header-and-title"
-                :header="tt('Card Picture')"
-                v-if="account.category === AccountCategory.CreditCard.type"
-                @click="showOpenCreditCardPictureDialog(subAccount)"
-            >
-                <template #title>
-                    <img v-if="subAccount.creditCardPictureUrl" :src="subAccount.creditCardPictureUrl" style="max-width: 100%; max-height: 160px" />
-                    <span v-else>{{ tt('Not set') }}</span>
-                </template>
-            </f7-list-item>
-
-            <f7-list-item
-                link="#"
-                :title="tt('Remove Picture')"
-                v-if="account.category === AccountCategory.CreditCard.type && subAccount.creditCardPictureUrl"
-                @click="removeAccountCreditCardPicture(subAccount)"
-            ></f7-list-item>
-
-
-            <f7-list-item
-                link="#"
                 class="list-item-with-header-and-title list-item-no-item-after"
                 :header="tt('Statement Date')"
                 :title="getAccountCreditCardStatementDate(subAccount.creditCardStatementDate)"
@@ -1494,12 +1433,11 @@
             </f7-actions-group>
         </f7-actions>
 
-        <input ref="creditCardPictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="onUploadCreditCardPicture($event)" />
     </f7-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted, useTemplateRef } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { Router } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -1514,7 +1452,6 @@ import { AccountCategory, AccountType } from '@/core/account.ts';
 import { ALL_ACCOUNT_ICONS } from '@/consts/icon.ts';
 import { ALL_ACCOUNT_COLORS } from '@/consts/color.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 import { TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT } from '@/consts/transaction.ts';
 import type { Account } from '@/models/account.ts';
 
@@ -1592,6 +1529,7 @@ const {
     getAccountRepaymentReminderDaysBefore,
     setAccountRepaymentReminderDaysBefore,
     notificationTimezoneName,
+    isCreditCardLimitPoolMainAccount,
     getDefaultTimezoneOffsetMinutes,
     getAccountCreditCardStatementDate,
     getAccountCreditCardExpireMonth,
@@ -1604,10 +1542,6 @@ const {
     updateAccountBalanceTime,
     updateAccountLastReconciledTime,
     fillCreditCardNotificationSettings,
-    updateAccountCreditCardPicture,
-    removeAccountCreditCardPicture,
-    discardUploadedUnboundCreditCardPicture,
-    confirmUploadedCreditCardPicture,
     isNewAccount,
     addSubAccount,
     setAccount
@@ -1643,8 +1577,6 @@ const showAccountTypeSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
 const showDeleteActionSheet = ref<boolean>(false);
 const showCreditCardLimitSheet = ref<boolean>(false);
-const creditCardPictureInput = useTemplateRef<HTMLInputElement>('creditCardPictureInput');
-const pictureTargetAccount = ref<Account | null>(null);
 
 const allCurrencies = computed<LocalizedCurrencyInfo[]>(() => getAllCurrencies());
 const allCurrenciesWithNotSet = computed<LocalizedCurrencyInfo[]>(() => getAllCurrencies(true));
@@ -1670,34 +1602,6 @@ function formatTime(unixTime?: number): string {
 
     const dateTime = parseDateTimeFromUnixTimeWithTimezoneOffset(unixTime, getTimezoneOffsetMinutes(unixTime));
     return formatDateTimeToLongTime(dateTime);
-}
-
-function showOpenCreditCardPictureDialog(targetAccount?: Account): void {
-    if (loading.value || submitting.value) {
-        return;
-    }
-
-    pictureTargetAccount.value = targetAccount || account.value;
-    creditCardPictureInput.value?.click();
-}
-
-function onUploadCreditCardPicture(event: Event): void {
-    if (!event || !event.target) {
-        return;
-    }
-
-    const el = event.target as HTMLInputElement;
-
-    if (!el.files || !el.files.length || !el.files[0]) {
-        return;
-    }
-
-    const pictureFile = el.files[0] as File;
-
-    el.value = '';
-    updateAccountCreditCardPicture(pictureFile, pictureTargetAccount.value || account.value).catch(error => {
-        showToast(error.message || error);
-    });
 }
 
 function init(): void {
@@ -1754,7 +1658,6 @@ function save(): void {
     }).then(() => {
         submitting.value = false;
         hideLoading();
-        confirmUploadedCreditCardPicture();
 
         if (!editAccountId.value) {
             showToast('You have added a new account');
@@ -1820,10 +1723,6 @@ watch(() => account.value.type, () => {
     if (subAccounts.value.length < 1) {
         addSubAccountAndContext();
     }
-});
-
-onUnmounted(() => {
-    discardUploadedUnboundCreditCardPicture();
 });
 
 init();

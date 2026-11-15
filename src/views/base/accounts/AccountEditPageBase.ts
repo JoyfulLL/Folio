@@ -4,21 +4,16 @@ import { useI18n } from '@/locales/helpers.ts';
 
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
-import { useAccountsStore } from '@/stores/account.ts';
 
 import type { TypeAndDisplayName } from '@/core/base.ts';
 import { AccountCategory, AccountType } from '@/core/account.ts';
 import type { LocalizedAccountCategory } from '@/core/account.ts';
-import { ImageUploadQualityType } from '@/core/image.ts';
-import { KnownFileType } from '@/core/file.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
 
 import { Account } from '@/models/account.ts';
 
 import { isDefined, isNumber } from '@/lib/common.ts';
-import logger from '@/lib/logger.ts';
 import { parseBigDecimal } from '@/lib/numeral.ts';
-import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 import {
     getTimezoneOffsetMinutes,
     getSameDateTimeWithCurrentTimezone,
@@ -32,11 +27,6 @@ const DEFAULT_CREDIT_CARD_NOTIFICATION_MINUTES_OF_DAY = 9 * 60;
 const CREDIT_CARD_NOTIFICATION_TIME_STEP_MINUTES = 5;
 const MINUTES_PER_DAY = 24 * 60;
 
-interface UploadedUnboundCreditCardPicture {
-    account: Account;
-    pictureId: string;
-}
-
 export function useAccountEditPageBase() {
     const {
         tt,
@@ -49,7 +39,6 @@ export function useAccountEditPageBase() {
 
     const settingsStore = useSettingsStore();
     const userStore = useUserStore();
-    const accountsStore = useAccountsStore();
 
     const defaultAccountCategory = AccountCategory.values(settingsStore.appSettings.accountCategoryOrders)[0] ?? AccountCategory.Default;
 
@@ -59,7 +48,6 @@ export function useAccountEditPageBase() {
     const submitting = ref<boolean>(false);
     const account = ref<Account>(Account.createNewAccount(defaultAccountCategory, userStore.currentUserDefaultCurrency, getCurrentUnixTimeForNewAccount()));
     const subAccounts = ref<Account[]>([]);
-    const uploadedUnboundCreditCardPictures = ref<UploadedUnboundCreditCardPicture[]>([]);
 
     const useLastReconciledTime = computed(() => userStore.currentUserUseLastReconciledTime);
 
@@ -245,6 +233,15 @@ export function useAccountEditPageBase() {
 
     const notificationTimezoneName = computed<string>(() => getBrowserTimezoneName());
 
+    // A multi-sub-account credit card whose physical card switch is off is only a shared
+    // credit limit container. It has no billing cycle of its own, so its notification
+    // settings are hidden; the physical sub-accounts keep their own notification settings.
+    const isCreditCardLimitPoolMainAccount = computed<boolean>(() =>
+        account.value.category === AccountCategory.CreditCard.type &&
+        account.value.type === AccountType.MultiSubAccounts.type &&
+        account.value.creditCardIsEntityCard === false
+    );
+
     function formatCreditCardNotificationTime(minutesOfDay: number): string {
         const hours = Math.floor(minutesOfDay / 60);
         const minutes = minutesOfDay % 60;
@@ -391,52 +388,6 @@ export function useAccountEditPageBase() {
         return getAccountCreditCardStatementDate(dayOfMonth);
     }
 
-    function updateAccountCreditCardPicture(file: File, targetAccount?: Account): Promise<void> {
-        const card = targetAccount || account.value;
-
-        return compressJpgImageByQuality(file, ImageUploadQualityType.HD720P).then(blob => {
-            return accountsStore.uploadCreditCardPicture({
-                pictureFile: KnownFileType.JPG.createFileFromBlob(blob, 'credit_card_picture')
-            });
-        }).then(pictureInfo => {
-            discardUploadedUnboundCreditCardPicture(card);
-
-            card.creditCardPictureId = pictureInfo.pictureId;
-            card.creditCardPictureUrl = pictureInfo.originalUrl;
-            uploadedUnboundCreditCardPictures.value.push({ account: card, pictureId: pictureInfo.pictureId });
-        });
-    }
-
-    function removeAccountCreditCardPicture(targetAccount?: Account): void {
-        const card = targetAccount || account.value;
-
-        card.creditCardPictureId = undefined;
-        card.creditCardPictureUrl = undefined;
-        discardUploadedUnboundCreditCardPicture(card);
-    }
-
-    // an uploaded picture is not bound to any account until the account is saved, so it must be removed once it is replaced or discarded
-    function discardUploadedUnboundCreditCardPicture(targetAccount?: Account): void {
-        const remaining: UploadedUnboundCreditCardPicture[] = [];
-
-        for (const item of uploadedUnboundCreditCardPictures.value) {
-            if (targetAccount && item.account !== targetAccount) {
-                remaining.push(item);
-                continue;
-            }
-
-            accountsStore.removeUnusedCreditCardPicture({ pictureId: item.pictureId }).catch(error => {
-                logger.warn('failed to remove the uploaded credit card picture', error);
-            });
-        }
-
-        uploadedUnboundCreditCardPictures.value = remaining;
-    }
-
-    function confirmUploadedCreditCardPicture(): void {
-        uploadedUnboundCreditCardPictures.value = [];
-    }
-
     function getAccountCreditCardCreditLimitDisplayValue(creditLimit: number | undefined, currency: string): string {
         if (!isNumber(creditLimit) || creditLimit <= 0 || !currency || currency === ACCOUNT_CURRENCY_NOT_SET_VALUE) {
             return tt('Not set');
@@ -559,6 +510,7 @@ export function useAccountEditPageBase() {
         notificationMinutesOfDay,
         notificationRepaymentDaysBefore,
         hasCreditCardNotificationEnabled,
+        isCreditCardLimitPoolMainAccount,
         hasAccountCreditCardNotificationEnabled,
         getAccountNotificationMinutesOfDay,
         setAccountNotificationMinutesOfDay,
@@ -576,10 +528,6 @@ export function useAccountEditPageBase() {
         getAccountCreditCardRepaymentDayOfMonth,
         getAccountCreditCardNotificationTime,
         fillCreditCardNotificationSettings,
-        updateAccountCreditCardPicture,
-        removeAccountCreditCardPicture,
-        discardUploadedUnboundCreditCardPicture,
-        confirmUploadedCreditCardPicture,
         getAccountCreditCardCreditLimitDisplayValue,
         updateAccountBalanceTime,
         updateAccountLastReconciledTime,

@@ -149,7 +149,6 @@ describe('Account credit card shared pool (stage 1)', () => {
         creditCardBankName: 'ABC',
         creditCardCardName: 'Mastercard 5083',
         creditCardLastFourDigits: '5083',
-        creditCardPictureId: '9001',
         creditCardStatementEmailEnabled: true,
         creditCardNotificationMinutesOfDay: 540,
         creditCardNotificationTimezoneName: 'Asia/Shanghai',
@@ -174,13 +173,12 @@ describe('Account credit card shared pool (stage 1)', () => {
         creditCardBankName: 'ABC',
         creditCardCardName: 'Mastercard 5083',
         creditCardLastFourDigits: '5083',
-        creditCardPictureId: '9002',
         creditCardStatementReminderEnabled: true,
         creditCardNotificationTimezoneName: 'Asia/Shanghai',
         creditCardCurrencyLimit: '30000'
     };
 
-    it('should keep existing card profile, picture and notification settings on the pool', () => {
+    it('should keep existing card profile and notification settings on the pool', () => {
         const pool = Account.of(poolResponse);
         const request = pool.toModifyRequest('session');
 
@@ -188,7 +186,6 @@ describe('Account credit card shared pool (stage 1)', () => {
         expect(request.creditCardBankName).toBe('ABC');
         expect(request.creditCardCardName).toBe('Mastercard 5083');
         expect(request.creditCardLastFourDigits).toBe('5083');
-        expect(request.creditCardPictureId).toBe('9001');
         expect(request.creditCardStatementEmailEnabled).toBe(true);
         expect(request.creditCardNotificationMinutesOfDay).toBe(540);
         expect(request.creditCardNotificationTimezoneName).toBe('Asia/Shanghai');
@@ -204,7 +201,6 @@ describe('Account credit card shared pool (stage 1)', () => {
         expect(request.creditCardLimit).toBeUndefined();
         expect(request.creditCardStatementDate).toBe(15);
         expect(request.creditCardBankName).toBe('ABC');
-        expect(request.creditCardPictureId).toBe('9002');
         expect(request.creditCardStatementReminderEnabled).toBe(true);
         expect(request.creditCardNotificationTimezoneName).toBe('Asia/Shanghai');
         expect(request.creditCardCurrencyLimit).toBe('30000');
@@ -218,7 +214,6 @@ describe('Account credit card shared pool (stage 1)', () => {
 
         expect(request.creditCardLimit).toBeUndefined();
         expect(request.creditCardBankName).toBeUndefined();
-        expect(request.creditCardPictureId).toBe('0');
         expect(request.creditCardStatementEmailEnabled).toBeUndefined();
         expect(request.creditCardNotificationTimezoneName).toBeUndefined();
     });

@@ -19,11 +19,9 @@ import (
 type AccountsApi struct {
 	ApiUsingConfig
 	ApiUsingDuplicateChecker
-	accounts           *services.AccountService
-	users              *services.UserService
-	icons              *services.UserCustomIconService
-	tokens             *services.TokenService
-	creditCardPictures *services.CreditCardPictureService
+	accounts *services.AccountService
+	users    *services.UserService
+	icons    *services.UserCustomIconService
 }
 
 // Initialize an account api singleton instance
@@ -38,11 +36,9 @@ var (
 			},
 			duplicateChecker: duplicatechecker.Container,
 		},
-		accounts:           services.Accounts,
-		users:              services.Users,
-		icons:              services.UserCustomIcons,
-		tokens:             services.Tokens,
-		creditCardPictures: services.CreditCardPictures,
+		accounts: services.Accounts,
+		users:    services.Users,
+		icons:    services.UserCustomIcons,
 	}
 )
 
@@ -103,7 +99,6 @@ func (a *AccountsApi) AccountListHandler(c *core.WebContext) (any, *errs.Error) 
 
 	sort.Sort(userFinalAccountResps)
 
-	a.fillCreditCardPictureUrls(c, uid, userFinalAccountResps...)
 	return userFinalAccountResps, nil
 }
 
@@ -147,7 +142,6 @@ func (a *AccountsApi) AccountGetHandler(c *core.WebContext) (any, *errs.Error) {
 
 	sort.Sort(accountResp.SubAccounts)
 
-	a.fillCreditCardPictureUrls(c, uid, accountResp)
 	return accountResp, nil
 }
 
@@ -195,7 +189,7 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 		return nil, errs.ErrCannotSetCreditLimitForNonCreditCardAccount
 	}
 
-	if accountCreateReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && hasCreditCardProfileFields(accountCreateReq.CreditCardBankName, accountCreateReq.CreditCardCardName, accountCreateReq.CreditCardLastFourDigits, accountCreateReq.CreditCardExpireMonth, accountCreateReq.CreditCardExpireYear, accountCreateReq.CreditCardCardholderName, accountCreateReq.CreditCardPictureId, accountCreateReq.CreditCardStatementDateIncludeTransaction, accountCreateReq.CreditCardRepaymentDateType, accountCreateReq.CreditCardRepaymentDaysAfterStatement, accountCreateReq.CreditCardRepaymentDayOfMonth) {
+	if accountCreateReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && hasCreditCardProfileFields(accountCreateReq.CreditCardBankName, accountCreateReq.CreditCardCardName, accountCreateReq.CreditCardLastFourDigits, accountCreateReq.CreditCardExpireMonth, accountCreateReq.CreditCardExpireYear, accountCreateReq.CreditCardCardholderName, accountCreateReq.CreditCardStatementDateIncludeTransaction, accountCreateReq.CreditCardRepaymentDateType, accountCreateReq.CreditCardRepaymentDaysAfterStatement, accountCreateReq.CreditCardRepaymentDayOfMonth) {
 		log.Warnf(c, "[accounts.AccountCreateHandler] cannot set credit card profile with category \"%d\"", accountCreateReq.Category)
 		return nil, errs.ErrCannotSetCreditCardProfileForNonCreditCard
 	}
@@ -334,28 +328,6 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 		return nil, errs.ErrAccountIconInvalid
 	}
 
-	if accountCreateReq.CreditCardPictureId > 0 {
-		err = a.creditCardPictures.CheckPictureCanBeBound(c, uid, 0, accountCreateReq.CreditCardPictureId)
-
-		if err != nil {
-			log.Warnf(c, "[accounts.AccountCreateHandler] credit card picture \"id:%d\" cannot be used for user \"uid:%d\", because %s", accountCreateReq.CreditCardPictureId, uid, err.Error())
-			return nil, errs.Or(err, errs.ErrCreditCardPictureIdInvalid)
-		}
-	}
-
-	for i := 0; i < len(accountCreateReq.SubAccounts); i++ {
-		pictureId := accountCreateReq.SubAccounts[i].CreditCardPictureId
-
-		if pictureId > 0 {
-			err = a.creditCardPictures.CheckPictureCanBeBound(c, uid, 0, pictureId)
-
-			if err != nil {
-				log.Warnf(c, "[accounts.AccountCreateHandler] sub-account#%d credit card picture \"id:%d\" cannot be used for user \"uid:%d\", because %s", i, pictureId, uid, err.Error())
-				return nil, errs.Or(err, errs.ErrCreditCardPictureIdInvalid)
-			}
-		}
-	}
-
 	if a.CurrentConfig().EnableDuplicateSubmissionsCheck && accountCreateReq.ClientSessionId != "" {
 		found, remark := a.GetSubmissionRemark(duplicatechecker.DUPLICATE_CHECKER_TYPE_NEW_ACCOUNT, uid, accountCreateReq.ClientSessionId)
 
@@ -387,7 +359,6 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 					}
 				}
 
-				a.fillCreditCardPictureUrls(c, uid, accountInfoResp)
 				return accountInfoResp, nil
 			}
 		}
@@ -398,28 +369,6 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 	if err != nil {
 		log.Errorf(c, "[accounts.AccountCreateHandler] failed to create account \"id:%d\" for user \"uid:%d\", because %s", mainAccount.AccountId, uid, err.Error())
 		return nil, errs.Or(err, errs.ErrOperationFailed)
-	}
-
-	if accountCreateReq.CreditCardPictureId > 0 {
-		err = a.creditCardPictures.BindPictureToAccount(c, uid, mainAccount.AccountId, accountCreateReq.CreditCardPictureId)
-
-		if err != nil {
-			log.Errorf(c, "[accounts.AccountCreateHandler] failed to bind credit card picture \"id:%d\" to account \"id:%d\" for user \"uid:%d\", because %s", accountCreateReq.CreditCardPictureId, mainAccount.AccountId, uid, err.Error())
-			return nil, errs.Or(err, errs.ErrOperationFailed)
-		}
-	}
-
-	for i := 0; i < len(childrenAccounts); i++ {
-		pictureId := getCreditCardPictureId(childrenAccounts[i].Extend)
-
-		if pictureId > 0 {
-			err = a.creditCardPictures.BindPictureToAccount(c, uid, childrenAccounts[i].AccountId, pictureId)
-
-			if err != nil {
-				log.Errorf(c, "[accounts.AccountCreateHandler] failed to bind credit card picture \"id:%d\" to sub-account \"id:%d\" for user \"uid:%d\", because %s", pictureId, childrenAccounts[i].AccountId, uid, err.Error())
-				return nil, errs.Or(err, errs.ErrOperationFailed)
-			}
-		}
 	}
 
 	log.Infof(c, "[accounts.AccountCreateHandler] user \"uid:%d\" has created a new account \"id:%d\" successfully", uid, mainAccount.AccountId)
@@ -437,7 +386,6 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 		}
 	}
 
-	a.fillCreditCardPictureUrls(c, uid, accountInfoResp)
 	return accountInfoResp, nil
 }
 
@@ -477,7 +425,7 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 		return nil, errs.ErrCannotSetCreditLimitForNonCreditCardAccount
 	}
 
-	if accountModifyReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && hasCreditCardProfileFields(accountModifyReq.CreditCardBankName, accountModifyReq.CreditCardCardName, accountModifyReq.CreditCardLastFourDigits, accountModifyReq.CreditCardExpireMonth, accountModifyReq.CreditCardExpireYear, accountModifyReq.CreditCardCardholderName, accountModifyReq.CreditCardPictureId, accountModifyReq.CreditCardStatementDateIncludeTransaction, accountModifyReq.CreditCardRepaymentDateType, accountModifyReq.CreditCardRepaymentDaysAfterStatement, accountModifyReq.CreditCardRepaymentDayOfMonth) {
+	if accountModifyReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && hasCreditCardProfileFields(accountModifyReq.CreditCardBankName, accountModifyReq.CreditCardCardName, accountModifyReq.CreditCardLastFourDigits, accountModifyReq.CreditCardExpireMonth, accountModifyReq.CreditCardExpireYear, accountModifyReq.CreditCardCardholderName, accountModifyReq.CreditCardStatementDateIncludeTransaction, accountModifyReq.CreditCardRepaymentDateType, accountModifyReq.CreditCardRepaymentDaysAfterStatement, accountModifyReq.CreditCardRepaymentDayOfMonth) {
 		log.Warnf(c, "[accounts.AccountModifyHandler] cannot set credit card profile with category \"%d\"", accountModifyReq.Category)
 		return nil, errs.ErrCannotSetCreditCardProfileForNonCreditCard
 	}
@@ -654,28 +602,6 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 	var toAddAccountBalanceTimes []int64
 	var toDeleteAccountIds []int64
 
-	if accountModifyReq.CreditCardPictureId > 0 {
-		err = a.creditCardPictures.CheckPictureCanBeBound(c, uid, mainAccount.AccountId, accountModifyReq.CreditCardPictureId)
-
-		if err != nil {
-			log.Warnf(c, "[accounts.AccountModifyHandler] credit card picture \"id:%d\" cannot be used for user \"uid:%d\", because %s", accountModifyReq.CreditCardPictureId, uid, err.Error())
-			return nil, errs.Or(err, errs.ErrCreditCardPictureIdInvalid)
-		}
-	}
-
-	for i := 0; i < len(accountModifyReq.SubAccounts); i++ {
-		subAccountReq := accountModifyReq.SubAccounts[i]
-
-		if subAccountReq.CreditCardPictureId > 0 {
-			err = a.creditCardPictures.CheckPictureCanBeBound(c, uid, subAccountReq.Id, subAccountReq.CreditCardPictureId)
-
-			if err != nil {
-				log.Warnf(c, "[accounts.AccountModifyHandler] sub-account#%d credit card picture \"id:%d\" cannot be used for user \"uid:%d\", because %s", i, subAccountReq.CreditCardPictureId, uid, err.Error())
-				return nil, errs.Or(err, errs.ErrCreditCardPictureIdInvalid)
-			}
-		}
-	}
-
 	toUpdateAccount, err := a.getToUpdateAccount(user, &accountModifyReq, &creditLimitForCreditCard, mainAccount, false)
 
 	if err != nil {
@@ -784,7 +710,6 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 					}
 				}
 
-				a.fillCreditCardPictureUrls(c, uid, accountInfoResp)
 				return accountInfoResp, nil
 			}
 		}
@@ -795,54 +720,6 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 	if err != nil {
 		log.Errorf(c, "[accounts.AccountModifyHandler] failed to update account \"id:%d\" for user \"uid:%d\", because %s", accountModifyReq.Id, uid, err.Error())
 		return nil, errs.Or(err, errs.ErrOperationFailed)
-	}
-
-	if accountModifyReq.CreditCardPictureId != getCreditCardPictureId(mainAccount.Extend) {
-		err = a.creditCardPictures.BindPictureToAccount(c, uid, accountModifyReq.Id, accountModifyReq.CreditCardPictureId)
-
-		if err != nil {
-			log.Errorf(c, "[accounts.AccountModifyHandler] failed to bind credit card picture \"id:%d\" to account \"id:%d\" for user \"uid:%d\", because %s", accountModifyReq.CreditCardPictureId, accountModifyReq.Id, uid, err.Error())
-			return nil, errs.Or(err, errs.ErrOperationFailed)
-		}
-	}
-
-	for i := 0; i < len(toUpdateAccounts); i++ {
-		subAccount := toUpdateAccounts[i]
-
-		if subAccount.AccountId == mainAccount.AccountId || subAccount.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD {
-			continue
-		}
-
-		oldSubAccount := accountMap[subAccount.AccountId]
-
-		if oldSubAccount == nil {
-			continue
-		}
-
-		pictureId := getCreditCardPictureId(subAccount.Extend)
-
-		if pictureId != getCreditCardPictureId(oldSubAccount.Extend) {
-			err = a.creditCardPictures.BindPictureToAccount(c, uid, subAccount.AccountId, pictureId)
-
-			if err != nil {
-				log.Errorf(c, "[accounts.AccountModifyHandler] failed to bind credit card picture \"id:%d\" to sub-account \"id:%d\" for user \"uid:%d\", because %s", pictureId, subAccount.AccountId, uid, err.Error())
-				return nil, errs.Or(err, errs.ErrOperationFailed)
-			}
-		}
-	}
-
-	for i := 0; i < len(toAddAccounts); i++ {
-		subAccount := toAddAccounts[i]
-		pictureId := getCreditCardPictureId(subAccount.Extend)
-
-		if pictureId > 0 {
-			err = a.creditCardPictures.BindPictureToAccount(c, uid, subAccount.AccountId, pictureId)
-
-			if err != nil {
-				log.Errorf(c, "[accounts.AccountModifyHandler] failed to bind credit card picture \"id:%d\" to sub-account \"id:%d\" for user \"uid:%d\", because %s", pictureId, subAccount.AccountId, uid, err.Error())
-				return nil, errs.Or(err, errs.ErrOperationFailed)
-			}
-		}
 	}
 
 	log.Infof(c, "[accounts.AccountModifyHandler] user \"uid:%d\" has updated account \"id:%d\" successfully", uid, accountModifyReq.Id)
@@ -911,7 +788,6 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 
 	sort.Sort(accountResp.SubAccounts)
 
-	a.fillCreditCardPictureUrls(c, uid, accountResp)
 	return accountResp, nil
 }
 
@@ -1054,12 +930,6 @@ func (a *AccountsApi) AccountDeleteHandler(c *core.WebContext) (any, *errs.Error
 	}
 
 	log.Infof(c, "[accounts.AccountDeleteHandler] user \"uid:%d\" has deleted account \"id:%d\"", uid, accountDeleteReq.Id)
-
-	err = a.creditCardPictures.RemovePicturesByAccountId(c, uid, accountDeleteReq.Id)
-
-	if err != nil {
-		log.Warnf(c, "[accounts.AccountDeleteHandler] failed to remove credit card pictures bound to account \"id:%d\" for user \"uid:%d\", because %s", accountDeleteReq.Id, uid, err.Error())
-	}
 
 	return true, nil
 }
@@ -1297,7 +1167,7 @@ func (a *AccountsApi) createNewAccountModel(uid int64, accountCreateReq *models.
 		if !isSubAccount || accountCreateReq.CreditCardStatementDate > 0 {
 			accountExtend.CreditCardStatementDate = &accountCreateReq.CreditCardStatementDate
 		}
-		setCreditCardProfileFields(accountExtend, accountCreateReq.CreditCardBankName, accountCreateReq.CreditCardCardName, accountCreateReq.CreditCardLastFourDigits, accountCreateReq.CreditCardExpireMonth, accountCreateReq.CreditCardExpireYear, accountCreateReq.CreditCardCardholderName, accountCreateReq.CreditCardPictureId, accountCreateReq.CreditCardStatementDateIncludeTransaction, accountCreateReq.CreditCardRepaymentDateType, accountCreateReq.CreditCardRepaymentDaysAfterStatement, accountCreateReq.CreditCardRepaymentDayOfMonth)
+		setCreditCardProfileFields(accountExtend, accountCreateReq.CreditCardBankName, accountCreateReq.CreditCardCardName, accountCreateReq.CreditCardLastFourDigits, accountCreateReq.CreditCardExpireMonth, accountCreateReq.CreditCardExpireYear, accountCreateReq.CreditCardCardholderName, accountCreateReq.CreditCardStatementDateIncludeTransaction, accountCreateReq.CreditCardRepaymentDateType, accountCreateReq.CreditCardRepaymentDaysAfterStatement, accountCreateReq.CreditCardRepaymentDayOfMonth)
 		setCreditCardNotificationFields(accountExtend, getCreditCardNotificationParamsFromCreateRequest(accountCreateReq))
 		setCreditCardEntityFields(accountExtend, accountCreateReq.CreditCardIsEntityCard, accountCreateReq.CreditCardCurrencyLimit, isSubAccount)
 
@@ -1330,7 +1200,7 @@ func (a *AccountsApi) createNewSubAccountModelForModify(uid int64, accountType m
 		if accountModifyReq.CreditCardStatementDate > 0 {
 			accountExtend.CreditCardStatementDate = &accountModifyReq.CreditCardStatementDate
 		}
-		setCreditCardProfileFields(accountExtend, accountModifyReq.CreditCardBankName, accountModifyReq.CreditCardCardName, accountModifyReq.CreditCardLastFourDigits, accountModifyReq.CreditCardExpireMonth, accountModifyReq.CreditCardExpireYear, accountModifyReq.CreditCardCardholderName, accountModifyReq.CreditCardPictureId, accountModifyReq.CreditCardStatementDateIncludeTransaction, accountModifyReq.CreditCardRepaymentDateType, accountModifyReq.CreditCardRepaymentDaysAfterStatement, accountModifyReq.CreditCardRepaymentDayOfMonth)
+		setCreditCardProfileFields(accountExtend, accountModifyReq.CreditCardBankName, accountModifyReq.CreditCardCardName, accountModifyReq.CreditCardLastFourDigits, accountModifyReq.CreditCardExpireMonth, accountModifyReq.CreditCardExpireYear, accountModifyReq.CreditCardCardholderName, accountModifyReq.CreditCardStatementDateIncludeTransaction, accountModifyReq.CreditCardRepaymentDateType, accountModifyReq.CreditCardRepaymentDaysAfterStatement, accountModifyReq.CreditCardRepaymentDayOfMonth)
 		setCreditCardNotificationFields(accountExtend, getCreditCardNotificationParamsFromModifyRequest(accountModifyReq))
 		setCreditCardEntityFields(accountExtend, accountModifyReq.CreditCardIsEntityCard, accountModifyReq.CreditCardCurrencyLimit, true)
 	}
@@ -1375,7 +1245,7 @@ func (a *AccountsApi) getToUpdateAccount(user *models.User, accountModifyReq *mo
 		if !isSubAccount || accountModifyReq.CreditCardStatementDate > 0 {
 			newAccountExtend.CreditCardStatementDate = &accountModifyReq.CreditCardStatementDate
 		}
-		setCreditCardProfileFields(newAccountExtend, accountModifyReq.CreditCardBankName, accountModifyReq.CreditCardCardName, accountModifyReq.CreditCardLastFourDigits, accountModifyReq.CreditCardExpireMonth, accountModifyReq.CreditCardExpireYear, accountModifyReq.CreditCardCardholderName, accountModifyReq.CreditCardPictureId, accountModifyReq.CreditCardStatementDateIncludeTransaction, accountModifyReq.CreditCardRepaymentDateType, accountModifyReq.CreditCardRepaymentDaysAfterStatement, accountModifyReq.CreditCardRepaymentDayOfMonth)
+		setCreditCardProfileFields(newAccountExtend, accountModifyReq.CreditCardBankName, accountModifyReq.CreditCardCardName, accountModifyReq.CreditCardLastFourDigits, accountModifyReq.CreditCardExpireMonth, accountModifyReq.CreditCardExpireYear, accountModifyReq.CreditCardCardholderName, accountModifyReq.CreditCardStatementDateIncludeTransaction, accountModifyReq.CreditCardRepaymentDateType, accountModifyReq.CreditCardRepaymentDaysAfterStatement, accountModifyReq.CreditCardRepaymentDayOfMonth)
 		setCreditCardNotificationFields(newAccountExtend, getCreditCardNotificationParamsFromModifyRequest(accountModifyReq))
 		setCreditCardEntityFields(newAccountExtend, accountModifyReq.CreditCardIsEntityCard, accountModifyReq.CreditCardCurrencyLimit, isSubAccount)
 
@@ -1530,11 +1400,11 @@ func isCreditCardEntityChanged(newExtend, oldExtend *models.AccountExtend) bool 
 		isStringPtrChanged(newExtend.CreditCardCurrencyLimit, oldExtend, func(e *models.AccountExtend) *string { return e.CreditCardCurrencyLimit })
 }
 
-func hasCreditCardProfileFields(bankName, cardName, lastFourDigits string, expireMonth, expireYear int, cardholderName string, pictureId int64, statementDateIncludeTransaction bool, repaymentDateType, repaymentDaysAfterStatement, repaymentDayOfMonth int) bool {
-	return bankName != "" || cardName != "" || lastFourDigits != "" || expireMonth != 0 || expireYear != 0 || cardholderName != "" || pictureId != 0 || statementDateIncludeTransaction || repaymentDateType != 0 || repaymentDaysAfterStatement != 0 || repaymentDayOfMonth != 0
+func hasCreditCardProfileFields(bankName, cardName, lastFourDigits string, expireMonth, expireYear int, cardholderName string, statementDateIncludeTransaction bool, repaymentDateType, repaymentDaysAfterStatement, repaymentDayOfMonth int) bool {
+	return bankName != "" || cardName != "" || lastFourDigits != "" || expireMonth != 0 || expireYear != 0 || cardholderName != "" || statementDateIncludeTransaction || repaymentDateType != 0 || repaymentDaysAfterStatement != 0 || repaymentDayOfMonth != 0
 }
 
-func setCreditCardProfileFields(extend *models.AccountExtend, bankName, cardName, lastFourDigits string, expireMonth, expireYear int, cardholderName string, pictureId int64, statementDateIncludeTransaction bool, repaymentDateType, repaymentDaysAfterStatement, repaymentDayOfMonth int) {
+func setCreditCardProfileFields(extend *models.AccountExtend, bankName, cardName, lastFourDigits string, expireMonth, expireYear int, cardholderName string, statementDateIncludeTransaction bool, repaymentDateType, repaymentDaysAfterStatement, repaymentDayOfMonth int) {
 	if bankName != "" {
 		extend.CreditCardBankName = &bankName
 	}
@@ -1552,9 +1422,6 @@ func setCreditCardProfileFields(extend *models.AccountExtend, bankName, cardName
 	}
 	if cardholderName != "" {
 		extend.CreditCardCardholderName = &cardholderName
-	}
-	if pictureId != 0 {
-		extend.CreditCardPictureId = &pictureId
 	}
 	if statementDateIncludeTransaction {
 		extend.CreditCardStatementDateIncludeTransaction = &statementDateIncludeTransaction
@@ -1577,7 +1444,6 @@ func isCreditCardProfileChanged(newExtend, oldExtend *models.AccountExtend) bool
 		isIntPtrChanged(newExtend.CreditCardExpireMonth, oldExtend, func(e *models.AccountExtend) *int { return e.CreditCardExpireMonth }) ||
 		isIntPtrChanged(newExtend.CreditCardExpireYear, oldExtend, func(e *models.AccountExtend) *int { return e.CreditCardExpireYear }) ||
 		isStringPtrChanged(newExtend.CreditCardCardholderName, oldExtend, func(e *models.AccountExtend) *string { return e.CreditCardCardholderName }) ||
-		isInt64PtrChanged(newExtend.CreditCardPictureId, oldExtend, func(e *models.AccountExtend) *int64 { return e.CreditCardPictureId }) ||
 		isBoolPtrChanged(newExtend.CreditCardStatementDateIncludeTransaction, oldExtend, func(e *models.AccountExtend) *bool { return e.CreditCardStatementDateIncludeTransaction }) ||
 		isIntPtrChanged(newExtend.CreditCardRepaymentDateType, oldExtend, func(e *models.AccountExtend) *int { return e.CreditCardRepaymentDateType }) ||
 		isIntPtrChanged(newExtend.CreditCardRepaymentDaysAfterStatement, oldExtend, func(e *models.AccountExtend) *int { return e.CreditCardRepaymentDaysAfterStatement }) ||
@@ -1600,20 +1466,6 @@ func isStringPtrChanged(newVal *string, oldExtend *models.AccountExtend, getter 
 
 func isIntPtrChanged(newVal *int, oldExtend *models.AccountExtend, getter func(*models.AccountExtend) *int) bool {
 	var oldVal *int
-	if oldExtend != nil {
-		oldVal = getter(oldExtend)
-	}
-	if newVal == nil && oldVal == nil {
-		return false
-	}
-	if newVal == nil || oldVal == nil {
-		return true
-	}
-	return *newVal != *oldVal
-}
-
-func isInt64PtrChanged(newVal *int64, oldExtend *models.AccountExtend, getter func(*models.AccountExtend) *int64) bool {
-	var oldVal *int64
 	if oldExtend != nil {
 		oldVal = getter(oldExtend)
 	}
@@ -1754,92 +1606,4 @@ func (a *AccountsApi) resetCreditCardNotificationScan(c *core.WebContext, uid in
 	if err := a.users.ResetUserCreditCardNotificationLastScanTime(c, uid); err != nil {
 		log.Warnf(c, "[accounts.resetCreditCardNotificationScan] failed to reset credit card notification scan time for user \"uid:%d\", because %s", uid, err.Error())
 	}
-}
-
-// fillCreditCardPictureUrls adds the url of the credit card picture to the given account responses
-func (a *AccountsApi) fillCreditCardPictureUrls(c *core.WebContext, uid int64, accountResps ...*models.AccountInfoResponse) {
-	// sub-accounts may carry their own card picture as well
-	allAccountResps := make([]*models.AccountInfoResponse, 0, len(accountResps))
-
-	for i := 0; i < len(accountResps); i++ {
-		allAccountResps = append(allAccountResps, accountResps[i])
-
-		for j := 0; j < len(accountResps[i].SubAccounts); j++ {
-			allAccountResps = append(allAccountResps, accountResps[i].SubAccounts[j])
-		}
-	}
-
-	accountResps = allAccountResps
-	pictureIds := make([]int64, 0, len(accountResps))
-
-	for i := 0; i < len(accountResps); i++ {
-		if accountResps[i].CreditCardPictureId != nil && *accountResps[i].CreditCardPictureId > 0 {
-			pictureIds = append(pictureIds, *accountResps[i].CreditCardPictureId)
-		}
-	}
-
-	if len(pictureIds) == 0 {
-		return
-	}
-
-	pictureInfoMap, err := a.creditCardPictures.GetPictureInfoMapByPictureIds(c, uid, pictureIds)
-
-	if err != nil {
-		log.Errorf(c, "[accounts.fillCreditCardPictureUrls] failed to get credit card pictures for user \"uid:%d\", because %s", uid, err.Error())
-		return
-	}
-
-	pictureToken, err := a.getCreditCardPictureToken(c, uid)
-
-	if err != nil {
-		log.Errorf(c, "[accounts.fillCreditCardPictureUrls] failed to get credit card picture token for user \"uid:%d\", because %s", uid, err.Error())
-		return
-	}
-
-	for i := 0; i < len(accountResps); i++ {
-		accountResp := accountResps[i]
-
-		if accountResp.CreditCardPictureId == nil {
-			continue
-		}
-
-		pictureInfo, exists := pictureInfoMap[*accountResp.CreditCardPictureId]
-
-		if !exists {
-			accountResp.CreditCardPictureId = nil
-			continue
-		}
-
-		accountResp.CreditCardPictureUrl = a.GetCreditCardPictureInfoResponse(pictureInfo, pictureToken).OriginalUrl
-	}
-}
-
-func (a *AccountsApi) getCreditCardPictureToken(c *core.WebContext, uid int64) (string, error) {
-	claims := c.GetTokenClaims()
-
-	if claims == nil {
-		log.Warnf(c, "[accounts.getCreditCardPictureToken] token is invalid, because claims is nil")
-		return "", errs.ErrInvalidToken
-	}
-
-	if claims.Type != core.USER_TOKEN_TYPE_NORMAL {
-		return "", nil
-	}
-
-	pictureToken, err := a.tokens.DeriveCreditCardPictureToken(c, claims, c.GetTokenRecord())
-
-	if err != nil {
-		log.Errorf(c, "[accounts.getCreditCardPictureToken] failed to derive credit card picture token for user \"uid:%d\", because %s", uid, err.Error())
-		return "", errs.Or(err, errs.ErrTokenGenerating)
-	}
-
-	return pictureToken, nil
-}
-
-func getCreditCardPictureId(extend *models.AccountExtend) int64 {
-	if extend == nil || extend.CreditCardPictureId == nil {
-		return 0
-	}
-
-	return *extend.CreditCardPictureId
 }

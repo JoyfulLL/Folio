@@ -216,12 +216,6 @@ func (s *TokenService) DeriveTransactionPictureToken(c core.Context, claims *cor
 	return token, err
 }
 
-// DeriveCreditCardPictureToken derives a credit card picture-only token from the current session
-func (s *TokenService) DeriveCreditCardPictureToken(c core.Context, claims *core.UserTokenClaims, tokenRecord core.TokenRecord) (string, error) {
-	token, _, err := s.deriveScopedNormalToken(c, claims, tokenRecord, core.NormalTokenScopeCreditCardPicture, s.CurrentConfig().CreditCardPictureTokenExpiredTimeDuration)
-	return token, err
-}
-
 // UpdateTokenLastSeen updates the last seen time of specified token
 func (s *TokenService) UpdateTokenLastSeen(c core.Context, tokenRecord *models.TokenRecord) error {
 	if tokenRecord.Uid <= 0 {

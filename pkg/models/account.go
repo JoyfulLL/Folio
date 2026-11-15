@@ -97,18 +97,15 @@ type Account struct {
 
 // AccountExtend represents account extend data stored in database
 type AccountExtend struct {
-	LastReconciledTime       *int64  `json:"lastReconciledTime,omitempty"`
-	CreditCardStatementDate  *int    `json:"creditCardStatementDate,omitempty"`
-	CreditCardLimit          *int64  `json:"creditCardLimit,string,omitempty"`
-	CreditCardBankName       *string `json:"creditCardBankName,omitempty"`
-	CreditCardCardName       *string `json:"creditCardCardName,omitempty"`
-	CreditCardLastFourDigits *string `json:"creditCardLastFourDigits,omitempty"`
-	CreditCardExpireMonth    *int    `json:"creditCardExpireMonth,omitempty"`
-	CreditCardExpireYear     *int    `json:"creditCardExpireYear,omitempty"`
-	CreditCardCardholderName *string `json:"creditCardCardholderName,omitempty"`
-	// CreditCardPicture is the deprecated base64 picture data url, kept only for converting it into a picture file
-	CreditCardPicture                         *string `json:"creditCardPicture,omitempty"`
-	CreditCardPictureId                       *int64  `json:"creditCardPictureId,string,omitempty"`
+	LastReconciledTime                        *int64  `json:"lastReconciledTime,omitempty"`
+	CreditCardStatementDate                   *int    `json:"creditCardStatementDate,omitempty"`
+	CreditCardLimit                           *int64  `json:"creditCardLimit,string,omitempty"`
+	CreditCardBankName                        *string `json:"creditCardBankName,omitempty"`
+	CreditCardCardName                        *string `json:"creditCardCardName,omitempty"`
+	CreditCardLastFourDigits                  *string `json:"creditCardLastFourDigits,omitempty"`
+	CreditCardExpireMonth                     *int    `json:"creditCardExpireMonth,omitempty"`
+	CreditCardExpireYear                      *int    `json:"creditCardExpireYear,omitempty"`
+	CreditCardCardholderName                  *string `json:"creditCardCardholderName,omitempty"`
 	CreditCardStatementDateIncludeTransaction *bool   `json:"creditCardStatementDateIncludeTransaction,omitempty"`
 	CreditCardRepaymentDateType               *int    `json:"creditCardRepaymentDateType,omitempty"`
 	CreditCardRepaymentDaysAfterStatement     *int    `json:"creditCardRepaymentDaysAfterStatement,omitempty"`
@@ -151,7 +148,6 @@ type AccountCreateRequest struct {
 	CreditCardExpireMonth                     int                     `json:"creditCardExpireMonth" binding:"min=0,max=12"`
 	CreditCardExpireYear                      int                     `json:"creditCardExpireYear" binding:"min=0,max=9999"`
 	CreditCardCardholderName                  string                  `json:"creditCardCardholderName" binding:"max=64"`
-	CreditCardPictureId                       int64                   `json:"creditCardPictureId,string" binding:"min=0"`
 	CreditCardStatementDateIncludeTransaction bool                    `json:"creditCardStatementDateIncludeTransaction"`
 	CreditCardRepaymentDateType               int                     `json:"creditCardRepaymentDateType" binding:"min=0,max=2"`
 	CreditCardRepaymentDaysAfterStatement     int                     `json:"creditCardRepaymentDaysAfterStatement" binding:"min=0,max=99"`
@@ -190,7 +186,6 @@ type AccountModifyRequest struct {
 	CreditCardExpireMonth                     int                     `json:"creditCardExpireMonth" binding:"min=0,max=12"`
 	CreditCardExpireYear                      int                     `json:"creditCardExpireYear" binding:"min=0,max=9999"`
 	CreditCardCardholderName                  string                  `json:"creditCardCardholderName" binding:"max=64"`
-	CreditCardPictureId                       int64                   `json:"creditCardPictureId,string" binding:"min=0"`
 	CreditCardStatementDateIncludeTransaction bool                    `json:"creditCardStatementDateIncludeTransaction"`
 	CreditCardRepaymentDateType               int                     `json:"creditCardRepaymentDateType" binding:"min=0,max=2"`
 	CreditCardRepaymentDaysAfterStatement     int                     `json:"creditCardRepaymentDaysAfterStatement" binding:"min=0,max=99"`
@@ -287,8 +282,6 @@ type AccountInfoResponse struct {
 	CreditCardExpireMonth                     *int                     `json:"creditCardExpireMonth,omitempty"`
 	CreditCardExpireYear                      *int                     `json:"creditCardExpireYear,omitempty"`
 	CreditCardCardholderName                  *string                  `json:"creditCardCardholderName,omitempty"`
-	CreditCardPictureId                       *int64                   `json:"creditCardPictureId,string,omitempty"`
-	CreditCardPictureUrl                      string                   `json:"creditCardPictureUrl,omitempty"`
 	CreditCardStatementDateIncludeTransaction *bool                    `json:"creditCardStatementDateIncludeTransaction,omitempty"`
 	CreditCardRepaymentDateType               *int                     `json:"creditCardRepaymentDateType,omitempty"`
 	CreditCardRepaymentDaysAfterStatement     *int                     `json:"creditCardRepaymentDaysAfterStatement,omitempty"`
@@ -329,7 +322,6 @@ func (a *Account) ToAccountInfoResponse() *AccountInfoResponse {
 	var creditCardExpireMonth *int
 	var creditCardExpireYear *int
 	var creditCardCardholderName *string
-	var creditCardPictureId *int64
 	var creditCardStatementDateIncludeTransaction *bool
 	var creditCardRepaymentDateType *int
 	var creditCardRepaymentDaysAfterStatement *int
@@ -374,7 +366,6 @@ func (a *Account) ToAccountInfoResponse() *AccountInfoResponse {
 			creditCardExpireMonth = a.Extend.CreditCardExpireMonth
 			creditCardExpireYear = a.Extend.CreditCardExpireYear
 			creditCardCardholderName = a.Extend.CreditCardCardholderName
-			creditCardPictureId = a.Extend.CreditCardPictureId
 			creditCardStatementDateIncludeTransaction = a.Extend.CreditCardStatementDateIncludeTransaction
 			creditCardRepaymentDateType = a.Extend.CreditCardRepaymentDateType
 			creditCardRepaymentDaysAfterStatement = a.Extend.CreditCardRepaymentDaysAfterStatement
@@ -410,7 +401,6 @@ func (a *Account) ToAccountInfoResponse() *AccountInfoResponse {
 		CreditCardExpireMonth:    creditCardExpireMonth,
 		CreditCardExpireYear:     creditCardExpireYear,
 		CreditCardCardholderName: creditCardCardholderName,
-		CreditCardPictureId:      creditCardPictureId,
 		CreditCardStatementDateIncludeTransaction: creditCardStatementDateIncludeTransaction,
 		CreditCardRepaymentDateType:               creditCardRepaymentDateType,
 		CreditCardRepaymentDaysAfterStatement:     creditCardRepaymentDaysAfterStatement,

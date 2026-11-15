@@ -26,8 +26,6 @@ export class Account implements AccountInfoResponse {
     public creditCardExpireMonth?: number;
     public creditCardExpireYear?: number;
     public creditCardCardholderName?: string;
-    public creditCardPictureId?: string;
-    public creditCardPictureUrl?: string;
     public creditCardStatementDateIncludeTransaction?: boolean;
     public creditCardRepaymentDateType?: number;
     public creditCardRepaymentDaysAfterStatement?: number;
@@ -53,7 +51,7 @@ export class Account implements AccountInfoResponse {
     private readonly _isAsset?: boolean;
     private readonly _isLiability?: boolean;
 
-    protected constructor(id: string, name: string, parentId: string, category: number, type: number, icon: string, iconType: number, color: string, currency: string, initialBalance: string, comment: string, displayOrder: number, visible: boolean, balanceTime?: number, lastReconciledTime?: number, creditCardStatementDate?: number, initialCreditCardLimit?: string, isAsset?: boolean, isLiability?: boolean, subAccounts?: Account[], creditCardBankName?: string, creditCardCardName?: string, creditCardLastFourDigits?: string, creditCardExpireMonth?: number, creditCardExpireYear?: number, creditCardCardholderName?: string, creditCardPictureId?: string, creditCardPictureUrl?: string, creditCardStatementDateIncludeTransaction?: boolean, creditCardRepaymentDateType?: number, creditCardRepaymentDaysAfterStatement?: number, creditCardRepaymentDayOfMonth?: number, creditCardStatementReminderEnabled?: boolean, creditCardStatementEmailEnabled?: boolean, creditCardRepaymentReminderEnabled?: boolean, creditCardRepaymentReminderDaysBefore?: number, creditCardNotificationMinutesOfDay?: number, creditCardNotificationTimezoneName?: string, creditCardNotificationTimezoneUtcOffset?: number, creditCardIsEntityCard?: boolean, creditCardCurrencyLimit?: string) {
+    protected constructor(id: string, name: string, parentId: string, category: number, type: number, icon: string, iconType: number, color: string, currency: string, initialBalance: string, comment: string, displayOrder: number, visible: boolean, balanceTime?: number, lastReconciledTime?: number, creditCardStatementDate?: number, initialCreditCardLimit?: string, isAsset?: boolean, isLiability?: boolean, subAccounts?: Account[], creditCardBankName?: string, creditCardCardName?: string, creditCardLastFourDigits?: string, creditCardExpireMonth?: number, creditCardExpireYear?: number, creditCardCardholderName?: string, creditCardStatementDateIncludeTransaction?: boolean, creditCardRepaymentDateType?: number, creditCardRepaymentDaysAfterStatement?: number, creditCardRepaymentDayOfMonth?: number, creditCardStatementReminderEnabled?: boolean, creditCardStatementEmailEnabled?: boolean, creditCardRepaymentReminderEnabled?: boolean, creditCardRepaymentReminderDaysBefore?: number, creditCardNotificationMinutesOfDay?: number, creditCardNotificationTimezoneName?: string, creditCardNotificationTimezoneUtcOffset?: number, creditCardIsEntityCard?: boolean, creditCardCurrencyLimit?: string) {
         this.id = id;
         this.name = name;
         this.parentId = parentId;
@@ -75,8 +73,6 @@ export class Account implements AccountInfoResponse {
         this.creditCardExpireMonth = creditCardExpireMonth;
         this.creditCardExpireYear = creditCardExpireYear;
         this.creditCardCardholderName = creditCardCardholderName;
-        this.creditCardPictureId = creditCardPictureId;
-        this.creditCardPictureUrl = creditCardPictureUrl;
         this.creditCardStatementDateIncludeTransaction = creditCardStatementDateIncludeTransaction;
         this.creditCardRepaymentDateType = creditCardRepaymentDateType;
         this.creditCardRepaymentDaysAfterStatement = creditCardRepaymentDaysAfterStatement;
@@ -252,7 +248,6 @@ export class Account implements AccountInfoResponse {
             this.creditCardExpireMonth === other.creditCardExpireMonth &&
             this.creditCardExpireYear === other.creditCardExpireYear &&
             this.creditCardCardholderName === other.creditCardCardholderName &&
-            this.creditCardPictureId === other.creditCardPictureId &&
             this.creditCardStatementDateIncludeTransaction === other.creditCardStatementDateIncludeTransaction &&
             this.creditCardRepaymentDateType === other.creditCardRepaymentDateType &&
             this.creditCardRepaymentDaysAfterStatement === other.creditCardRepaymentDaysAfterStatement &&
@@ -359,8 +354,6 @@ export class Account implements AccountInfoResponse {
         this.creditCardExpireMonth = other.creditCardExpireMonth;
         this.creditCardExpireYear = other.creditCardExpireYear;
         this.creditCardCardholderName = other.creditCardCardholderName;
-        this.creditCardPictureId = other.creditCardPictureId;
-        this.creditCardPictureUrl = other.creditCardPictureUrl;
         this.creditCardStatementDateIncludeTransaction = other.creditCardStatementDateIncludeTransaction;
         this.creditCardRepaymentDateType = other.creditCardRepaymentDateType;
         this.creditCardRepaymentDaysAfterStatement = other.creditCardRepaymentDaysAfterStatement;
@@ -440,7 +433,6 @@ export class Account implements AccountInfoResponse {
             creditCardExpireMonth: isCreditCard ? this.creditCardExpireMonth || undefined : undefined,
             creditCardExpireYear: isCreditCard ? this.creditCardExpireYear || undefined : undefined,
             creditCardCardholderName: isCreditCard ? this.creditCardCardholderName || undefined : undefined,
-            creditCardPictureId: isCreditCard ? this.creditCardPictureId || '0' : undefined,
             creditCardStatementDateIncludeTransaction: isCreditCard ? this.creditCardStatementDateIncludeTransaction : undefined,
             creditCardRepaymentDateType: isCreditCard ? this.creditCardRepaymentDateType || undefined : undefined,
             creditCardRepaymentDaysAfterStatement: isCreditCard ? this.creditCardRepaymentDaysAfterStatement || undefined : undefined,
@@ -497,7 +489,6 @@ export class Account implements AccountInfoResponse {
             creditCardExpireMonth: isCreditCard ? this.creditCardExpireMonth || undefined : undefined,
             creditCardExpireYear: isCreditCard ? this.creditCardExpireYear || undefined : undefined,
             creditCardCardholderName: isCreditCard ? this.creditCardCardholderName || undefined : undefined,
-            creditCardPictureId: isCreditCard ? this.creditCardPictureId || '0' : undefined,
             creditCardStatementDateIncludeTransaction: isCreditCard ? this.creditCardStatementDateIncludeTransaction : undefined,
             creditCardRepaymentDateType: isCreditCard ? this.creditCardRepaymentDateType || undefined : undefined,
             creditCardRepaymentDaysAfterStatement: isCreditCard ? this.creditCardRepaymentDaysAfterStatement || undefined : undefined,
@@ -673,8 +664,6 @@ export class Account implements AccountInfoResponse {
             this.creditCardExpireMonth,
             this.creditCardExpireYear,
             this.creditCardCardholderName,
-            this.creditCardPictureId,
-            this.creditCardPictureUrl,
             this.creditCardStatementDateIncludeTransaction,
             this.creditCardRepaymentDateType,
             this.creditCardRepaymentDaysAfterStatement,
@@ -719,8 +708,6 @@ export class Account implements AccountInfoResponse {
             this.creditCardExpireMonth,
             this.creditCardExpireYear,
             this.creditCardCardholderName,
-            this.creditCardPictureId,
-            this.creditCardPictureUrl,
             this.creditCardStatementDateIncludeTransaction,
             this.creditCardRepaymentDateType,
             this.creditCardRepaymentDaysAfterStatement,
@@ -808,8 +795,6 @@ export class Account implements AccountInfoResponse {
             accountResponse.creditCardExpireMonth,
             accountResponse.creditCardExpireYear,
             accountResponse.creditCardCardholderName,
-            accountResponse.creditCardPictureId,
-            accountResponse.creditCardPictureUrl,
             accountResponse.creditCardStatementDateIncludeTransaction,
             accountResponse.creditCardRepaymentDateType,
             accountResponse.creditCardRepaymentDaysAfterStatement,
@@ -896,8 +881,6 @@ export class AccountWithDisplayBalance extends Account {
             account.creditCardExpireMonth,
             account.creditCardExpireYear,
             account.creditCardCardholderName,
-            account.creditCardPictureId,
-            account.creditCardPictureUrl,
             account.creditCardStatementDateIncludeTransaction,
             account.creditCardRepaymentDateType,
             account.creditCardRepaymentDaysAfterStatement,
@@ -938,7 +921,6 @@ export interface AccountCreateRequest {
     readonly creditCardExpireMonth?: number;
     readonly creditCardExpireYear?: number;
     readonly creditCardCardholderName?: string;
-    readonly creditCardPictureId?: string;
     readonly creditCardStatementDateIncludeTransaction?: boolean;
     readonly creditCardRepaymentDateType?: number;
     readonly creditCardRepaymentDaysAfterStatement?: number;
@@ -976,7 +958,6 @@ export interface AccountModifyRequest {
     readonly creditCardExpireMonth?: number;
     readonly creditCardExpireYear?: number;
     readonly creditCardCardholderName?: string;
-    readonly creditCardPictureId?: string;
     readonly creditCardStatementDateIncludeTransaction?: boolean;
     readonly creditCardRepaymentDateType?: number;
     readonly creditCardRepaymentDaysAfterStatement?: number;
@@ -1021,8 +1002,6 @@ export interface AccountInfoResponse {
     readonly creditCardExpireMonth?: number;
     readonly creditCardExpireYear?: number;
     readonly creditCardCardholderName?: string;
-    readonly creditCardPictureId?: string;
-    readonly creditCardPictureUrl?: string;
     readonly creditCardStatementDateIncludeTransaction?: boolean;
     readonly creditCardRepaymentDateType?: number;
     readonly creditCardRepaymentDaysAfterStatement?: number;
