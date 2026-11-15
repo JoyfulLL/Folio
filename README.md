@@ -100,3 +100,7 @@ Release tags are plain semver (`1.0.3`, no `v` prefix, so they never collide wit
 ## License
 
 MIT. This is an independent custom build based on the MIT-licensed ezBookkeeping project; the original copyright notice and third-party license texts are preserved in [LICENSE](LICENSE) and `third-party-dependencies.json`, and are also shown in the app's About dialog.
+
+**Third-party copyleft notice:** the optional HEIC/HEIF decoder used by transaction picture uploads is [heic-to 1.6.7](https://github.com/hoppergee/heic-to) (embedding libheif and libde265) and is licensed under the **GNU Lesser General Public License, version 3 or later (LGPL-3.0-or-later)**, not MIT. It is shipped unmodified as a separate lazily loaded JavaScript chunk; Folio's own source code remains MIT. Verbatim copies of the GPL-3.0 and LGPL-3.0 texts, the upstream license notice and the full compliance notice (including how to replace the decoder) are in [`public/licenses/`](public/licenses/), which is copied into `dist/licenses/` in every release archive, Docker image and self-hosted deployment; the corresponding copyright notice also appears in the About dialog.
+
+To build an artifact that contains **no LGPL code at all**, run `FOLIO_HEIC_DECODER=none npm run build`. In that build HEIC uploads work only in browsers with native HEIC decoding (e.g. Safari on iOS/macOS); other browsers show a clear error message. HEVC/H.265 patents are separate from the copyright license — see the patent note in `public/licenses/NOTICE.txt`.

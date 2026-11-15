@@ -105,6 +105,10 @@ function injectFramework7CssFile({ htmlFileName, placeHolders }: { htmlFileName:
 export default defineConfig(() => {
     const licenseContent = fs.readFileSync('./LICENSE', { encoding: 'utf-8' });
     const buildUnixTime = process.env['buildUnixTime'] || '';
+    // Set FOLIO_HEIC_DECODER=none to build a pure-MIT artifact with no LGPL code.
+    // The decoder is replaced by a tiny stub; HEIC then only works where the
+    // browser decodes it natively. See public/licenses/NOTICE.txt.
+    const disableHeicDecoder = process.env['FOLIO_HEIC_DECODER'] === 'none';
 
     const options: UserConfig = {
         root: SRC_DIR,
@@ -356,6 +360,7 @@ export default defineConfig(() => {
         resolve: {
             alias: {
                 '@': SRC_DIR,
+                ...(disableHeicDecoder ? { 'heic-to/csp': resolve(SRC_DIR, 'lib/heic_decoder_stub.ts') } : {})
             },
         },
         server: {

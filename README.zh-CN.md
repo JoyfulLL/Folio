@@ -102,3 +102,7 @@ docker run -p8080:8080 -v /path/to/data:/ezbookkeeping/data folio:local
 ## 许可证
 
 MIT。本项目是基于 MIT 许可的 ezBookkeeping 的独立定制版本；原始版权声明与第三方许可文本保留在 [LICENSE](LICENSE) 和 `third-party-dependencies.json` 中，并同时展示在应用的「关于」对话框里。
+
+**第三方弱著佐权声明：**交易图片上传所用的可选 HEIC/HEIF 解码器 [heic-to 1.6.7](https://github.com/hoppergee/heic-to)（内嵌 libheif 与 libde265）采用 **GNU 较宽松通用公共许可证第 3 版或更高版本（LGPL-3.0-or-later）**，并非 MIT。它以未经修改的独立懒加载 JavaScript chunk 形式分发；Folio 自身源码仍为 MIT。GPL-3.0 与 LGPL-3.0 许可证全文、上游许可声明以及完整合规声明（含替换解码器的方法）位于 [`public/licenses/`](public/licenses/)，会随 `dist/licenses/` 进入每个发布包、Docker 镜像与自托管部署；对应版权声明也会显示在「关于」对话框中。
+
+如需构建**完全不含 LGPL 代码**的产物，执行 `FOLIO_HEIC_DECODER=none npm run build`。该构建下 HEIC 上传仅在浏览器原生支持 HEIC 解码时可用（例如 iOS/macOS 的 Safari），其他浏览器会显示明确的错误提示。HEVC/H.265 专利与著作权许可是两回事，详见 `public/licenses/NOTICE.txt` 中的专利说明。
