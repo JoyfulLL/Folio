@@ -37,8 +37,8 @@ export class ImportPreset implements ImportPresetInfoResponse {
     public id: string = '';
     public name: string = '';
     public displayOrder: number;
-    public fileType: string = 'ezbookkeeping';
-    public fileSubType: string = 'ezbookkeeping_csv';
+    public fileType: string = 'folio';
+    public fileSubType: string = 'folio_csv';
     public fileEncoding: string = 'auto';
     public handlingMethod: ImportCustomFileFormatProcessMethod = ImportCustomFileFormatProcessMethod.ColumnMapping;
     public additionalOptions: ImportFileTypeSupportedAdditionalOptions = {};
@@ -137,8 +137,8 @@ export class ImportPreset implements ImportPresetInfoResponse {
             '',
             '',
             0,
-            'ezbookkeeping',
-            'ezbookkeeping_csv',
+            'folio',
+            'folio_csv',
             'auto',
             ImportCustomFileFormatProcessMethod.ColumnMapping,
             {},

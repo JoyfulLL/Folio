@@ -22,7 +22,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/utils"
 )
 
-const tokenPrefix = "ebk"
+const tokenPrefix = "folio"
 const tokenIdentityMinimumSize = 8 + 8 + 8 + 1
 const tokenMaxExpiredAtUnixTime = int64(253402300799) // 9999-12-31 23:59:59 UTC
 

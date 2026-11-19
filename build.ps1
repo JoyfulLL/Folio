@@ -130,7 +130,7 @@ function Build-Backend {
     Write-Host "Building backend binary file ($ReleaseType)..."
 
     $env:CGO_ENABLED = 1
-    go build -a -v -trimpath -tags timetzdata -ldflags "-w -s -linkmode external -extldflags '-static' $backend_build_extra_arguments" -o ezbookkeeping.exe ezbookkeeping.go
+    go build -a -v -trimpath -tags timetzdata -ldflags "-w -s -linkmode external -extldflags '-static' $backend_build_extra_arguments" -o folio.exe folio.go
 
     Remove-Item Env:\CGO_ENABLED -ErrorAction SilentlyContinue
 }
@@ -172,7 +172,7 @@ function Build-Frontend {
 }
 
 function Build-Package {
-    $packageFileName = "ezbookkeeping-$Version"
+    $packageFileName = "folio-$Version"
 
     if (-not $Release) {
         $packageFileName = "$packageFileName-$BuildDate"
@@ -195,7 +195,7 @@ function Build-Package {
     New-Item -ItemType Directory -Path "package\storage"
     New-Item -ItemType Directory -Path "package\log"
 
-    Copy-Item ezbookkeeping.exe package\
+    Copy-Item folio.exe package\
     Copy-Item dist package\public -Recurse
     Copy-Item conf package\conf -Recurse
     Copy-Item templates package\templates -Recurse

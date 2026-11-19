@@ -32,7 +32,7 @@ const ClientTimezoneNameHeaderName = "X-Timezone-Name"
 const tokenHeaderName = "Authorization"
 const tokenHeaderValuePrefix = "bearer "
 const tokenQueryStringParam = "token"
-const tokenCookieParam = "ebk_auth_token"
+const tokenCookieParam = "folio_auth_token"
 
 // WebContext represents the request and response context
 type WebContext struct {

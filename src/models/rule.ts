@@ -248,7 +248,8 @@ export class ImportTransactionReplaceRule {
 }
 
 export class ImportTransactionReplaceRules {
-    private static readonly JSON_ROOT_FIELD = 'ezBookkeepingImportTransactionReplaceRules';
+    private static readonly JSON_ROOT_FIELD = 'FolioImportTransactionReplaceRules';
+    private static readonly LEGACY_JSON_ROOT_FIELD = 'ezBookkeepingImportTransactionReplaceRules';
 
     private readonly rules: ImportTransactionReplaceRule[];
 
@@ -293,7 +294,7 @@ export class ImportTransactionReplaceRules {
     public static parseFromJson(json: string, generateId: () => string): ImportTransactionReplaceRules | null {
         try {
             const parsed = JSON.parse(json);
-            const root = parsed[ImportTransactionReplaceRules.JSON_ROOT_FIELD];
+            const root = parsed[ImportTransactionReplaceRules.JSON_ROOT_FIELD] ?? parsed[ImportTransactionReplaceRules.LEGACY_JSON_ROOT_FIELD];
 
             if (!Array.isArray(root)) {
                 return null;

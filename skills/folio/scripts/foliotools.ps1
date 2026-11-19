@@ -20,8 +20,8 @@ param(
     [string[]]$CommandArgs
 )
 
-$script:EBKTOOL_SERVER_BASEURL = $env:EBKTOOL_SERVER_BASEURL
-$script:EBKTOOL_TOKEN = $env:EBKTOOL_TOKEN
+$script:FOLIOTOOL_SERVER_BASEURL = $env:FOLIOTOOL_SERVER_BASEURL
+$script:FOLIOTOOL_TOKEN = $env:FOLIOTOOL_TOKEN
 
 # API Configuration Structure
 $API_CONFIGS = @(
@@ -721,7 +721,7 @@ function Import-DotEnvFile {
                     $value = $matches[1]
                 }
 
-                if ($key -eq 'EBKTOOL_SERVER_BASEURL' -or $key -eq 'EBKTOOL_TOKEN') {
+                if ($key -eq 'FOLIOTOOL_SERVER_BASEURL' -or $key -eq 'FOLIOTOOL_TOKEN') {
                     Set-Variable -Name $key -Value $value -Scope Script -Force
                 }
             }
@@ -733,7 +733,7 @@ function Import-DotEnvFile {
 }
 
 function Initialize-EnvironmentVariables {
-    if ($script:EBKTOOL_SERVER_BASEURL -and $script:EBKTOOL_TOKEN) {
+    if ($script:FOLIOTOOL_SERVER_BASEURL -and $script:FOLIOTOOL_TOKEN) {
         return
     }
 
@@ -745,31 +745,31 @@ function Initialize-EnvironmentVariables {
         $env:HOME
     }
 
-    if (-not $script:EBKTOOL_SERVER_BASEURL -or -not $script:EBKTOOL_TOKEN) {
+    if (-not $script:FOLIOTOOL_SERVER_BASEURL -or -not $script:FOLIOTOOL_TOKEN) {
         $envPath = Join-Path -Path $currentDir -ChildPath '.env'
         if (Import-DotEnvFile -Path $envPath) {
-            if ($script:EBKTOOL_SERVER_BASEURL -and $script:EBKTOOL_TOKEN) {
+            if ($script:FOLIOTOOL_SERVER_BASEURL -and $script:FOLIOTOOL_TOKEN) {
                 return
             }
         }
     }
 
-    if (-not $script:EBKTOOL_SERVER_BASEURL -or -not $script:EBKTOOL_TOKEN) {
+    if (-not $script:FOLIOTOOL_SERVER_BASEURL -or -not $script:FOLIOTOOL_TOKEN) {
         if ($parentDir) {
             $envPath = Join-Path -Path $parentDir -ChildPath '.env'
             if (Import-DotEnvFile -Path $envPath) {
-                if ($script:EBKTOOL_SERVER_BASEURL -and $script:EBKTOOL_TOKEN) {
+                if ($script:FOLIOTOOL_SERVER_BASEURL -and $script:FOLIOTOOL_TOKEN) {
                     return
                 }
             }
         }
     }
 
-    if (-not $script:EBKTOOL_SERVER_BASEURL -or -not $script:EBKTOOL_TOKEN) {
+    if (-not $script:FOLIOTOOL_SERVER_BASEURL -or -not $script:FOLIOTOOL_TOKEN) {
         if ($homeDir) {
             $envPath = Join-Path -Path $homeDir -ChildPath '.env'
             if (Import-DotEnvFile -Path $envPath) {
-                if ($script:EBKTOOL_SERVER_BASEURL -and $script:EBKTOOL_TOKEN) {
+                if ($script:FOLIOTOOL_SERVER_BASEURL -and $script:FOLIOTOOL_TOKEN) {
                     return
                 }
             }
@@ -1160,8 +1160,8 @@ function Show-Help {
     Write-Host "    ebktools.ps1 [-tzName <name>] [-tzOffset <offset>] [-rawResponse] <command> [command-options]"
     Write-Host ""
     Write-Host "Environment Variables (Required):"
-    Write-Host "    EBKTOOL_SERVER_BASEURL      Folio server base URL (e.g., http://localhost:8080)"
-    Write-Host "    EBKTOOL_TOKEN               Folio API token"
+    Write-Host "    FOLIOTOOL_SERVER_BASEURL      Folio server base URL (e.g., http://localhost:8080)"
+    Write-Host "    FOLIOTOOL_TOKEN               Folio API token"
     Write-Host ""
     Write-Host "    You can also set the above environment variables in a '.env' file located in the current directory, parent directory or home directory."
     Write-Host ""
@@ -1177,8 +1177,8 @@ function Show-Help {
     Write-Host ""
     Write-Host "Examples:"
     Write-Host "    # Set environment variables"
-    Write-Host "    `$env:EBKTOOL_SERVER_BASEURL = 'http://localhost:8080'"
-    Write-Host "    `$env:EBKTOOL_TOKEN = 'YOUR_TOKEN'"
+    Write-Host "    `$env:FOLIOTOOL_SERVER_BASEURL = 'http://localhost:8080'"
+    Write-Host "    `$env:FOLIOTOOL_TOKEN = 'YOUR_TOKEN'"
     Write-Host ""
     Write-Host "    # List all available commands"
     Write-Host "    ebktools.ps1 list"
@@ -1364,17 +1364,17 @@ function Invoke-Api {
         exit 1
     }
 
-    $serverBaseUrl = $script:EBKTOOL_SERVER_BASEURL
-    $authToken = $script:EBKTOOL_TOKEN
+    $serverBaseUrl = $script:FOLIOTOOL_SERVER_BASEURL
+    $authToken = $script:FOLIOTOOL_TOKEN
 
     if (-not $serverBaseUrl) {
-        Write-Red "Error: Environment variable 'EBKTOOL_SERVER_BASEURL' is not set."
+        Write-Red "Error: Environment variable 'FOLIOTOOL_SERVER_BASEURL' is not set."
         Write-Host "Please set it to your Folio server base URL (e.g., http://localhost:8080)"
         exit 1
     }
 
     if (-not $authToken) {
-        Write-Red "Error: Environment variable 'EBKTOOL_TOKEN' is not set."
+        Write-Red "Error: Environment variable 'FOLIOTOOL_TOKEN' is not set."
         Write-Host "Please set it to your API token."
         exit 1
     }

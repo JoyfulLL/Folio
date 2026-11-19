@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	ebkWorkDirEnvName                  = "EBK_WORK_DIR"
-	ebkConfigItemValueEnvNamePrefix    = "EBK"
-	ebkConfigItemFilePathEnvNamePrefix = "EBKCFP"
-	defaultConfigPath                  = "/conf/ezbookkeeping.ini"
+	folioWorkDirEnvName                  = "FOLIO_WORK_DIR"
+	folioConfigItemValueEnvNamePrefix    = "FOLIO"
+	folioConfigItemFilePathEnvNamePrefix = "FOLIOCFP"
+	defaultConfigPath                    = "/conf/folio.ini"
 	defaultRootUrl                     = "%(protocol)s://%(domain)s:%(http_port)s/"
 	defaultStaticRootPath              = "public"
 )
@@ -174,7 +174,7 @@ const (
 	defaultDomain   string = "localhost"
 
 	defaultDatabaseHost            string = "127.0.0.1:3306"
-	defaultDatabaseName            string = "ezbookkeeping"
+	defaultDatabaseName            string = "folio"
 	defaultDatabaseMaxIdleConn     uint16 = 2
 	defaultDatabaseMaxOpenConn     uint16 = 0
 	defaultDatabaseConnMaxLifetime uint32 = 14400
@@ -193,7 +193,7 @@ const (
 	defaultInMemoryDuplicateCheckerCleanupInterval uint32 = 60  // 1 minutes
 	defaultDuplicateSubmissionsInterval            uint32 = 300 // 5 minutes
 
-	defaultSecretKey                          string = "ezbookkeeping"
+	defaultSecretKey                          string = "folio"
 	defaultTrustedProxyIPs                    string = "10.0.0.0/8,169.254.0.0/16,127.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 	defaultTokenExpiredTime                   uint32 = 2592000 // 30 days
 	defaultTokenMinRefreshInterval            uint32 = 86400   // 1 day
@@ -1124,7 +1124,7 @@ const (
 
 // loadDailyReportConfiguration loads the daily report configuration. This section is not part
 // of the shipped configuration template, so the webhook url and the signing secret are meant
-// to be provided through environment variables (EBK_DAILY_REPORT_WEBHOOK_URL etc.) or a
+// to be provided through environment variables (FOLIO_DAILY_REPORT_WEBHOOK_URL etc.) or a
 // configuration file kept outside the repository. The "enable" switch only turns on the
 // server-wide fallback webhook of the users listed in "uids"; each user can also enable the
 // daily report with its own webhook in the web ui, which does not depend on this switch
@@ -1449,7 +1449,7 @@ func loadDeveloperTools(config *Config, configFile *ini.File, sectionName string
 }
 
 func getWorkingPath() (string, error) {
-	workingPath := os.Getenv(ebkWorkDirEnvName)
+	workingPath := os.Getenv(folioWorkDirEnvName)
 
 	if workingPath != "" {
 		return workingPath, nil
@@ -1718,11 +1718,11 @@ func getConfigItemValueFromEnvironment(sectionName string, itemName string) stri
 }
 
 func getConfigItemFilePathEnvironmentKey(sectionName string, itemName string) string {
-	return fmt.Sprintf("%s_%s_%s", ebkConfigItemFilePathEnvNamePrefix, strings.ToUpper(sectionName), strings.ToUpper(itemName))
+	return fmt.Sprintf("%s_%s_%s", folioConfigItemFilePathEnvNamePrefix, strings.ToUpper(sectionName), strings.ToUpper(itemName))
 }
 
 func getConfigItemValueEnvironmentKey(sectionName string, itemName string) string {
-	return fmt.Sprintf("%s_%s_%s", ebkConfigItemValueEnvNamePrefix, strings.ToUpper(sectionName), strings.ToUpper(itemName))
+	return fmt.Sprintf("%s_%s_%s", folioConfigItemValueEnvNamePrefix, strings.ToUpper(sectionName), strings.ToUpper(itemName))
 }
 
 func getLogLevel(logLevelStr string) (Level, error) {

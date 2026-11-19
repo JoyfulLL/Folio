@@ -126,7 +126,7 @@ func TestUserCustomIconsApi_CustomIconListHandler(t *testing.T) {
 	iconList := result.(*models.UserCustomIconListResponse)
 	icons := iconList.Items
 	assert.Len(t, icons, 1)
-	assert.True(t, strings.HasPrefix(icons[0].OriginalUrl, "https://foo.bar/icons/456.png?token=ebk-tk.i-"))
+	assert.True(t, strings.HasPrefix(icons[0].OriginalUrl, "https://foo.bar/icons/456.png?token=folio-tk.i-"))
 
 	iconUrl, err := url.Parse(icons[0].OriginalUrl)
 	assert.Nil(t, err)

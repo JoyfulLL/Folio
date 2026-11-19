@@ -17,17 +17,17 @@ export const SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES: ImportFileCategoryAndType
         categoryName: 'Folio File Format',
         fileTypes: [
             {
-                type: 'ezbookkeeping',
+                type: 'folio',
                 name: 'Folio Data Export File',
                 extensions: '.csv,.tsv',
                 subTypes: [
                     {
-                        type: 'ezbookkeeping_csv',
+                        type: 'folio_csv',
                         name: 'CSV (Comma-separated values) File',
                         extensions: '.csv',
                     },
                     {
-                        type: 'ezbookkeeping_tsv',
+                        type: 'folio_tsv',
                         name: 'TSV (Tab-separated values) File',
                         extensions: '.tsv',
                     }

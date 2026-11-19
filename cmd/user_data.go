@@ -366,7 +366,7 @@ var UserData = &cli.Command{
 					Name:     "type",
 					Aliases:  []string{"t"},
 					Required: true,
-					Usage:    "Import file type (supports \"ezbookkeeping_csv\", \"ezbookkeeping_tsv\")",
+					Usage:    "Import file type (supports \"folio_csv\", \"folio_tsv\")",
 				},
 			},
 		},
@@ -926,7 +926,7 @@ func importUserTransaction(c *core.CliContext) error {
 		return os.ErrExist
 	}
 
-	if filetype != "ezbookkeeping_csv" && filetype != "ezbookkeeping_tsv" {
+	if filetype != "folio_csv" && filetype != "folio_tsv" && filetype != "ezbookkeeping_csv" && filetype != "ezbookkeeping_tsv" {
 		log.CliErrorf(c, "[user_data.importUserTransaction] unknown file type \"%s\"", filetype)
 		return errs.ErrImportFileTypeNotSupported
 	}

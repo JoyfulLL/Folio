@@ -20,9 +20,9 @@ import {
     isString
 } from '@/lib/common.ts';
 
-const settingsLocalStorageKey: string = 'ebk_app_settings';
-const currentLanguageSessionStorageKey: string = 'ebk_current_language';
-const languagePreviewSessionStorageKeyPrefix: string = 'ebk_language_preview_';
+const settingsLocalStorageKey: string = 'folio_app_settings';
+const currentLanguageSessionStorageKey: string = 'folio_current_language';
+const languagePreviewSessionStorageKeyPrefix: string = 'folio_language_preview_';
 
 export interface SessionLanguagePreview {
     readonly data: string;

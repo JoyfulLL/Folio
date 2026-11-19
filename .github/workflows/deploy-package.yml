@@ -80,7 +80,7 @@ jobs:
             *)     matrix='[{"arch":"amd64","runner":"ubuntu-24.04"},{"arch":"arm64","runner":"ubuntu-24.04-arm"}]' ;;
           esac
           # The tag is the authoritative version: /healthz.json and
-          # `ezbookkeeping --version` report this exact string.
+          # `folio --version` report this exact string.
           version="$tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -150,7 +150,7 @@ jobs:
           pkg="folio-${TAG}-linux-${ARCH}.tar.gz"
           test -s "$pkg"
           # No "grep -q": with pipefail it can SIGPIPE tar and cause a false failure.
-          tar -tzf "$pkg" | grep -x './ezbookkeeping' >/dev/null || { echo "ERROR: backend binary missing"; exit 1; }
+          tar -tzf "$pkg" | grep -x './folio' >/dev/null || { echo "ERROR: backend binary missing"; exit 1; }
           tar -tzf "$pkg" | grep '^\./public/' >/dev/null || { echo "ERROR: frontend dist missing"; exit 1; }
           echo "OK: $pkg ($(du -h "$pkg" | cut -f1))"
 
@@ -194,8 +194,8 @@ jobs:
 
           - Commit: \`$GITHUB_SHA\`
           - Assets: one tar.gz per architecture, named \`folio-$TAG-linux-<arch>.tar.gz\`
-          - Deploy with \`ez-update.sh $TAG\`; it updates /opt/ez in place and keeps
-            \`/opt/ez/conf/ezbookkeeping.ini\`, data/, storage/, log/ and nginx paths untouched.
+          - Deploy with \`folio-update.sh $TAG\`; it updates /opt/folio in place and keeps
+            \`/opt/folio/conf/folio.ini\`, data/, storage/, log/ and nginx paths untouched.
           - The \`conf/\` inside the archive is only the template. Never use it in production.
           EOF
           extra=()

@@ -419,8 +419,8 @@ const showState = ref<boolean>(false);
 const clientSessionId = ref<string>('');
 const currentStep = ref<ImportTransactionDialogStep>('uploadFile');
 const importProcess = ref<number>(0);
-const fileType = ref<string>('ezbookkeeping');
-const fileSubType = ref<string>('ezbookkeeping_csv');
+const fileType = ref<string>('folio');
+const fileSubType = ref<string>('folio_csv');
 const fileEncoding = ref<string>('auto');
 const detectingFileEncoding = ref<boolean>(false);
 const autoDetectedFileEncoding = ref<string | undefined>(undefined);
@@ -718,8 +718,8 @@ function loadInitFileTypeFromSettings(): void {
 function open(): Promise<void> {
     loading.value = true;
     loadingPreset.value = false;
-    fileType.value = 'ezbookkeeping';
-    fileSubType.value = 'ezbookkeeping_csv';
+    fileType.value = 'folio';
+    fileSubType.value = 'folio_csv';
 
     if (settingsStore.appSettings.rememberLastSelectedFileTypeInImportTransactionDialog && settingsStore.appSettings.lastSelectedFileTypeInImportTransactionDialog) {
         loadInitFileTypeFromSettings();
@@ -1272,7 +1272,7 @@ function parseData(): void {
                 return;
             }
 
-            type = 'ezbookkeeping_json';
+            type = 'folio_json';
             encoding = undefined;
             uploadFile = KnownFileType.JSON.createFile(executeCustomScriptResult, 'import');
         }

@@ -11,16 +11,16 @@ import { isEnableApplicationLock } from './settings.ts';
 import { clearAllUserCaches } from './cache.ts';
 import logger from './logger.ts';
 
-const appLockSecretBaseStringPrefix: string = 'EBK_LOCK_SECRET_';
+const appLockSecretBaseStringPrefix: string = 'FOLIO_LOCK_SECRET_';
 
-const tokenLocalStorageKey: string = 'ebk_user_token';
-const webauthnConfigLocalStorageKey: string = 'ebk_user_webauthn_config';
-const userInfoLocalStorageKey: string = 'ebk_user_info';
-const transactionDraftLocalStorageKey: string = 'ebk_user_draft_transaction';
+const tokenLocalStorageKey: string = 'folio_user_token';
+const webauthnConfigLocalStorageKey: string = 'folio_user_webauthn_config';
+const userInfoLocalStorageKey: string = 'folio_user_info';
+const transactionDraftLocalStorageKey: string = 'folio_user_draft_transaction';
 
-const tokenSessionStorageKey: string = 'ebk_user_session_token';
-const encryptedTokenSessionStorageKey: string = 'ebk_user_session_encrypted_token';
-const appLockStateSessionStorageKey: string = 'ebk_user_app_lock_state'; // { 'username': '', secret: '' }
+const tokenSessionStorageKey: string = 'folio_user_session_token';
+const encryptedTokenSessionStorageKey: string = 'folio_user_session_encrypted_token';
+const appLockStateSessionStorageKey: string = 'folio_user_app_lock_state'; // { 'username': '', secret: '' }
 
 function getAppLockSecret(pinCode: string): string {
     const hashedPinCode = sha256(appLockSecretBaseStringPrefix + pinCode).toString();
@@ -99,7 +99,7 @@ export function unlockTokenByWebAuthn(credentialId: string, userName: string, us
     };
     const token = getDecryptedToken(encryptedToken, appLockState);
 
-    if (!token || token.length < 8) { // v2 prefix "ebk-tk-"
+    if (!token || token.length < 8) { // v2 prefix "folio-tk-"
         throw new Error('Failed to decrypt token');
     }
 
@@ -122,7 +122,7 @@ export function unlockTokenByPinCode(userName: string, pinCode: string): boolean
     };
     const token = getDecryptedToken(encryptedToken, appLockState);
 
-    if (!token || token.length < 8) { // v2 prefix "ebk-tk-"
+    if (!token || token.length < 8) { // v2 prefix "folio-tk-"
         throw new Error('Failed to decrypt token');
     }
 

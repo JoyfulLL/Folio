@@ -18,7 +18,7 @@
         </f7-list>
 
         <p class="about-powered-by text-align-center">
-            <f7-link target="_blank" @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')">{{ tt('Powered by ezBookkeeping') }}</f7-link>
+            <f7-link target="_blank" @click="openExternalUrl('https://github.com/JoyfulLL/Folio')">{{ tt('Powered by Folio') }}</f7-link>
         </p>
 
         <f7-block-title class="margin-top" v-if="exchangeRatesData && !isUserCustomExchangeRates">{{ tt('Exchange Rates Data') }}</f7-block-title>

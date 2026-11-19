@@ -189,8 +189,8 @@ build_backend() {
 
     echo "Building backend binary file ($RELEASE_TYPE)..."
 
-    CGO_ENABLED=1 go build -a -v -trimpath -ldflags "-w -s $ld_static_link_flags $backend_build_extra_arguments" -o ezbookkeeping ezbookkeeping.go
-    chmod +x ezbookkeeping
+    CGO_ENABLED=1 go build -a -v -trimpath -ldflags "-w -s $ld_static_link_flags $backend_build_extra_arguments" -o folio folio.go
+    chmod +x folio
 }
 
 build_frontend() {
@@ -250,7 +250,7 @@ build_package() {
     mkdir package/data
     mkdir package/storage
     mkdir package/log
-    cp ezbookkeeping package/
+    cp folio package/
     cp -R dist package/public
     cp -R conf package/conf
     cp -R templates package/templates
@@ -268,7 +268,7 @@ build_docker() {
         docker_tag="SNAPSHOT-$BUILD_DATE";
     fi
 
-    docker_tag="ezbookkeeping:$docker_tag"
+    docker_tag="folio:$docker_tag"
 
     if [ -n "$DOCKER_TAG" ]; then
         docker_tag="$DOCKER_TAG"

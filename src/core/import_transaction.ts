@@ -120,7 +120,8 @@ export class ImportTransactionColumnType implements TypeAndName {
 }
 
 export class ImportTransactionDataMapping {
-    private static readonly JSON_ROOT_FIELD = 'ezBookkeepingImportTransactionDataMapping';
+    private static readonly JSON_ROOT_FIELD = 'FolioImportTransactionDataMapping';
+    private static readonly LEGACY_JSON_ROOT_FIELD = 'ezBookkeepingImportTransactionDataMapping';
     private static readonly DEFAULT_INCLUDE_HEADER = true;
     private static readonly DEFAULT_TIME_FORMAT = '';
     private static readonly DEFAULT_TIMEZONE_FORMAT = '';
@@ -404,7 +405,7 @@ export class ImportTransactionDataMapping {
     public static parseFromJson(json: string): ImportTransactionDataMapping | null {
         try {
             const parsed = JSON.parse(json);
-            const root = parsed[ImportTransactionDataMapping.JSON_ROOT_FIELD];
+            const root = parsed[ImportTransactionDataMapping.JSON_ROOT_FIELD] ?? parsed[ImportTransactionDataMapping.LEGACY_JSON_ROOT_FIELD];
 
             if (!root) {
                 return null;

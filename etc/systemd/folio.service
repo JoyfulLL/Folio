@@ -6,10 +6,10 @@ After=mariadb.service mysqld.service postgresql.service
 
 [Service]
 Type=simple
-User=ezbookkeeping
-Group=ezbookkeeping
-WorkingDirectory=/usr/local/bin/ezbookkeeping
-ExecStart=/usr/local/bin/ezbookkeeping/ezbookkeeping server run
+User=folio
+Group=folio
+WorkingDirectory=/usr/local/bin/folio
+ExecStart=/usr/local/bin/folio/folio server run
 Restart=on-failure
 
 [Install]

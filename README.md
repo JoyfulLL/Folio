@@ -24,11 +24,11 @@ Folio is an independent custom build forked from [ezBookkeeping](https://github.
 
 - **Uniform account icon badges** — account cards use a single 40×40 circular badge with a 24px `contain`-fitted icon and theme-aware tint tokens, replacing the large translucent card watermarks. Light and dark themes share the same design tokens.
 - **Insights Explorer visibility preference** — show or hide the Insights Explorer entry in the desktop navbar (upstream always shows it).
-- **Folio branding** — app name, PWA icons and export filename prefixes use *Folio*; the About screens credit "Built on ezBookkeeping".
+- **Folio branding** — app name, PWA icons, export filename prefixes, binary/config/database names and environment variables all use *Folio*; the About screens link to the Folio repository.
 
 ### Build & deployment
 
-- Pull-based in-place upgrade script (`deploy/ez-update.sh`), a systemd unit and MySQL bootstrap SQL.
+- Pull-based in-place upgrade script (`deploy/folio-update.sh`), a systemd unit and MySQL bootstrap SQL.
 - CI packaging workflow; release assets named `folio-<version>-<arch>.tar.gz` with plain semver tags that do not collide with upstream `v*.*.*` tags.
 - Build scripts, Dockerfile and PWA tooling adjusted for the renamed release artifacts.
 
@@ -65,35 +65,35 @@ Requires Go, GCC (for SQLite), Node.js and npm.
 
 Windows equivalents: `build.bat` and `build.ps1`.
 
-A successful build writes the frontend into `dist/` and the backend executable to `ezbookkeeping` (`ezbookkeeping.exe` on Windows). The executable and config filenames are kept stable so existing deployments and update scripts continue to work.
+A successful build writes the frontend into `dist/` and the backend executable to `folio` (`folio.exe` on Windows).
 
 ## Run
 
 ```sh
-./ezbookkeeping server run
+./folio server run
 ```
 
 By default Folio listens on port 8080: `http://{YOUR_HOST_ADDRESS}:8080/`.
 
-Configuration lives in `conf/ezbookkeeping.ini`. For local development, copy it to `conf/ezbookkeeping.local.ini` and run:
+Configuration lives in `conf/folio.ini`. For local development, copy it to `conf/folio.local.ini` and run:
 
 ```sh
-go run ezbookkeeping.go server run --conf-path=conf/ezbookkeeping.local.ini
+go run folio.go server run --conf-path=conf/folio.local.ini
 ```
 
-Every setting can be overridden with an `EBK_<SECTION>_<KEY>` environment variable.
+Every setting can be overridden with a `FOLIO_<SECTION>_<KEY>` environment variable.
 
 ### Docker
 
 ```sh
-docker run -p8080:8080 -v /path/to/data:/ezbookkeeping/data folio:local
+docker run -p8080:8080 -v /path/to/data:/folio/data folio:local
 ```
 
 Mount a persistent volume for `data/`, `log/` and `storage/` so data survives container replacement.
 
 ## Deployment helpers
 
-`deploy/ez-update.sh` performs an in-place, pull-based upgrade of a systemd installation. It replaces only the backend binary, `public/`, `templates/` and `LICENSE`, and never overwrites the real config, database or logs. See `deploy/ez-update.env.example` and `deploy/ezbookkeeping.service` for the expected layout.
+`deploy/folio-update.sh` performs an in-place, pull-based upgrade of a systemd installation. It replaces only the backend binary, `public/`, `templates/` and `LICENSE`, and never overwrites the real config, database or logs. See `deploy/folio-update.env.example` and `deploy/folio.service` for the expected layout.
 
 Release tags are plain semver (`1.0.3`, no `v` prefix, so they never collide with the upstream `v*.*.*` release workflow). The tag is also the version string reported by the binary and the web UI. Release assets are named `folio-<tag>-linux-<arch>.tar.gz`.
 

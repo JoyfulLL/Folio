@@ -1,0 +1,53 @@
+# /etc/systemd/system/folio.service
+#
+# This file OVERRIDES the packaged unit at
+# /usr/lib/systemd/system/folio.service (systemd prefers /etc over
+# /usr/lib). You do NOT need to edit or delete the original file.
+#
+# Install:
+#   sudo install -m 0644 deploy/folio.service /etc/systemd/system/folio.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl cat folio          # confirm which file is in effect
+#   sudo systemctl restart folio
+#
+# Paths are IDENTICAL to the currently running service:
+#   WorkingDirectory = /opt/folio
+#   ExecStart        = /opt/folio/folio server run
+#   config           = /opt/folio/conf/folio.ini  (default lookup, no --conf-path)
+# nginx needs NO change: /opt/folio/public and port 6060 stay where they are.
+#
+# Optional /etc/folio.env (EnvironmentFile has a leading "-" so the
+# file may be absent). Example FOLIO_* overrides:
+#   FOLIO_DAILY_REPORT_ENABLE=true
+#   FOLIO_DAILY_REPORT_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
+#   FOLIO_DAILY_REPORT_SIGNING_SECRET=...
+#   FOLIO_DAILY_REPORT_UIDS=1
+# If a statically linked binary cannot resolve external hosts (Feishu webhook),
+# force Go's built-in DNS resolver here:
+#   GODEBUG=netdns=go
+# If you create it: sudo chown root:folio /etc/folio.env
+#                   sudo chmod 640 /etc/folio.env
+# SELinux note (Oracle Linux / RHEL): the binary in /opt/folio must keep an
+# executable label. folio-update.sh preserves it automatically; check with
+#   ls -Z /opt/folio/folio     # expect usr_t or bin_t, NOT default_t
+# Keep [security] secret_key in /opt/folio/conf/folio.ini unchanged forever.
+
+[Unit]
+Description=Folio (custom build)
+After=syslog.target network.target network-online.target mariadb.service mysqld.service postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=folio
+Group=folio
+WorkingDirectory=/opt/folio
+EnvironmentFile=-/etc/folio.env
+ExecStart=/opt/folio/folio server run
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

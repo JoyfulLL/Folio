@@ -280,7 +280,7 @@ func TestGenerateEncryptedToken_Normal(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, []byte{byte(core.NormalTokenScopeAll)})
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-tk-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-tk-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -314,7 +314,7 @@ func TestGenerateEncryptedToken_Require2FA(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-2fa-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-2fa-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -345,7 +345,7 @@ func TestGenerateEncryptedToken_EmailVerify(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-vfy-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-vfy-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -376,7 +376,7 @@ func TestGenerateEncryptedToken_PasswordReset(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-rst-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-rst-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -407,7 +407,7 @@ func TestGenerateEncryptedToken_MCP(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-mcp-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-mcp-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -438,7 +438,7 @@ func TestGenerateEncryptedToken_OAuth2RequireVerify(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-olk-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-olk-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -469,7 +469,7 @@ func TestGenerateEncryptedToken_OAuth2Callback(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-oauth2-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-oauth2-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -500,7 +500,7 @@ func TestGenerateEncryptedToken_API(t *testing.T) {
 	}
 	actualValue, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, nil)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(actualValue, "ebk-ak-"))
+	assert.True(t, strings.HasPrefix(actualValue, "folio-ak-"))
 
 	parts := strings.Split(actualValue, "-")
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), parts)
@@ -578,7 +578,7 @@ func TestParseEncryptedTokenId_InvalidFormat(t *testing.T) {
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -588,7 +588,7 @@ func TestParseEncryptedTokenId_InvalidFormat(t *testing.T) {
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", "00", "extra"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", "00", "extra"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -596,27 +596,27 @@ func TestParseEncryptedTokenId_InvalidFormat(t *testing.T) {
 
 func TestParseEncryptedTokenId_UnknownType(t *testing.T) {
 	service := initializeTokenServiceTest(t)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "unknown", "00"})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "unknown", "00"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidTokenType, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk.", "00"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk.", "00"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidTokenType, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk.unknown", "00"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk.unknown", "00"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidTokenType, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk.a.p", "00"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk.a.p", "00"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidTokenType, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "ak.a", "00"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "ak.a", "00"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidTokenType, err)
@@ -624,12 +624,12 @@ func TestParseEncryptedTokenId_UnknownType(t *testing.T) {
 
 func TestParseEncryptedTokenId_InvalidCiphertext(t *testing.T) {
 	service := initializeTokenServiceTest(t)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", "not-hex"})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", "not-hex"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", "00"})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", "00"})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -640,7 +640,7 @@ func TestParseEncryptedTokenId_ShortIdentity(t *testing.T) {
 	ciphertext, err := utils.EncryptSecretToHex(string(make([]byte, 24)), service.CurrentConfig().SecretKey)
 	assert.Equal(t, nil, err)
 
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -648,7 +648,7 @@ func TestParseEncryptedTokenId_ShortIdentity(t *testing.T) {
 	ciphertext, err = utils.EncryptSecretToHex("", service.CurrentConfig().SecretKey)
 	assert.Equal(t, nil, err)
 
-	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err = service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -657,7 +657,7 @@ func TestParseEncryptedTokenId_ShortIdentity(t *testing.T) {
 func TestParseEncryptedTokenId_InvalidUserId(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, 0, 456, 789, core.USER_TOKEN_TYPE_NORMAL, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -667,7 +667,7 @@ func TestParseEncryptedTokenId_InvalidUserId(t *testing.T) {
 func TestParseEncryptedTokenId_InvalidUserTokenId(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, 0, 789, core.USER_TOKEN_TYPE_NORMAL, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -677,7 +677,7 @@ func TestParseEncryptedTokenId_InvalidUserTokenId(t *testing.T) {
 func TestParseEncryptedTokenId_InvalidCreationTime(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, 456, 0, core.USER_TOKEN_TYPE_NORMAL, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -687,7 +687,7 @@ func TestParseEncryptedTokenId_InvalidCreationTime(t *testing.T) {
 func TestParseEncryptedTokenId_InvalidNegativeUserId(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, -1, 456, 789, core.USER_TOKEN_TYPE_NORMAL, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -697,7 +697,7 @@ func TestParseEncryptedTokenId_InvalidNegativeUserId(t *testing.T) {
 func TestParseEncryptedTokenId_InvalidNegativeUserTokenId(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, -1, 789, core.USER_TOKEN_TYPE_NORMAL, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -707,7 +707,7 @@ func TestParseEncryptedTokenId_InvalidNegativeUserTokenId(t *testing.T) {
 func TestParseEncryptedTokenId_InvalidNegativeCreationTime(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, 456, -1, core.USER_TOKEN_TYPE_NORMAL, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -717,7 +717,7 @@ func TestParseEncryptedTokenId_InvalidNegativeCreationTime(t *testing.T) {
 func TestParseEncryptedTokenId_TypeMismatch(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, 456, 789, core.USER_TOKEN_TYPE_API, nil)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "tk", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "tk", ciphertext})
 
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
@@ -728,7 +728,7 @@ func TestParseEncryptedTokenId_AdditionalData(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	expectedData := []byte{0, 255, ':', '-', 1}
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, 456, 789, core.USER_TOKEN_TYPE_API, expectedData)
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "ak", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "ak", ciphertext})
 	assert.Equal(t, nil, err)
 
 	expectedValue := &models.TokenRecord{
@@ -744,7 +744,7 @@ func TestParseEncryptedTokenId_AdditionalData(t *testing.T) {
 func TestParseEncryptedTokenId_MaximumIds(t *testing.T) {
 	service := initializeTokenServiceTest(t)
 	ciphertext := encryptTokenIdentityForTest(t, service, math.MaxInt64, math.MaxInt64, math.MaxInt64, core.USER_TOKEN_TYPE_API, nil)
-	actualValue, _, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "ak", ciphertext})
+	actualValue, _, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "ak", ciphertext})
 	assert.Equal(t, nil, err)
 
 	expectedValue := &models.TokenRecord{
@@ -761,7 +761,7 @@ func TestParseEncryptedTokenId_WrongKey(t *testing.T) {
 	ciphertext := encryptTokenIdentityForTest(t, service, 123, 456, 789, core.USER_TOKEN_TYPE_API, nil)
 	service.CurrentConfig().SecretKey = "different-global-key"
 
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "ak", ciphertext})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "ak", ciphertext})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -774,7 +774,7 @@ func TestParseEncryptedTokenId_TamperedCiphertext(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	data[len(data)-1] ^= 1
-	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"ebk", "ak", hex.EncodeToString(data)})
+	actualValue, actualData, err := service.parseEncryptedTokenId(core.NewNullContext(), []string{"folio", "ak", hex.EncodeToString(data)})
 	assert.Nil(t, actualValue)
 	assert.Nil(t, actualData)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
@@ -835,7 +835,7 @@ func TestGenerateEncryptedToken_UserAvatar(t *testing.T) {
 
 	token, err := service.generateEncryptedToken(record, core.USER_AVATAR_DERIVED_NORMAL_TOKEN, additionalDataBytes)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(token, "ebk-tk.a-"))
+	assert.True(t, strings.HasPrefix(token, "folio-tk.a-"))
 
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), strings.Split(token, "-"))
 	assert.Equal(t, nil, err)
@@ -909,7 +909,7 @@ func TestGenerateEncryptedToken_TransactionPicture(t *testing.T) {
 
 	token, err := service.generateEncryptedToken(record, core.TRANSACTION_PICTURE_DERIVED_NORMAL_TOKEN, additionalDataBytes)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(token, "ebk-tk.p-"))
+	assert.True(t, strings.HasPrefix(token, "folio-tk.p-"))
 
 	actualRecord, encryptedData, err := service.parseEncryptedTokenId(core.NewNullContext(), strings.Split(token, "-"))
 	assert.Equal(t, nil, err)
@@ -1031,7 +1031,7 @@ func TestDeriveUserAvatarToken_CurrentSession(t *testing.T) {
 	expectedValue := time.Now().Add(time.Hour).Unix()
 	token, err := service.DeriveUserAvatarToken(c, claims, record)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(token, "ebk-tk.a-"))
+	assert.True(t, strings.HasPrefix(token, "folio-tk.a-"))
 
 	actualValue, actualRecord, err := service.ParseToken(c, token, core.NormalTokenScopeUserAvatar)
 	assert.Equal(t, nil, err)
@@ -1046,18 +1046,18 @@ func TestDeriveUserAvatarToken_CurrentSession(t *testing.T) {
 	_, _, err = service.ParseToken(c, token, core.NormalTokenScopeTransactionPicture)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	mismatchedToken := strings.Replace(token, "ebk-tk.a-", "ebk-tk.p-", 1)
+	mismatchedToken := strings.Replace(token, "folio-tk.a-", "folio-tk.p-", 1)
 	_, _, err = service.ParseToken(c, mismatchedToken, core.NormalTokenScopeUserAvatar, core.NormalTokenScopeTransactionPicture)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	missingDerivedTokenType := strings.Replace(token, "ebk-tk.a-", "ebk-tk-", 1)
+	missingDerivedTokenType := strings.Replace(token, "folio-tk.a-", "folio-tk-", 1)
 	actualValue, _, err = service.ParseToken(c, missingDerivedTokenType, core.NormalTokenScopeUserAvatar)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 	assert.Nil(t, actualValue)
 
 	normalToken, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, []byte{byte(core.NormalTokenScopeAll)})
 	assert.Equal(t, nil, err)
-	mismatchedToken = strings.Replace(normalToken, "ebk-tk-", "ebk-tk.a-", 1)
+	mismatchedToken = strings.Replace(normalToken, "folio-tk-", "folio-tk.a-", 1)
 	_, _, err = service.ParseToken(c, mismatchedToken)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 }
@@ -1108,7 +1108,7 @@ func TestDeriveTransactionPictureToken_CurrentSession(t *testing.T) {
 	expectedValue := time.Now().Add(30 * time.Minute).Unix()
 	token, err := service.DeriveTransactionPictureToken(c, claims, record)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(token, "ebk-tk.p-"))
+	assert.True(t, strings.HasPrefix(token, "folio-tk.p-"))
 
 	actualValue, actualRecord, err := service.ParseToken(c, token, core.NormalTokenScopeTransactionPicture)
 	assert.Equal(t, nil, err)
@@ -1123,18 +1123,18 @@ func TestDeriveTransactionPictureToken_CurrentSession(t *testing.T) {
 	_, _, err = service.ParseToken(c, token, core.NormalTokenScopeUserAvatar)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	mismatchedToken := strings.Replace(token, "ebk-tk.p-", "ebk-tk.a-", 1)
+	mismatchedToken := strings.Replace(token, "folio-tk.p-", "folio-tk.a-", 1)
 	_, _, err = service.ParseToken(c, mismatchedToken, core.NormalTokenScopeUserAvatar, core.NormalTokenScopeTransactionPicture)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	missingDerivedTokenType := strings.Replace(token, "ebk-tk.p-", "ebk-tk-", 1)
+	missingDerivedTokenType := strings.Replace(token, "folio-tk.p-", "folio-tk-", 1)
 	actualValue, _, err = service.ParseToken(c, missingDerivedTokenType, core.NormalTokenScopeTransactionPicture)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 	assert.Nil(t, actualValue)
 
 	normalToken, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, []byte{byte(core.NormalTokenScopeAll)})
 	assert.Equal(t, nil, err)
-	mismatchedToken = strings.Replace(normalToken, "ebk-tk-", "ebk-tk.p-", 1)
+	mismatchedToken = strings.Replace(normalToken, "folio-tk-", "folio-tk.p-", 1)
 	_, _, err = service.ParseToken(c, mismatchedToken)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 }
@@ -1345,7 +1345,7 @@ func TestDeriveUserCustomIconToken_CurrentSession(t *testing.T) {
 	expectedValue := time.Now().Add(30 * time.Minute).Unix()
 	token, expiresAt, err := service.DeriveUserCustomIconToken(c, claims, record)
 	assert.Equal(t, nil, err)
-	assert.True(t, strings.HasPrefix(token, "ebk-tk.i-"))
+	assert.True(t, strings.HasPrefix(token, "folio-tk.i-"))
 
 	actualValue, actualRecord, err := service.ParseToken(c, token, core.NormalTokenScopeUserCustomIcon)
 	assert.Equal(t, nil, err)
@@ -1364,18 +1364,18 @@ func TestDeriveUserCustomIconToken_CurrentSession(t *testing.T) {
 	_, _, err = service.ParseToken(c, token, core.NormalTokenScopeTransactionPicture)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	mismatchedToken := strings.Replace(token, "ebk-tk.i-", "ebk-tk.a-", 1)
+	mismatchedToken := strings.Replace(token, "folio-tk.i-", "folio-tk.a-", 1)
 	_, _, err = service.ParseToken(c, mismatchedToken, core.NormalTokenScopeUserAvatar, core.NormalTokenScopeUserCustomIcon)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 
-	missingDerivedTokenType := strings.Replace(token, "ebk-tk.i-", "ebk-tk-", 1)
+	missingDerivedTokenType := strings.Replace(token, "folio-tk.i-", "folio-tk-", 1)
 	actualValue, _, err = service.ParseToken(c, missingDerivedTokenType, core.NormalTokenScopeUserCustomIcon)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 	assert.Nil(t, actualValue)
 
 	normalToken, err := service.generateEncryptedToken(record, core.NONE_DERIVED_TOKEN, []byte{byte(core.NormalTokenScopeAll)})
 	assert.Equal(t, nil, err)
-	mismatchedToken = strings.Replace(normalToken, "ebk-tk-", "ebk-tk.i-", 1)
+	mismatchedToken = strings.Replace(normalToken, "folio-tk-", "folio-tk.i-", 1)
 	_, _, err = service.ParseToken(c, mismatchedToken)
 	assert.Equal(t, errs.ErrCurrentInvalidToken, err)
 }

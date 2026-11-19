@@ -38,7 +38,7 @@
                                 </v-row>
                                 <v-row no-gutters>
                                     <v-col cols="12">
-                                        <a class="about-powered-by" target="_blank" href="https://github.com/mayswind/ezbookkeeping">{{ tt('Powered by ezBookkeeping') }}</a>
+                                        <a class="about-powered-by" target="_blank" href="https://github.com/JoyfulLL/Folio">{{ tt('Powered by Folio') }}</a>
                                     </v-col>
                                 </v-row>
                             </v-card-text>

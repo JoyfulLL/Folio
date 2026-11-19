@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
-# ez-update.sh - in-place, pull-based deploy for the custom Folio build.
+# folio-update.sh - in-place, pull-based deploy for the custom Folio build.
 #
 # Works on any Linux (Ubuntu, Debian, RHEL-family / Oracle Linux 10, ...).
 # On RHEL-family systems SELinux is enforcing by default, so replacements keep
 # the destination's inode/directory label instead of recreating it.
 #
 # Designed for the EXISTING layout (no path changes, nginx does not need touching):
-#   /opt/ez/ezbookkeeping            binary
-#   /opt/ez/public                  frontend (nginx root/proxy target stays the same)
-#   /opt/ez/conf/ezbookkeeping.ini  REAL config (secret_key, DB password) - NEVER touched
-#   /opt/ez/{data,storage,log}      user data - NEVER touched
-#   /opt/ez-backups/                backups created by this script
+#   /opt/folio/folio            binary
+#   /opt/folio/public                  frontend (nginx root/proxy target stays the same)
+#   /opt/folio/conf/folio.ini  REAL config (secret_key, DB password) - NEVER touched
+#   /opt/folio/{data,storage,log}      user data - NEVER touched
+#   /opt/folio-backups/                backups created by this script
 #
 # Usage:
-#   sudo ez-update.sh --check                 # dry run: show every resolved path, change nothing
-#   sudo ez-update.sh --check-db              # test the DB dump only; service is NOT touched
-#   sudo ez-update.sh                        # deploy RELEASE_TAG from /etc/ez-update.env
-#   sudo ez-update.sh 1.0.3                  # deploy one specific Release tag
-#   sudo ez-update.sh latest                 # deploy the newest Release
-#   sudo ez-update.sh --rollback             # restore the most recent app backup
+#   sudo folio-update.sh --check                 # dry run: show every resolved path, change nothing
+#   sudo folio-update.sh --check-db              # test the DB dump only; service is NOT touched
+#   sudo folio-update.sh                        # deploy RELEASE_TAG from /etc/folio-update.env
+#   sudo folio-update.sh 1.0.3                  # deploy one specific Release tag
+#   sudo folio-update.sh latest                 # deploy the newest Release
+#   sudo folio-update.sh --rollback             # restore the most recent app backup
 #
 # What an update does:
 #   1. download the arch-matched tar.gz from the GitHub Release
 #   2. stop the service, back up and VERIFY the database
-#   3. back up the 4 build artifacts into /opt/ez-backups/app-<timestamp>
-#   4. replace ONLY ezbookkeeping / public / templates / LICENSE in /opt/ez
+#   3. back up the 4 build artifacts into /opt/folio-backups/app-<timestamp>
+#   4. replace ONLY folio / public / templates / LICENSE in /opt/folio
 #      (conf/, data/, storage/, log/ and every other file are untouched)
 #   5. start the service, probe /healthz.json, roll back automatically on failure
 #   6. keep the last KEEP_BACKUPS backups
@@ -33,24 +33,24 @@
 # if it really contains the schema (CREATE TABLE statements are counted), while
 # harmless mysqldump complaints about server-owned "masking policies" are
 # ignored instead of aborting the update.
-# Run "sudo ez-update.sh --check-db" to prove the dump works, with no downtime.
+# Run "sudo folio-update.sh --check-db" to prove the dump works, with no downtime.
 set -Eeuo pipefail
 IFS=$'\n\t'
 
 # Bump on every change: printed by --check so a stale copy installed in
 # /usr/local/sbin is obvious at a glance.
-SCRIPT_REV="2026-11-15.2"
+SCRIPT_REV="2026-11-19.1"
 
-CONFIG_FILE="${EZ_UPDATE_CONFIG:-/etc/ez-update.env}"
+CONFIG_FILE="${FOLIO_UPDATE_CONFIG:-/etc/folio-update.env}"
 
 # ---- defaults, all overridable in $CONFIG_FILE -----------------------------
-INSTALL_DIR="/opt/ez"
-BACKUP_DIR="/opt/ez-backups"
-CONF_FILE=""                 # empty => $INSTALL_DIR/conf/ezbookkeeping.ini
-SQLITE_DB_PATH=""            # empty => $INSTALL_DIR/data/ezbookkeeping.db
-SERVICE_NAME="ezbookkeeping"
-SERVICE_USER="ezbookkeeping"
-SERVICE_GROUP="ezbookkeeping"
+INSTALL_DIR="/opt/folio"
+BACKUP_DIR="/opt/folio-backups"
+CONF_FILE=""                 # empty => $INSTALL_DIR/conf/folio.ini
+SQLITE_DB_PATH=""            # empty => $INSTALL_DIR/data/folio.db
+SERVICE_NAME="folio"
+SERVICE_USER="folio"
+SERVICE_GROUP="folio"
 GITHUB_REPO=""
 GITHUB_TOKEN=""
 RELEASE_TAG=""
@@ -61,12 +61,12 @@ KEEP_BACKUPS="3"
 DB_BACKUP_CMD=""
 
 # Only these four build artifacts are ever replaced.
-ITEMS=(ezbookkeeping public templates LICENSE)
+ITEMS=(folio public templates LICENSE)
 # These are explicitly protected - a bug must never delete them.
 PROTECTED=(conf data storage log)
 
-log() { printf '[ez-update] %s\n' "$*"; }
-die() { printf '[ez-update] ERROR: %s\n' "$*" >&2; exit 1; }
+log() { printf '[folio-update] %s\n' "$*"; }
+die() { printf '[folio-update] ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
     # Print the comment block at the top without hard-coding line numbers: a
@@ -89,7 +89,7 @@ cleanup() {
     # while we still own the stop; successful runs reset SERVICE_STOPPED=0.
     if [ "$SERVICE_STOPPED" = "1" ] && [ "$rc" -ne 0 ]; then
         systemctl start "$SERVICE_NAME" >/dev/null 2>&1 || true
-        printf '[ez-update] ERROR: update aborted (rc=%s); service restarted\n' "$rc" >&2
+        printf '[folio-update] ERROR: update aborted (rc=%s); service restarted\n' "$rc" >&2
     fi
     return 0
 }
@@ -106,15 +106,15 @@ esac
 
 # ---- load config -----------------------------------------------------------
 [ "$(id -u)" -eq 0 ] || die "must run as root: sudo $0 <tag>"
-[ -f "$CONFIG_FILE" ] || die "missing config $CONFIG_FILE (see deploy/ez-update.env.example)"
+[ -f "$CONFIG_FILE" ] || die "missing config $CONFIG_FILE (see deploy/folio-update.env.example)"
 # shellcheck disable=SC1090
 set -a
 . "$CONFIG_FILE"
 set +a
 
 [ -n "$GITHUB_REPO" ] || die "GITHUB_REPO must be set in $CONFIG_FILE (owner/repo)"
-[ -n "$CONF_FILE" ] || CONF_FILE="$INSTALL_DIR/conf/ezbookkeeping.ini"
-[ -n "$SQLITE_DB_PATH" ] || SQLITE_DB_PATH="$INSTALL_DIR/data/ezbookkeeping.db"
+[ -n "$CONF_FILE" ] || CONF_FILE="$INSTALL_DIR/conf/folio.ini"
+[ -n "$SQLITE_DB_PATH" ] || SQLITE_DB_PATH="$INSTALL_DIR/data/folio.db"
 
 for cmd in curl tar systemctl find awk date mktemp; do
     command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
@@ -221,7 +221,7 @@ backup_items() {
 # Replace one build artifact WITHOUT recreating its inode / directory.
 # RHEL-family distros (Oracle Linux 10, RHEL, Rocky, Alma) run SELinux in
 # enforcing mode by default. "rm -rf" + "cp -a" would import the staging
-# directory's label into /opt/ez and systemd could fail with 203/EXEC.
+# directory's label into /opt/folio and systemd could fail with 203/EXEC.
 # Keeping the destination makes new files inherit exactly the label that
 # already works with systemd and nginx today.
 replace_item() {
@@ -260,7 +260,7 @@ install_items() {
     for item in "${ITEMS[@]}"; do
         replace_item "$src" "$item"
     done
-    chmod 755 "$INSTALL_DIR/ezbookkeeping"
+    chmod 755 "$INSTALL_DIR/folio"
 }
 
 restore_items() {
@@ -274,7 +274,7 @@ restore_items() {
         fi
         replace_item "$src" "$item"
     done
-    chmod 755 "$INSTALL_DIR/ezbookkeeping"
+    chmod 755 "$INSTALL_DIR/folio"
 }
 
 latest_app_backup() {
@@ -377,7 +377,7 @@ take_db_backup() {
         log "hint: if mysqldump said 'FLUSH ... TABLES: Access denied', the dump account"
         log "      needs the global RELOAD (or FLUSH_TABLES) privilege; add PROCESS too,"
         log "      or keep --no-tablespaces, to avoid a tablespace privilege error."
-        log "      See the PRIVILEGES notes in deploy/ez-update.env.example."
+        log "      See the PRIVILEGES notes in deploy/folio-update.env.example."
         rm -f -- "$dest"
         return 1
     fi
@@ -436,7 +436,7 @@ if [ "$MODE" = "check" ]; then
     log "script           : $0  (rev $SCRIPT_REV)"
     log "install dir      : $INSTALL_DIR  ($([ -d "$INSTALL_DIR" ] && echo exists || echo MISSING))"
     log "config file      : $CONF_FILE  ($([ -f "$CONF_FILE" ] && echo exists || echo MISSING))"
-    log "binary           : $INSTALL_DIR/ezbookkeeping  ($([ -f "$INSTALL_DIR/ezbookkeeping" ] && echo exists || echo MISSING))"
+    log "binary           : $INSTALL_DIR/folio  ($([ -f "$INSTALL_DIR/folio" ] && echo exists || echo MISSING))"
     log "systemd unit     : $(systemctl show -p FragmentPath --value "$SERVICE_NAME" 2>/dev/null || echo 'not found')"
     log "WorkingDirectory : $(systemctl show -p WorkingDirectory --value "$SERVICE_NAME" 2>/dev/null || echo '?')"
     log "service state    : $(systemctl is-active "$SERVICE_NAME" 2>/dev/null || echo '?')"
@@ -455,13 +455,13 @@ if [ "$MODE" = "check" ]; then
     fi
     BIN_LABEL="n/a (SELinux not enforcing)"
     if [ "$SELINUX_MODE" = "Enforcing" ]; then
-        BIN_LABEL="$(stat -c '%C' "$INSTALL_DIR/ezbookkeeping" 2>/dev/null || echo '?')"
+        BIN_LABEL="$(stat -c '%C' "$INSTALL_DIR/folio" 2>/dev/null || echo '?')"
     fi
     log "os / selinux     : ${OS_LABEL:-unknown} / $SELINUX_MODE"
     log "binary label     : $BIN_LABEL"
     log "json parser      : $JSON_TOOL"
     log "requested tag    : ${1:-${RELEASE_TAG:-latest}}"
-    log "asset names      : folio-<tag>-linux-$ARCH.tar.gz (legacy fallback: ezbookkeeping-<tag>-linux-$ARCH.tar.gz)"
+    log "asset name       : folio-<tag>-linux-$ARCH.tar.gz"
     log "WILL REPLACE     : $(printf '%s ' "${ITEMS[@]}")"
     log "NEVER TOUCH      : $(printf '%s ' "${PROTECTED[@]}") (and any other file in $INSTALL_DIR)"
     log "backups go to    : $BACKUP_DIR"
@@ -481,7 +481,7 @@ if [ "$MODE" = "db-check" ]; then
             log "no DB_BACKUP_CMD set; this install uses sqlite ($SQLITE_DB_PATH) and is copied, not dumped"
             exit 0
         fi
-        die "DB_BACKUP_CMD is empty in $CONFIG_FILE (see deploy/ez-update.env.example)"
+        die "DB_BACKUP_CMD is empty in $CONFIG_FILE (see deploy/folio-update.env.example)"
     fi
     TMP_DIR="$(mktemp -d)"
     CHECK_DUMP="$TMP_DIR/db-check.sql.gz"
@@ -524,73 +524,43 @@ if [ "$TAG" = "latest" ]; then
     log "latest release: $TAG"
 fi
 
-PRIMARY_ASSET_NAME="folio-${TAG}-linux-${ARCH}.tar.gz"
-# Releases published before the Folio rename used the "ezbookkeeping-" prefix.
-# Keep it as a fallback so older Release tags stay deployable.
-LEGACY_ASSET_NAME="ezbookkeeping-${TAG}-linux-${ARCH}.tar.gz"
-log "target: $GITHUB_REPO / $TAG / $PRIMARY_ASSET_NAME"
+ASSET_NAME="folio-${TAG}-linux-${ARCH}.tar.gz"
+log "target: $GITHUB_REPO / $TAG / $ASSET_NAME"
 
 TMP_DIR="$(mktemp -d)"
-PKG=""
-ASSET_NAME=""
+PKG="$TMP_DIR/$ASSET_NAME"
 
-# Private repos resolve the asset URL through the API. The release metadata is
-# the same for both candidate names, so fetch it once instead of once per try.
-RELEASE_JSON=""
 if [ -n "$GITHUB_TOKEN" ]; then
     RELEASE_JSON="$(api_get "/releases/tags/$TAG")" || die "release $TAG not reachable"
+    ASSET_URL="$(printf '%s' "$RELEASE_JSON" | json_asset_url)"
+    [ -n "$ASSET_URL" ] || die "asset $ASSET_NAME not found in release $TAG"
+    if ! curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
+        -H "Accept: application/octet-stream" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -o "$PKG" "$ASSET_URL"; then
+        die "download failed for $ASSET_NAME"
+    fi
+else
+    if ! curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
+        -o "$PKG" \
+        "https://github.com/$GITHUB_REPO/releases/download/$TAG/$ASSET_NAME"; then
+        die "download failed for $ASSET_NAME"
+    fi
 fi
 
-for candidate_asset_name in "$PRIMARY_ASSET_NAME" "$LEGACY_ASSET_NAME"; do
-    candidate_pkg="$TMP_DIR/$candidate_asset_name"
-    log "trying asset: $candidate_asset_name"
-    rm -f "$candidate_pkg"
-
-    if [ -n "$GITHUB_TOKEN" ]; then
-        ASSET_NAME="$candidate_asset_name"
-        ASSET_URL="$(printf '%s' "$RELEASE_JSON" | json_asset_url)"
-        if [ -z "$ASSET_URL" ]; then
-            log "asset $candidate_asset_name not found in release $TAG"
-            continue
-        fi
-        if ! curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
-            -H "Accept: application/octet-stream" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -o "$candidate_pkg" "$ASSET_URL"; then
-            log "download failed for $candidate_asset_name"
-            continue
-        fi
-    else
-        if ! curl -fL --retry 3 --connect-timeout 15 --max-time 900 \
-            -o "$candidate_pkg" \
-            "https://github.com/$GITHUB_REPO/releases/download/$TAG/$candidate_asset_name"; then
-            log "download failed for $candidate_asset_name"
-            continue
-        fi
-    fi
-
-    # A proxy or a stale redirect can return HTTP 200 with an HTML error page.
-    # Validate the archive before accepting the candidate, otherwise the
-    # legacy fallback would never be tried.
-    if [ ! -s "$candidate_pkg" ] || ! tar -tzf "$candidate_pkg" >/dev/null 2>&1; then
-        log "$candidate_asset_name is empty or not a valid tar.gz"
-        continue
-    fi
-
-    ASSET_NAME="$candidate_asset_name"
-    PKG="$candidate_pkg"
-    break
-done
-
-[ -n "$PKG" ] || die "no downloadable asset found for release $TAG (tried $PRIMARY_ASSET_NAME and $LEGACY_ASSET_NAME)"
+# A proxy or a stale redirect can return HTTP 200 with an HTML error page.
+# Validate the archive before accepting it.
+if [ ! -s "$PKG" ] || ! tar -tzf "$PKG" >/dev/null 2>&1; then
+    die "$ASSET_NAME is empty or not a valid tar.gz"
+fi
 # No "grep -q": with pipefail it can SIGPIPE tar and cause a false failure.
-tar -tzf "$PKG" | grep -x './ezbookkeeping' >/dev/null || die "package has no backend binary"
+tar -tzf "$PKG" | grep -x './folio' >/dev/null || die "package has no backend binary"
 log "downloaded $(du -h "$PKG" | cut -f1)"
 
 # ---- preflight on the live install -----------------------------------------
 [ -d "$INSTALL_DIR" ] || die "install dir does not exist: $INSTALL_DIR"
 [ -f "$CONF_FILE" ] || die "real config not found: $CONF_FILE (refusing to break your install)"
-[ -f "$INSTALL_DIR/ezbookkeeping" ] || die "binary not found: $INSTALL_DIR/ezbookkeeping"
+[ -f "$INSTALL_DIR/folio" ] || die "binary not found: $INSTALL_DIR/folio"
 
 TS="$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
@@ -630,12 +600,12 @@ log "saved previous artifacts to $APP_BACKUP"
 # ---- stage + install -------------------------------------------------------
 STAGE="$(mktemp -d "$BACKUP_DIR/.stage-XXXXXX")"
 tar -xzf "$PKG" -C "$STAGE"
-[ -f "$STAGE/ezbookkeeping" ] || die "backend binary missing after extraction"
+[ -f "$STAGE/folio" ] || die "backend binary missing after extraction"
 
 # Whitelist: conf/, data/, storage/, log/ inside the package are discarded.
-# The real /opt/ez/conf/ezbookkeeping.ini can never be overwritten.
+# The real /opt/folio/conf/folio.ini can never be overwritten.
 find "$STAGE" -mindepth 1 -maxdepth 1 \
-    ! -name ezbookkeeping ! -name public ! -name templates ! -name LICENSE \
+    ! -name folio ! -name public ! -name templates ! -name LICENSE \
     -exec rm -rf -- {} +
 
 install_items "$STAGE"

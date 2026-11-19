@@ -55,7 +55,7 @@ describe('rule', () => {
         );
         const parsed = JSON.parse(ImportTransactionReplaceRules.of([rule]).toJson());
 
-        expect(parsed.ezBookkeepingImportTransactionReplaceRules[0].conditionValue).toEqual([100, 100]);
+        expect(parsed.FolioImportTransactionReplaceRules[0].conditionValue).toEqual([100, 100]);
     });
 
     test('should reject invalid condition and action values', () => {

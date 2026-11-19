@@ -39,20 +39,20 @@ RUN ./build.sh frontend
 # Package docker image
 FROM alpine:3.24.3
 LABEL org.opencontainers.image.title="Folio" org.opencontainers.image.licenses="MIT"
-RUN addgroup -S -g 1000 ezbookkeeping && adduser -S -G ezbookkeeping -u 1000 ezbookkeeping
+RUN addgroup -S -g 1000 folio && adduser -S -G folio -u 1000 folio
 RUN apk --no-cache add tzdata
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
-RUN mkdir -p /ezbookkeeping && chown 1000:1000 /ezbookkeeping \
-  && mkdir -p /ezbookkeeping/data && chown 1000:1000 /ezbookkeeping/data \
-  && mkdir -p /ezbookkeeping/log && chown 1000:1000 /ezbookkeeping/log \
-  && mkdir -p /ezbookkeeping/storage && chown 1000:1000 /ezbookkeeping/storage
-WORKDIR /ezbookkeeping
-COPY --from=be-builder --chown=1000:1000 /build/ezbookkeeping /ezbookkeeping/ezbookkeeping
-COPY --from=fe-builder --chown=1000:1000 /build/dist /ezbookkeeping/public
-COPY --chown=1000:1000 conf /ezbookkeeping/conf
-COPY --chown=1000:1000 templates /ezbookkeeping/templates
-COPY --chown=1000:1000 LICENSE /ezbookkeeping/LICENSE
+RUN mkdir -p /folio && chown 1000:1000 /folio \
+  && mkdir -p /folio/data && chown 1000:1000 /folio/data \
+  && mkdir -p /folio/log && chown 1000:1000 /folio/log \
+  && mkdir -p /folio/storage && chown 1000:1000 /folio/storage
+WORKDIR /folio
+COPY --from=be-builder --chown=1000:1000 /build/folio /folio/folio
+COPY --from=fe-builder --chown=1000:1000 /build/dist /folio/public
+COPY --chown=1000:1000 conf /folio/conf
+COPY --chown=1000:1000 templates /folio/templates
+COPY --chown=1000:1000 LICENSE /folio/LICENSE
 USER 1000:1000
 EXPOSE 8080
 ENTRYPOINT ["/docker-entrypoint.sh"]

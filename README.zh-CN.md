@@ -26,11 +26,11 @@ Folio 是基于 [ezBookkeeping](https://github.com/mayswind/ezbookkeeping) 的�
 
 - **账户图标统一徽章** —— 账户卡片统一使用 40×40 圆形徽章，24px 图标 `contain` 等比居中，配主题色令牌；移除了覆盖整张卡片的大尺寸半透明水印。明暗主题共用同一套设计令牌。
 - **洞察探索按钮显隐偏好** —— 可显示或隐藏桌面端导航栏的 Insights Explorer 入口（上游始终显示）。
-- **Folio 品牌** —— 应用名、PWA 图标与导出文件名前缀统一为 Folio；「关于」页面标注「基于 ezBookkeeping 构建」。
+- **Folio 品牌** —— 应用名、PWA 图标、导出文件名前缀、二进制／配置／数据库名与环境变量统一为 Folio；「关于」页面链接到 Folio 仓库。
 
 ### 构建与部署
 
-- 提供拉取式原地升级脚本 `deploy/ez-update.sh`、systemd 单元与 MySQL 初始化 SQL。
+- 提供拉取式原地升级脚本 `deploy/folio-update.sh`、systemd 单元与 MySQL 初始化 SQL。
 - CI 打包工作流；发布资源命名为 `folio-<版本>-<架构>.tar.gz`，使用不带 `v` 前缀的纯 semver 标签，避免与上游 `v*.*.*` 冲突。
 - 构建脚本、Dockerfile 与 PWA 工具链针对改名后的发布产物做了相应调整。
 
@@ -67,35 +67,35 @@ Folio 是基于 [ezBookkeeping](https://github.com/mayswind/ezbookkeeping) 的�
 
 Windows 下对应 `build.bat` 和 `build.ps1`。
 
-构建成功后，前端产物写入 `dist/`，后端可执行文件为 `ezbookkeeping`（Windows 下为 `ezbookkeeping.exe`）。可执行文件名与配置文件名保持不变，方便已有部署和升级脚本继续使用。
+构建成功后，前端产物写入 `dist/`，后端可执行文件为 `folio`（Windows 下为 `folio.exe`）。
 
 ## 运行
 
 ```sh
-./ezbookkeeping server run
+./folio server run
 ```
 
 默认监听 8080 端口：`http://{你的主机地址}:8080/`。
 
-配置文件位于 `conf/ezbookkeeping.ini`。本地开发时复制为 `conf/ezbookkeeping.local.ini` 后运行：
+配置文件位于 `conf/folio.ini`。本地开发时复制为 `conf/folio.local.ini` 后运行：
 
 ```sh
-go run ezbookkeeping.go server run --conf-path=conf/ezbookkeeping.local.ini
+go run folio.go server run --conf-path=conf/folio.local.ini
 ```
 
-所有配置项都可以用 `EBK_<节名>_<键名>` 环境变量覆盖。
+所有配置项都可以用 `FOLIO_<节名>_<键名>` 环境变量覆盖。
 
 ### Docker
 
 ```sh
-docker run -p8080:8080 -v /path/to/data:/ezbookkeeping/data folio:local
+docker run -p8080:8080 -v /path/to/data:/folio/data folio:local
 ```
 
 为 `data/`、`log/`、`storage/` 挂载持久化卷，保证容器重建后数据不丢。
 
 ## 部署辅助工具
 
-`deploy/ez-update.sh` 可对 systemd 安装执行拉取式原地升级。它只替换后端二进制、`public/`、`templates/` 和 `LICENSE`，不会覆盖真实配置、数据库或日志。目录约定见 `deploy/ez-update.env.example` 和 `deploy/ezbookkeeping.service`。
+`deploy/folio-update.sh` 可对 systemd 安装执行拉取式原地升级。它只替换后端二进制、`public/`、`templates/` 和 `LICENSE`，不会覆盖真实配置、数据库或日志。目录约定见 `deploy/folio-update.env.example` 和 `deploy/folio.service`。
 
 发布标签使用不带 `v` 前缀的纯 semver（`1.0.3`），避免与上游 `v*.*.*` 发布流程冲突。标签同时作为二进制与网页界面显示的版本号，发布资源命名为 `folio-<标签>-linux-<架构>.tar.gz`。
 
