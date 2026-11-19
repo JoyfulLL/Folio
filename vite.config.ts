@@ -164,7 +164,7 @@ export default defineConfig(() => {
                     name: 'Folio',
                     short_name: 'Folio',
                     description: 'A lightweight, self-hosted personal finance app.',
-                    theme_color: '#C67E48',
+                    theme_color: '#EF7624',
                     background_color: '#F6F7F8',
                     start_url: './',
                     scope: './',

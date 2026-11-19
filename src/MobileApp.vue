@@ -113,27 +113,29 @@ const notification = ref<Notification.Notification | null>(null);
 
 const hasPushPopupBackdrop = ref<boolean | undefined>(undefined);
 const hasBackdrop = ref<boolean | undefined>(undefined);
+const currentPageIsAuth = ref<boolean>(false);
 const currentNotificationContent = computed<string | null>(() => rootStore.currentNotification);
 
 function setThemeColorMeta(darkMode: boolean | undefined): void {
+    let color = '#f6f6f8';
+
     if (hasPushPopupBackdrop.value) {
-        document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#000');
-        return;
+        color = '#000';
+    } else if (hasBackdrop.value) {
+        color = darkMode ? '#0b0b0b' : '#949495';
+    } else if (currentPageIsAuth.value) {
+        color = darkMode ? '#000' : '#fff';
+    } else {
+        color = darkMode ? '#121212' : '#f6f6f8';
     }
 
-    if (darkMode) {
-        if (hasBackdrop.value) {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#0b0b0b');
-        } else {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#121212');
-        }
-    } else {
-        if (hasBackdrop.value) {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#949495');
-        } else {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#f6f6f8');
-        }
-    }
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', color);
+    document.documentElement.style.setProperty('--folio-status-bar-bg', color);
+}
+
+function updatePageThemeColor(page: { el?: HTMLElement }): void {
+    currentPageIsAuth.value = !!page.el?.classList.contains('login-page');
+    setThemeColorMeta(environmentsStore.framework7DarkMode);
 }
 
 function onBackdropChanged(element: { push?: boolean, opened?: boolean }): void {
@@ -151,8 +153,11 @@ onMounted(() => {
 
     f7ready((f7) => {
         environmentsStore.framework7DarkMode = f7.darkMode;
+        const currentPageEl = document.querySelector<HTMLElement>('.page-current');
+        currentPageIsAuth.value = !!currentPageEl?.classList.contains('login-page');
         setThemeColorMeta(f7.darkMode);
 
+        f7.on('pageAfterIn', (page: { el?: HTMLElement }) => updatePageThemeColor(page));
         f7.on('actionsOpen', (actions: Actions.Actions) => onBackdropChanged(actions));
         f7.on('actionsClose', (actions: Actions.Actions) => onBackdropChanged(actions));
         f7.on('dialogOpen', (dialog: Dialog.Dialog) => onBackdropChanged(dialog));

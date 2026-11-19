@@ -232,6 +232,26 @@ clientsClaim();
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
+/** CSS/JS/HTML are intentionally excluded from the precache manifest and served from the runtime code cache below. That cache has a fixed name and CacheFirst never revalidates it, so a new build can strand an iOS standalone PWA on the previous HTML/CSS forever (clearing Safari cache or re-adding the home-screen icon does not reset it). Drop the code cache whenever a new service worker activates, so every deploy re-fetches fresh HTML and hashed assets. The precache (assets cache) is untouched. **/
+self.addEventListener('activate', (event: ExtendableEvent) => {
+    event.waitUntil((async (): Promise<void> => {
+        const cacheNames: string[] = await caches.keys();
+        await Promise.all(
+            cacheNames
+                .filter(cacheName => cacheName === SW_CODE_CACHE_NAME)
+                .map(cacheName => caches.delete(cacheName))
+        );
+    })());
+});
+
+/** The standalone PWA start_url ('./') does not match the HTML extension routes below, so its navigation used to fall through to the browser HTTP cache and could keep serving a stale HTML that references an old CSS bundle. Always revalidate document navigations against the network. **/
+registerRoute(
+    ({ request }) => request.mode === 'navigate',
+    new NetworkFirst({
+        cacheName: SW_CODE_CACHE_NAME,
+    })
+);
+
 registerRoute(
     /.*\/img\/desktop\/.*\.(png|jpg|jpeg|gif|tiff|bmp|svg)/,
     new StaleWhileRevalidate({

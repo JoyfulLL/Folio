@@ -5,8 +5,120 @@
 }
 
 .ios .navbar-bg::before {
-    /** the original "--f7-navbar-height" is 76px, but ezBookkkeeping changed "--f7-navbar-height", so the gradient should be adjusted accordingly **/
+    /** the original "--f7-navbar-height" is 76px, but ezBookkeeping changed "--f7-navbar-height", so the gradient should be adjusted accordingly **/
     mask-image: linear-gradient(to bottom, black calc(50% + min(calc(var(--f7-navbar-height) - (76px - var(--f7-safe-area-top, 0px))), var(--f7-safe-area-top, 0px))), transparent 100%);
+}
+
+/**
+ * Keep the native navbar glass (the .navbar-bg blur/gradient that blends the
+ * status bar into the page), but flatten the pill-shaped glass containers that
+ * Framework7 9 wraps around the navbar links (back / menu: .left / .right /
+ * .navbar-pane). Those pills paint an opaque round highlight plus a heavy
+ * shadow on an otherwise uniform bar, breaking the "one continuous colour"
+ * top. Clearing only their own paint leaves the icons sitting directly on the
+ * bar while the bar itself keeps its glass.
+ **/
+.ios .navbar .left,
+.ios .navbar .right,
+.ios .navbar .navbar-pane {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+
+/**
+ * The standalone Web Clip draws the iOS status bar over the top safe area.
+ * Paint that area with the same colour as the current page (kept in sync with
+ * the theme-color meta by MobileApp.vue) so the status bar blends into the
+ * page instead of showing a fixed white strip.
+ **/
+html.ios,
+html.ios body,
+html.ios .framework7-root {
+    background-color: var(--folio-status-bar-bg, var(--f7-page-bg-color)) !important;
+}
+
+/**
+ * Home page: keep the app name tucked into the top safe area and reveal it
+ * proportionally while pull-to-refresh is being dragged. --folio-title-reveal
+ * is updated by HomePage.vue (0 = hidden, 1 = fully visible).
+ **/
+.ios .page.home-page > .navbar .title {
+    --folio-title-reveal: 0;
+    opacity: var(--folio-title-reveal);
+    transform: translateY(calc((var(--folio-title-reveal) - 1) * 40px));
+    transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.ios .page.home-page.folio-title-pulling > .navbar .title {
+    transition: none;
+}
+
+/**
+ * V4: Hide the native iOS scroll indicator on every scroll container.
+ * iOS Safari 16.4+ honours `scrollbar-width`/`scrollbar-color` (this is exactly
+ * how Framework7 hides scrollbars itself); `::-webkit-scrollbar` is ignored on
+ * iOS. Apply to all pages, not just the login screen (settings/list pages too).
+ **/
+html,
+body,
+.framework7-root,
+.page,
+.page-content,
+.login-screen,
+.login-screen-content,
+.tab,
+.view {
+    scrollbar-width: none !important;
+    scrollbar-color: transparent transparent !important;
+    -ms-overflow-style: none !important;
+}
+
+.page-content::-webkit-scrollbar,
+.login-screen-content::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/**
+ * V5: Lock the document itself so iOS cannot rubber-band the whole WebView.
+ *
+ * Framework7 forces `body { overflow-y: scroll }`. In a standalone Web Clip,
+ * `overflow-y: hidden` alone does NOT stop iOS from dragging the whole page
+ * (navbar + content + tabbar all translate together and bounce back on release)
+ * because iOS Safari ignores overflow:hidden on body for touch panning. Pinning
+ * html/body/.framework7-root with position:fixed removes the document-level
+ * scroll container entirely. Real per-page scrolling still happens inside
+ * `.page-content` (which Framework7 gives overflow:auto), so long lists remain
+ * scrollable. Pull-to-refresh also still works: it translates `.page-content`
+ * children only and never needs the document to scroll.
+ **/
+html.ios,
+html.ios body,
+html.ios .framework7-root {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+}
+
+/** Keep the login screen non-scrollable at heights where its content fits; restore scrolling when a field is focused so the keyboard cannot hide inputs. **/
+@media (min-height: 630px) {
+    .login-page > .page-content {
+        overflow: hidden !important;
+    }
+
+    .login-page > .page-content:focus-within {
+        overflow: auto !important;
+    }
 }
 
 .ios .subnavbar {

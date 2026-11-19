@@ -1,5 +1,6 @@
 <template>
-    <f7-page ptr @ptr:refresh="reload" @page:afterin="onPageAfterIn">
+    <f7-page ptr class="home-page" @ptr:pullstart="onPtrPullStart" @ptr:pullmove="onPtrPullMove" @ptr:pullend="onPtrPullEnd"
+             @ptr:refresh="reload" @page:afterin="onPageAfterIn">
         <f7-navbar>
             <f7-nav-title :title="tt('global.app.title')"></f7-nav-title>
         </f7-navbar>
@@ -350,6 +351,41 @@ function onNavigate(type: MobileOverviewWidgetNavigationType, path?: string): vo
     } else if (type === MobileOverviewWidgetNavigationType.AIImageRecognition) {
         showAIReceiptImageRecognitionSheet.value = true;
     }
+}
+
+function getHomePageElement(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('.page.home-page.page-current');
+}
+
+function onPtrPullStart(): void {
+    getHomePageElement()?.classList.add('folio-title-pulling');
+}
+
+function onPtrPullMove(): void {
+    const pageEl = getHomePageElement();
+
+    if (!pageEl) {
+        return;
+    }
+
+    const contentEl = pageEl.querySelector<HTMLElement>(':scope > .page-content');
+    const pulledEl = contentEl?.querySelector<HTMLElement>(':scope > *:not(.ptr-preloader)');
+    const transform = pulledEl?.style.transform ?? '';
+    const matched = /translate3d\([^,]+,\s*([-\d.]+)px/i.exec(transform);
+    const pullDistance = Math.max(0, Number.parseFloat(matched?.[1] ?? '0'));
+
+    pageEl.style.setProperty('--folio-title-reveal', String(Math.min(pullDistance / 60, 1)));
+}
+
+function onPtrPullEnd(): void {
+    const pageEl = getHomePageElement();
+
+    if (!pageEl) {
+        return;
+    }
+
+    pageEl.classList.remove('folio-title-pulling');
+    pageEl.style.setProperty('--folio-title-reveal', '0');
 }
 
 function onPageAfterIn(): void {
