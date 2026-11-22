@@ -4,6 +4,7 @@ import { CurrencySortingType } from './currency.ts';
 import { KeywordMatchMode } from './text.ts';
 import { ImageUploadQualityType } from './image.ts';
 import { CreditCardAmountDisplayType } from './account.ts';
+import { DEFAULT_THEME_COLOR_SCHEME } from './theme_color_scheme.ts';
 import {
     TransactionAmountType,
     TransactionQuickSaveButtonStyle,
@@ -38,6 +39,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     debug: boolean;
     // General Settings
     theme: string;
+    themeColorScheme: string;
     fontSize: number;
     timeZone: string;
     autoUpdateExchangeRatesData: boolean;
@@ -216,6 +218,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     debug: false,
     // General Settings
     theme: 'auto',
+    themeColorScheme: DEFAULT_THEME_COLOR_SCHEME,
     fontSize: 1,
     timeZone: '',
     autoUpdateExchangeRatesData: true,

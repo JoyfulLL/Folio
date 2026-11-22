@@ -153,6 +153,11 @@ export const useSettingsStore = defineStore('settings', () => {
         appSettings.value.theme = value;
     }
 
+    function setThemeColorScheme(value: string): void {
+        updateApplicationSettingsValue('themeColorScheme', value);
+        appSettings.value.themeColorScheme = value;
+    }
+
     function setFontSize(value: number): void {
         updateApplicationSettingsValue('fontSize', value);
         appSettings.value.fontSize = value;
@@ -643,6 +648,7 @@ export const useSettingsStore = defineStore('settings', () => {
         // functions
         // -- General Settings
         setTheme,
+        setThemeColorScheme,
         setFontSize,
         setTimeZone,
         setAutoUpdateExchangeRatesData,

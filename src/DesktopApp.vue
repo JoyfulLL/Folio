@@ -36,6 +36,7 @@ import { initMapProvider } from '@/lib/map/index.ts';
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
 import { updateMapCacheExpiration, updateTransactionPictureCacheExpiration } from '@/lib/cache.ts';
 import { getSystemTheme, setExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
+import { applyVuetifyThemeColorScheme } from '@/lib/ui/theme_color_scheme.ts';
 import logger from '@/lib/logger.ts';
 
 const { tt, getCurrentLanguageInfo, setLanguage, initLocale } = useI18n();
@@ -92,6 +93,8 @@ if (settingsStore.appSettings.theme === ThemeType.Light) {
 } else {
     theme.change(getSystemTheme());
 }
+
+applyVuetifyThemeColorScheme(theme, settingsStore.appSettings.themeColorScheme);
 
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
     if (settingsStore.appSettings.theme === 'auto') {
