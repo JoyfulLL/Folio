@@ -12,7 +12,6 @@ import { useOverviewStore } from '@/stores/overview.ts';
 import { useStatisticsStore } from '@/stores/statistics.ts';
 
 import type { NameValue, TypeAndDisplayName } from '@/core/base.ts';
-import { ALL_THEME_COLOR_SCHEMES } from '@/core/theme_color_scheme.ts';
 import { DateRangeScene, DateRange } from '@/core/datetime.ts';
 import type { LocalizedTimezoneInfo } from '@/core/timezone.ts';
 
@@ -52,13 +51,6 @@ export function useAppSettingPageBase() {
             { name: tt('Light'), value: 'light' },
             { name: tt('Dark'), value: 'dark' }
         ];
-    });
-
-    const allThemeColorSchemes = computed<NameValue[]>(() => {
-        return ALL_THEME_COLOR_SCHEMES.map(scheme => ({
-            name: tt(scheme.name),
-            value: scheme.type
-        }));
     });
 
     const allTimezones = computed<LocalizedTimezoneInfo[]>(() => getAllTimezones(getCurrentUnixTime(), true));
@@ -248,7 +240,6 @@ export function useAppSettingPageBase() {
         loadingTags,
         // computed states
         allThemes,
-        allThemeColorSchemes,
         allTimezones,
         allTimezoneTypesUsedForStatistics,
         allCurrencySortingTypes,

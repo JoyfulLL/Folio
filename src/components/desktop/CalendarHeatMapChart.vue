@@ -12,13 +12,11 @@ import type { CallbackDataParams } from 'echarts/types/dist/shared';
 
 import { useI18n } from '@/locales/helpers.ts';
 
-import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
 
 import type { BigDecimal } from '@/core/numeral.ts';
 import { type WeekDayValue, KnownDateTimeFormat } from '@/core/datetime.ts';
 import { ThemeType } from '@/core/theme.ts';
-import { getThemeColorScheme, getThemeColorSchemeChartBaseColor } from '@/core/theme_color_scheme.ts';
 import { ChartValueType, type CalendarChartSourceDataItem } from '@/core/chart.ts';
 
 import {
@@ -63,7 +61,6 @@ const emit = defineEmits<{
 }>();
 
 const theme = useTheme();
-const settingsStore = useSettingsStore();
 
 const {
     tt,
@@ -194,7 +191,7 @@ const chartOptions = computed<object>(() => {
                 max: heatMapData.value.maxValue.toDoubleNumber(),
                 calculable: true,
                 inRange: {
-                    color: [ getThemeColorSchemeChartBaseColor(settingsStore.appSettings.themeColorScheme, isDarkMode.value), getThemeColorScheme(settingsStore.appSettings.themeColorScheme).primary ]
+                    color: isDarkMode.value ? [ '#1a1a1a', '#c67e48' ] : [ '#faf8f4', '#c67e48' ]
                 },
                 textStyle: {
                     color: isDarkMode.value ? '#888' : '#666'

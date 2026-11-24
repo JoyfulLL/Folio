@@ -12,13 +12,10 @@ import type { CallbackDataParams } from 'echarts/types/dist/shared';
 
 import { useI18n } from '@/locales/helpers.ts';
 
-import { useSettingsStore } from '@/stores/setting.ts';
-
 import { itemAndIndex } from '@/core/base.ts';
 import { TextDirection } from '@/core/text.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
 import { ThemeType } from '@/core/theme.ts';
-import { getThemeColorScheme, getThemeColorSchemeChartBaseColor } from '@/core/theme_color_scheme.ts';
 import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 
 import { isArray } from '@/lib/common.ts';
@@ -51,7 +48,6 @@ const emit = defineEmits<{
 }>();
 
 const theme = useTheme();
-const settingsStore = useSettingsStore();
 
 const {
     tt,
@@ -196,7 +192,7 @@ const chartOptions = computed<object>(() => {
                 max: heatMapData.value.maxValue.toDoubleNumber(),
                 calculable: true,
                 inRange: {
-                    color: [ getThemeColorSchemeChartBaseColor(settingsStore.appSettings.themeColorScheme, isDarkMode.value), getThemeColorScheme(settingsStore.appSettings.themeColorScheme).primary ]
+                    color: isDarkMode.value ? [ '#1a1a1a', '#c67e48' ] : [ '#faf8f4', '#c67e48' ]
                 },
                 textStyle: {
                     color: isDarkMode.value ? '#888' : '#666'

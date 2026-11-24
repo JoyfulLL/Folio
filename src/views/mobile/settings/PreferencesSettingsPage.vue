@@ -4,31 +4,6 @@
 
         <f7-block-title class="margin-top">{{ tt('General Settings') }}</f7-block-title>
         <f7-list strong inset dividers class="settings-list">
-            <f7-list-item
-                class="item-truncate-after-text"
-                link="#"
-                @click="showThemeColorSchemePopup = true"
-            >
-                <template #after-title>
-                    <div class="item-actual-title">
-                        <span>{{ tt('Theme Color') }}</span>
-                    </div>
-                </template>
-                <template #after>
-                    {{ findNameByValue(allThemeColorSchemes, currentThemeColorScheme) }}
-                </template>
-                <list-item-selection-popup value-type="item"
-                                           key-field="value" value-field="value"
-                                           title-field="name"
-                                           :title="tt('Theme Color')"
-                                           :enable-filter="true"
-                                           :filter-placeholder="tt('Theme Color')"
-                                           :filter-no-items-text="tt('No results')"
-                                           :items="allThemeColorSchemes"
-                                           v-model:show="showThemeColorSchemePopup"
-                                           v-model="currentThemeColorScheme">
-                </list-item-selection-popup>
-            </f7-list-item>
             <f7-list-item>
                 <template #after-title>
                     {{ tt('Show Account Balance') }}
@@ -556,7 +531,6 @@ const {
     loadingAccounts,
     loadingTransactionCategories,
     loadingTags,
-    allThemeColorSchemes,
     hasAnyAccount,
     hasAnyVisibleAccount,
     hasAnyTransactionCategory,
@@ -595,7 +569,6 @@ const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 const transactionTagsStore = useTransactionTagsStore();
 
-const showThemeColorSchemePopup = ref<boolean>(false);
 const showTimezoneUsedForStatisticsInHomePagePopup = ref<boolean>(false);
 const showTransactionPictureQualityPopup = ref<boolean>(false);
 const showReconciliationStatementDefaultDateRangePopup = ref<boolean>(false);
@@ -603,16 +576,6 @@ const showReconciliationStatementDefaultDateRangePopup = ref<boolean>(false);
 const allTransactionQuickSaveButtonStyles = computed<TypeAndDisplayName[]>(() => getAllTransactionQuickSaveButtonStyles());
 const allTransactionQuickAddButtonActionTypes = computed<TypeAndDisplayName[]>(() => getAllTransactionQuickAddButtonActionTypes());
 const allCreditCardAmountDisplayTypes = computed<TypeAndDisplayName[]>(() => getAllCreditCardAmountDisplayTypes());
-
-const currentThemeColorScheme = computed<string>({
-    get: () => settingsStore.appSettings.themeColorScheme,
-    set: value => {
-        if (value !== settingsStore.appSettings.themeColorScheme) {
-            settingsStore.setThemeColorScheme(value);
-            location.reload();
-        }
-    }
-});
 
 const overviewPageLayoutDisplayContent = computed<string>(() => {
     try {

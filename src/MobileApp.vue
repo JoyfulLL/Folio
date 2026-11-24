@@ -26,8 +26,6 @@ import { ThemeType } from '@/core/theme.ts';
 import { isFunction } from '@/lib/common.ts';
 import { isProduction } from '@/lib/version.ts';
 import { getTheme, isEnableSwipeBack, isEnableAnimate } from '@/lib/settings.ts';
-import { getThemeColorScheme } from '@/core/theme_color_scheme.ts';
-import { applyThemeColorSchemeCssVariables } from '@/lib/ui/theme_color_scheme.ts';
 import { initMapProvider } from '@/lib/map/index.ts';
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
 import { updateMapCacheExpiration, updateTransactionPictureCacheExpiration } from '@/lib/cache.ts';
@@ -48,7 +46,7 @@ const f7params = ref<Framework7Parameters>({
     name: 'Folio',
     theme: 'ios',
     colors: {
-        primary: getThemeColorScheme(settingsStore.appSettings.themeColorScheme).primary
+        primary: '#c67e48'
     },
     routes: routes,
     darkMode: (() => {
@@ -229,7 +227,6 @@ let localeDefaultSettings = initLocale(userStore.currentUserLanguage, settingsSt
 settingsStore.updateLocalizedDefaultSettings(localeDefaultSettings);
 
 setExpenseAndIncomeAmountColor(userStore.currentUserExpenseAmountColor, userStore.currentUserIncomeAmountColor);
-applyThemeColorSchemeCssVariables(settingsStore.appSettings.themeColorScheme);
 
 if (isUserLogined()) {
     if (!settingsStore.appSettings.applicationLock || isUserUnlocked()) {

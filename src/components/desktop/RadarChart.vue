@@ -17,7 +17,6 @@ import { itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
 import type { ColorValue, ColorStyleValue } from '@/core/color.ts';
 import { ThemeType } from '@/core/theme.ts';
-import { getThemeColorScheme, getThemeColorSchemeChartBaseColor } from '@/core/theme_color_scheme.ts';
 import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
 
 import { BIG_DECIMAL_ZERO, isBigDecimal } from '@/lib/numeral.ts';
@@ -104,7 +103,7 @@ const radarData = computed<RadarChartData>(() => {
             }
 
             let totalValidValue: BigDecimal = BIG_DECIMAL_ZERO;
-            const color = props.hideLegend ? getDisplayColor(getThemeColorScheme(settingsStore.appSettings.themeColorScheme).primary) : getDisplayColor(props.useCustomColor && item.color ? item.color : chartColors.value[allSeries.length % chartColors.value.length]);
+            const color = props.hideLegend ? '#c07d43' : getDisplayColor(props.useCustomColor && item.color ? item.color : chartColors.value[allSeries.length % chartColors.value.length]);
             let tooltip = props.hideLegend ? '' : `<div><span class="chart-pointer" style="background-color: ${color}"></span><span>${item.name}</span></div>`;
 
             for (const value of item.values) {
@@ -198,11 +197,7 @@ const chartOptions = computed<object>(() => {
             },
             splitArea: {
                 areaStyle: {
-                    color: (!props.skeleton && radarData.value.allSeries.length)
-                        ? (isDarkMode.value
-                            ? ['#363534', getThemeColorScheme(settingsStore.appSettings.themeColorScheme).dark.surface]
-                            : [getThemeColorSchemeChartBaseColor(settingsStore.appSettings.themeColorScheme, false), getThemeColorScheme(settingsStore.appSettings.themeColorScheme).light.surface])
-                        : ['#d3d3d3', '#d3d3d3']
+                    color: (!props.skeleton && radarData.value.allSeries.length) ? (isDarkMode.value ? ['#363534', '#1a1a1a'] : ['#faf8f4', '#fff']) : ['#d3d3d3', '#d3d3d3']
                 }
             },
             indicator: radarData.value.indicators
@@ -223,7 +218,7 @@ const chartOptions = computed<object>(() => {
                         color: item.color,
                         opacity: isDarkMode.value ? 0.5 : 0.2
                     } : {
-                        color: getThemeColorScheme(settingsStore.appSettings.themeColorScheme).primary + (isDarkMode.value ? '80' : '40')
+                        color: isDarkMode.value ? '#c07d4380' : '#c07d4340'
                     }
                 })),
                 top: 0,

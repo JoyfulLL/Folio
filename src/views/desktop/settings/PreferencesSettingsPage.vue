@@ -21,22 +21,6 @@
                         </div>
 
                         <div class="setting-item">
-                            <span>{{ tt('Theme Color') }}</span>
-                            <v-spacer/>
-                            <v-select
-                                class="ms-4"
-                                density="compact"
-                                item-title="name"
-                                item-value="value"
-                                persistent-placeholder
-                                max-width="400px"
-                                :placeholder="tt('Theme Color')"
-                                :items="allThemeColorSchemes"
-                                v-model="currentThemeColorScheme"
-                            />
-                        </div>
-
-                        <div class="setting-item">
                             <span>{{ tt('Timezone') }}</span>
                             <v-spacer/>
                             <v-autocomplete
@@ -502,7 +486,6 @@ import { DEFAULT_PAGE_COUNTS } from '@/consts/page.ts';
 
 import { isDefaultDesktopOverviewLayout, parseDesktopOverviewLayout } from '@/lib/overview_layout.ts';
 import { getSystemTheme } from '@/lib/ui/common.ts';
-import { applyVuetifyThemeColorScheme } from '@/lib/ui/theme_color_scheme.ts';
 
 type SnackBarType = InstanceType<typeof SnackBar>;
 type ChartColorSchemeDialogType = InstanceType<typeof ChartColorSchemeDialog>;
@@ -517,7 +500,6 @@ const {
     loadingTransactionCategories,
     loadingTags,
     allThemes,
-    allThemeColorSchemes,
     allTimezones,
     allTimezoneTypesUsedForStatistics,
     allCurrencySortingTypes,
@@ -582,16 +564,6 @@ const currentTheme = computed<string>({
             } else {
                 theme.change(getSystemTheme());
             }
-        }
-    }
-});
-
-const currentThemeColorScheme = computed<string>({
-    get: () => settingsStore.appSettings.themeColorScheme,
-    set: (value: string) => {
-        if (value !== settingsStore.appSettings.themeColorScheme) {
-            settingsStore.setThemeColorScheme(value);
-            applyVuetifyThemeColorScheme(theme, value);
         }
     }
 });
