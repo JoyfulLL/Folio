@@ -1575,9 +1575,15 @@
     "pageSpecific": {
         "accountListPage": {
             "outstandingBalance": "未清餘額",
-            "availableBalance": "可用額度"
+            "availableBalance": "可用額度",
+            "markAsRepaid": "標記為已還款",
+            "repaid": "已還款"
         }
     },
+    "Credit card bill has been marked as repaid": "帳單已標記為還款",
+    "Credit card repayment mark has been undone": "已撤銷還款標記",
+    "Unable to mark credit card repayment as paid": "無法標記為已還款",
+    "Unable to undo credit card repayment mark": "無法撤銷還款標記",
     "OK": "確定",
     "Cancel": "取消",
     "Operation": "操作",

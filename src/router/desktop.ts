@@ -3,6 +3,11 @@ import { type NavigationGuardReturn, createRouter, createWebHashHistory } from '
 import { TemplateType } from '@/core/template.ts';
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
 
+/**
+ * First-paint critical pages stay as static imports so the initial route does not need
+ * an extra network round-trip. Everything else is loaded on demand to keep the entry
+ * bundle small and shorten the window before the app shell can render.
+ */
 import LoginPage from '@/views/desktop/LoginPage.vue';
 import SignUpPage from '@/views/desktop/SignupPage.vue';
 import VerifyEmailPage from '@/views/desktop/VerifyEmailPage.vue';
@@ -13,39 +18,28 @@ import UnlockPage from '@/views/desktop/UnlockPage.vue';
 
 import HomePage from '@/views/desktop/HomePage.vue';
 
-import TransactionListPage from '@/views/desktop/transactions/ListPage.vue';
-
-import StatisticsTransactionPage from '@/views/desktop/statistics/TransactionPage.vue';
-
-import InsightsExplorerPage from '@/views/desktop/insights/ExplorerPage.vue';
-
-import AccountListPage from '@/views/desktop/accounts/ListPage.vue';
-
-import TransactionCategoryListPage from '@/views/desktop/categories/ListPage.vue';
-
-import TransactionTagListPage from '@/views/desktop/tags/ListPage.vue';
-
-import TransactionTemplateListPage from '@/views/desktop/templates/ListPage.vue';
-
-import UserCustomIconListPage from '@/views/desktop/customicons/ListPage.vue';
-
-import ImportPresetsListPage from '@/views/desktop/presets/ImportPresetsListPage.vue';
-
-import OverviewLayoutEditorPage from '@/views/desktop/overview/LayoutEditorPage.vue';
-
-import SettingsPageLayout from '@/views/desktop/settings/SettingsPageLayout.vue';
-import UserBasicSettingPage from '@/views/desktop/users/UserBasicSettingPage.vue';
-import UserSecuritySettingPage from '@/views/desktop/users/UserSecuritySettingPage.vue';
-import TwoFactorAuthPage from '@/views/desktop/users/TwoFactorAuthPage.vue';
-import DataManagementPage from '@/views/desktop/users/DataManagementPage.vue';
-import PreferencesSettingsPage from '@/views/desktop/settings/PreferencesSettingsPage.vue';
-import ApplicationLockPage from '@/views/desktop/settings/ApplicationLockPage.vue';
-import StatisticsSettingPage from '@/views/desktop/settings/StatisticsSettingPage.vue';
-import ApplicationCloudSyncSettingsPage from '@/views/desktop/settings/ApplicationCloudSyncSettingsPage.vue';
-import BrowserCacheSettingPage from '@/views/desktop/settings/BrowserCacheSettingPage.vue';
-import DeveloperToolsPage from '@/views/desktop/settings/DeveloperToolsPage.vue';
-
-import ExchangeRatesListPage from '@/views/desktop/exchangerates/ListPage.vue';
+const TransactionListPage = () => import('@/views/desktop/transactions/ListPage.vue');
+const StatisticsTransactionPage = () => import('@/views/desktop/statistics/TransactionPage.vue');
+const InsightsExplorerPage = () => import('@/views/desktop/insights/ExplorerPage.vue');
+const AccountListPage = () => import('@/views/desktop/accounts/ListPage.vue');
+const TransactionCategoryListPage = () => import('@/views/desktop/categories/ListPage.vue');
+const TransactionTagListPage = () => import('@/views/desktop/tags/ListPage.vue');
+const TransactionTemplateListPage = () => import('@/views/desktop/templates/ListPage.vue');
+const UserCustomIconListPage = () => import('@/views/desktop/customicons/ListPage.vue');
+const ImportPresetsListPage = () => import('@/views/desktop/presets/ImportPresetsListPage.vue');
+const OverviewLayoutEditorPage = () => import('@/views/desktop/overview/LayoutEditorPage.vue');
+const SettingsPageLayout = () => import('@/views/desktop/settings/SettingsPageLayout.vue');
+const UserBasicSettingPage = () => import('@/views/desktop/users/UserBasicSettingPage.vue');
+const UserSecuritySettingPage = () => import('@/views/desktop/users/UserSecuritySettingPage.vue');
+const TwoFactorAuthPage = () => import('@/views/desktop/users/TwoFactorAuthPage.vue');
+const DataManagementPage = () => import('@/views/desktop/users/DataManagementPage.vue');
+const PreferencesSettingsPage = () => import('@/views/desktop/settings/PreferencesSettingsPage.vue');
+const ApplicationLockPage = () => import('@/views/desktop/settings/ApplicationLockPage.vue');
+const StatisticsSettingPage = () => import('@/views/desktop/settings/StatisticsSettingPage.vue');
+const ApplicationCloudSyncSettingsPage = () => import('@/views/desktop/settings/ApplicationCloudSyncSettingsPage.vue');
+const BrowserCacheSettingPage = () => import('@/views/desktop/settings/BrowserCacheSettingPage.vue');
+const DeveloperToolsPage = () => import('@/views/desktop/settings/DeveloperToolsPage.vue');
+const ExchangeRatesListPage = () => import('@/views/desktop/exchangerates/ListPage.vue');
 
 function checkLogin(): NavigationGuardReturn {
     if (!isUserLogined()) {

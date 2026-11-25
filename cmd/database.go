@@ -197,6 +197,14 @@ func updateAllDatabaseTablesStructure(c *core.CliContext) error {
 
 	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] credit card notification log table maintained successfully")
 
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.CreditCardRepaymentStatus))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] credit card repayment status table maintained successfully")
+
 	err = datastore.Container.UserDataStore.SyncStructs(new(models.DailyReportLog))
 
 	if err != nil {

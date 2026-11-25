@@ -295,6 +295,7 @@ type AccountInfoResponse struct {
 	CreditCardNotificationTimezoneUtcOffset   *int16                   `json:"creditCardNotificationTimezoneUtcOffset,omitempty"`
 	CreditCardIsEntityCard                    *bool                    `json:"creditCardIsEntityCard,omitempty"`
 	CreditCardCurrencyLimit                   *string                  `json:"creditCardCurrencyLimit,omitempty"`
+	CreditCardRepaymentStatus                 *RepaymentStatusInfo     `json:"creditCardRepaymentStatus,omitempty"`
 	DisplayOrder                              int32                    `json:"displayOrder"`
 	IsAsset                                   bool                     `json:"isAsset,omitempty"`
 	IsLiability                               bool                     `json:"isLiability,omitempty"`

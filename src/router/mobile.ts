@@ -2,60 +2,75 @@ import type { Router } from 'framework7/types';
 
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
 
-import HomePage from '@/views/mobile/HomePage.vue';
-import LoginPage from '@/views/mobile/LoginPage.vue';
-import SignUpPage from '@/views/mobile/SignupPage.vue';
-import UnlockPage from '@/views/mobile/UnlockPage.vue';
+/**
+ * First-paint critical pages stay as static imports (wrapped in a resolved loader) so the
+ * initial route needs no extra network round-trip. Every other page is loaded on demand,
+ * which keeps the mobile entry bundle small and shortens the pre-render window.
+ */
+import HomeComponent from '@/views/mobile/HomePage.vue';
+import LoginComponent from '@/views/mobile/LoginPage.vue';
+import SignUpComponent from '@/views/mobile/SignupPage.vue';
+import UnlockComponent from '@/views/mobile/UnlockPage.vue';
 
-import TransactionListPage from '@/views/mobile/transactions/ListPage.vue';
-import TransactionEditPage from '@/views/mobile/transactions/EditPage.vue';
-import TransactionAmountFilterPage from '@/views/mobile/transactions/AmountFilterPage.vue';
+const HomePage = () => Promise.resolve(HomeComponent);
+const LoginPage = () => Promise.resolve(LoginComponent);
+const SignUpPage = () => Promise.resolve(SignUpComponent);
+const UnlockPage = () => Promise.resolve(UnlockComponent);
 
-import AccountListPage from '@/views/mobile/accounts/ListPage.vue';
-import AccountEditPage from '@/views/mobile/accounts/EditPage.vue';
-import AccountReconciliationStatementPage from '@/views/mobile/accounts/ReconciliationStatementPage.vue';
-import AccountMoveAllTransactionsPage from '@/views/mobile/accounts/MoveAllTransactionsPage.vue';
-import AccountReshapeAccountsPage from '@/views/mobile/accounts/ReshapeAccountsPage.vue';
+const TransactionListPage = () => import('@/views/mobile/transactions/ListPage.vue').then(m => m.default);
+const TransactionEditPage = () => import('@/views/mobile/transactions/EditPage.vue').then(m => m.default);
+const TransactionAmountFilterPage = () => import('@/views/mobile/transactions/AmountFilterPage.vue').then(m => m.default);
 
-import StatisticsTransactionPage from '@/views/mobile/statistics/TransactionPage.vue';
-import StatisticsSettingsPage from '@/views/mobile/statistics/SettingsPage.vue';
+const AccountListPage = () => import('@/views/mobile/accounts/ListPage.vue').then(m => m.default);
+const AccountEditPage = () => import('@/views/mobile/accounts/EditPage.vue').then(m => m.default);
+const AccountReconciliationStatementPage = () => import('@/views/mobile/accounts/ReconciliationStatementPage.vue').then(m => m.default);
+const AccountMoveAllTransactionsPage = () => import('@/views/mobile/accounts/MoveAllTransactionsPage.vue').then(m => m.default);
+const AccountReshapeAccountsPage = () => import('@/views/mobile/accounts/ReshapeAccountsPage.vue').then(m => m.default);
 
-import TextSizeSettingsPage from '@/views/mobile/settings/TextSizeSettingsPage.vue';
-import PreferencesSettingsPage from '@/views/mobile/settings/PreferencesSettingsPage.vue';
-import OverviewLayoutEditorPage from '@/views/mobile/overview/LayoutEditorPage.vue';
-import ChartColorSchemeSettingsPage from '@/views/mobile/settings/ChartColorSchemeSettingsPage.vue';
-import AccountCategoryDisplayOrderSettingsPage from '@/views/mobile/settings/AccountCategoryDisplayOrderSettingsPage.vue';
-import ApplicationCloudSyncSettingsPage from '@/views/mobile/settings/ApplicationCloudSyncSettingsPage.vue';
-import BrowserCacheSettingPage from '@/views/mobile/settings/BrowserCacheSettingPage.vue';
-import AccountFilterSettingsPage from '@/views/mobile/settings/AccountFilterSettingsPage.vue';
-import CategoryFilterSettingsPage from '@/views/mobile/settings/CategoryFilterSettingsPage.vue';
-import TransactionTagFilterSettingsPage from '@/views/mobile/settings/TransactionTagFilterSettingsPage.vue';
+const StatisticsTransactionPage = () => import('@/views/mobile/statistics/TransactionPage.vue').then(m => m.default);
+const StatisticsSettingsPage = () => import('@/views/mobile/statistics/SettingsPage.vue').then(m => m.default);
 
-import SettingsPage from '@/views/mobile/SettingsPage.vue';
-import ApplicationLockPage from '@/views/mobile/ApplicationLockPage.vue';
-import ExchangeRatesListPage from '@/views/mobile/exchangerates/ListPage.vue';
-import ExchangeRatesUpdatePage from '@/views/mobile/exchangerates/UpdatePage.vue';
-import AboutPage from '@/views/mobile/AboutPage.vue';
+const TextSizeSettingsPage = () => import('@/views/mobile/settings/TextSizeSettingsPage.vue').then(m => m.default);
+const PreferencesSettingsPage = () => import('@/views/mobile/settings/PreferencesSettingsPage.vue').then(m => m.default);
+const OverviewLayoutEditorPage = () => import('@/views/mobile/overview/LayoutEditorPage.vue').then(m => m.default);
+const ChartColorSchemeSettingsPage = () => import('@/views/mobile/settings/ChartColorSchemeSettingsPage.vue').then(m => m.default);
+const AccountCategoryDisplayOrderSettingsPage = () => import('@/views/mobile/settings/AccountCategoryDisplayOrderSettingsPage.vue').then(m => m.default);
+const ApplicationCloudSyncSettingsPage = () => import('@/views/mobile/settings/ApplicationCloudSyncSettingsPage.vue').then(m => m.default);
+const BrowserCacheSettingPage = () => import('@/views/mobile/settings/BrowserCacheSettingPage.vue').then(m => m.default);
+const AccountFilterSettingsPage = () => import('@/views/mobile/settings/AccountFilterSettingsPage.vue').then(m => m.default);
+const CategoryFilterSettingsPage = () => import('@/views/mobile/settings/CategoryFilterSettingsPage.vue').then(m => m.default);
+const TransactionTagFilterSettingsPage = () => import('@/views/mobile/settings/TransactionTagFilterSettingsPage.vue').then(m => m.default);
 
-import UserProfilePage from '@/views/mobile/users/UserProfilePage.vue';
-import DataManagementPage from '@/views/mobile/users/DataManagementPage.vue';
-import TwoFactorAuthPage from '@/views/mobile/users/TwoFactorAuthPage.vue';
-import SessionListPage from '@/views/mobile/users/SessionListPage.vue';
+const SettingsPage = () => import('@/views/mobile/SettingsPage.vue').then(m => m.default);
+const ApplicationLockPage = () => import('@/views/mobile/ApplicationLockPage.vue').then(m => m.default);
+const ExchangeRatesListPage = () => import('@/views/mobile/exchangerates/ListPage.vue').then(m => m.default);
+const ExchangeRatesUpdatePage = () => import('@/views/mobile/exchangerates/UpdatePage.vue').then(m => m.default);
+const AboutPage = () => import('@/views/mobile/AboutPage.vue').then(m => m.default);
 
-import CategoryAllPage from '@/views/mobile/categories/AllPage.vue';
-import CategoryListPage from '@/views/mobile/categories/ListPage.vue';
-import CategoryEditPage from '@/views/mobile/categories/EditPage.vue';
-import CategoryPresetPage from '@/views/mobile/categories/PresetPage.vue';
+const UserProfilePage = () => import('@/views/mobile/users/UserProfilePage.vue').then(m => m.default);
+const DataManagementPage = () => import('@/views/mobile/users/DataManagementPage.vue').then(m => m.default);
+const TwoFactorAuthPage = () => import('@/views/mobile/users/TwoFactorAuthPage.vue').then(m => m.default);
+const SessionListPage = () => import('@/views/mobile/users/SessionListPage.vue').then(m => m.default);
 
-import TagListPage from '@/views/mobile/tags/ListPage.vue';
-import TagGroupListPage from '@/views/mobile/tags/GroupListPage.vue';
+const CategoryAllPage = () => import('@/views/mobile/categories/AllPage.vue').then(m => m.default);
+const CategoryListPage = () => import('@/views/mobile/categories/ListPage.vue').then(m => m.default);
+const CategoryEditPage = () => import('@/views/mobile/categories/EditPage.vue').then(m => m.default);
+const CategoryPresetPage = () => import('@/views/mobile/categories/PresetPage.vue').then(m => m.default);
 
-import TemplateListPage from '@/views/mobile/templates/ListPage.vue';
+const TagListPage = () => import('@/views/mobile/tags/ListPage.vue').then(m => m.default);
+const TagGroupListPage = () => import('@/views/mobile/tags/GroupListPage.vue').then(m => m.default);
 
-function asyncResolve(component: unknown): (ctx: Router.RouteCallbackCtx) => void {
-    return function({ resolve }: { resolve: ({ component }: { component: unknown }) => void }): void {
-        return resolve({
-            component: component
+const TemplateListPage = () => import('@/views/mobile/templates/ListPage.vue').then(m => m.default);
+
+type PageLoader = () => Promise<unknown>;
+
+function asyncResolve(loader: PageLoader): (ctx: Router.RouteCallbackCtx) => void {
+    return function({ resolve, reject }: { resolve: ({ component }: { component: unknown }) => void, reject: () => void }): void {
+        loader().then(component => {
+            resolve({ component: component });
+        }).catch(error => {
+            console.error('failed to load page component', error);
+            reject();
         });
     } as unknown as (ctx: Router.RouteCallbackCtx) => void;
 }

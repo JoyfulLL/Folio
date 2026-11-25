@@ -64,7 +64,38 @@
     <noscript>
         <strong>We're sorry but Folio doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
-    <div id="app"></div>
+    <style>
+        .folio-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#faf8f4;color:#4a453f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+        .folio-boot-logo{width:56px;height:56px;border-radius:14px}
+        .folio-boot-spinner{width:32px;height:32px;border:3px solid rgba(239,118,36,.2);border-top-color:#ef7624;border-radius:50%;animation:folio-boot-spin .8s linear infinite}
+        @keyframes folio-boot-spin{to{transform:rotate(360deg)}}
+        .folio-boot-name{font-size:18px;font-weight:600;letter-spacing:.5px}
+        .folio-boot-hint{font-size:13px;opacity:.55}
+        .folio-boot.is-lite{display:block;background:#faf8f4;pointer-events:none}
+        .folio-boot.is-lite .folio-boot-logo,.folio-boot.is-lite .folio-boot-spinner,.folio-boot.is-lite .folio-boot-name,.folio-boot.is-lite .folio-boot-hint{display:none}
+        .folio-boot.is-lite::after{content:'';position:absolute;top:0;left:0;width:30%;height:2px;background:#ef7624;animation:folio-boot-bar 1.2s ease-in-out infinite}
+        @keyframes folio-boot-bar{0%{transform:translateX(-100%)}100%{transform:translateX(333%)}}
+    </style>
+    <div id="app">
+        <div class="folio-boot" id="folio-boot">
+            <img class="folio-boot-logo" src="img/folio-192.png" alt="Folio">
+            <div class="folio-boot-spinner"></div>
+            <div class="folio-boot-name">Folio</div>
+            <div class="folio-boot-hint">Loading…</div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var boot = document.getElementById('folio-boot');
+            var seen = false;
+            try { seen = sessionStorage.getItem('folio_boot_seen') === '1'; } catch (e) {}
+            if (seen) {
+                if (boot) { boot.className = 'folio-boot is-lite'; }
+            } else {
+                try { sessionStorage.setItem('folio_boot_seen', '1'); } catch (e) {}
+            }
+        })();
+    </script>
 
     <script type="module" src="./desktop-main.ts"></script>
 </body>

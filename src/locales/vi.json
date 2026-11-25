@@ -1575,9 +1575,15 @@
     "pageSpecific": {
         "accountListPage": {
             "outstandingBalance": "Outstanding",
-            "availableBalance": "Available"
+            "availableBalance": "Available",
+            "markAsRepaid": "Mark as Repaid",
+            "repaid": "Repaid"
         }
     },
+    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
+    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
+    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
+    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
     "OK": "OK",
     "Cancel": "Hủy",
     "Operation": "Thao tác",
