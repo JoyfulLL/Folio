@@ -43,6 +43,10 @@ import type {
     AccountReshapeRequest
 } from '@/models/account.ts';
 import type {
+    CreditCardRepaymentStatusRequest,
+    CreditCardRepaymentStatusResponse
+} from '@/models/credit_card_repayment_status.ts';
+import type {
     AuthResponse,
     RegisterResponse
 } from '@/models/auth_response.ts';
@@ -557,6 +561,15 @@ export default {
     },
     updateAccountLastReconciledTime: (req: AccountUpdateLastReconciledTimeRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/accounts/update/last_reconciled_time.json', req);
+    },
+    getCreditCardRepaymentStatus: ({ id, scheduledDate }: CreditCardRepaymentStatusRequest): ApiResponsePromise<CreditCardRepaymentStatusResponse> => {
+        return axios.get<ApiResponse<CreditCardRepaymentStatusResponse>>(`v1/accounts/credit_card_repayment_status.json?id=${id}&scheduledDate=${scheduledDate ?? ''}`);
+    },
+    markCreditCardRepaymentPaid: (req: CreditCardRepaymentStatusRequest): ApiResponsePromise<CreditCardRepaymentStatusResponse> => {
+        return axios.post<ApiResponse<CreditCardRepaymentStatusResponse>>('v1/accounts/credit_card_repayment/paid.json', req);
+    },
+    unmarkCreditCardRepaymentPaid: (req: CreditCardRepaymentStatusRequest): ApiResponsePromise<CreditCardRepaymentStatusResponse> => {
+        return axios.post<ApiResponse<CreditCardRepaymentStatusResponse>>('v1/accounts/credit_card_repayment/unpaid.json', req);
     },
     hideAccount: (req: AccountHideRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/accounts/hide.json', req);

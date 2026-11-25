@@ -5,6 +5,7 @@ import { AccountType, AccountCategory } from '@/core/account.ts';
 import { ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currency.ts';
 import { DEFAULT_ACCOUNT_COLOR } from '@/consts/color.ts';
 import { AMOUNT_FACTOR } from '@/consts/numeral.ts';
+import type { CreditCardRepaymentStatusResponse } from '@/models/credit_card_repayment_status.ts';
 
 export class Account implements AccountInfoResponse {
     public id: string;
@@ -1015,6 +1016,7 @@ export interface AccountInfoResponse {
     readonly creditCardNotificationTimezoneUtcOffset?: number;
     readonly creditCardIsEntityCard?: boolean;
     readonly creditCardCurrencyLimit?: string;
+    readonly creditCardRepaymentStatus?: CreditCardRepaymentStatusResponse;
     readonly displayOrder: number;
     readonly isAsset?: boolean;
     readonly isLiability?: boolean;

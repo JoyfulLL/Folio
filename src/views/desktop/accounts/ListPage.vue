@@ -175,6 +175,10 @@
                                                         <small class="account-currency text-truncate ms-2">
                                                             {{ accountCurrency(element) }}
                                                         </small>
+                                                        <small class="account-repayment-status text-truncate ms-2"
+                                                               v-if="getCreditCardRepaymentStatus(element.getAccountOrSubAccount(activeSubAccount[element.id]))?.paid">
+                                                            {{ tt('pageSpecific.accountListPage.repaid') }}
+                                                        </small>
                                                         <v-spacer/>
                                                         <span class="align-self-center">
                                                             <v-icon :class="!loading && activeAccountCategoryVisibleAccountCount > 1 ? 'drag-handle' : 'disabled'"
@@ -242,6 +246,13 @@
                                                                     </template>
                                                                 </v-list>
                                                             </v-menu>
+                                                        </v-btn>
+                                                        <v-btn class="ms-1" density="comfortable" color="default" variant="text"
+                                                               :disabled="loading"
+                                                               :prepend-icon="isCreditCardRepaymentManuallyPaid(element.getAccountOrSubAccount(activeSubAccount[element.id])) ? mdiUndo : mdiCheckCircleOutline"
+                                                               v-if="canMarkCreditCardRepayment(element.getAccountOrSubAccount(activeSubAccount[element.id])) && !getCreditCardRepaymentStatus(element.getAccountOrSubAccount(activeSubAccount[element.id]))?.paid || isCreditCardRepaymentManuallyPaid(element.getAccountOrSubAccount(activeSubAccount[element.id]))"
+                                                               @click="toggleCreditCardRepayment(element.getAccountOrSubAccount(activeSubAccount[element.id]))">
+                                                            {{ isCreditCardRepaymentManuallyPaid(element.getAccountOrSubAccount(activeSubAccount[element.id])) ? tt('Undo') : tt('pageSpecific.accountListPage.markAsRepaid') }}
                                                         </v-btn>
                                                         <v-btn class="ms-1" density="comfortable" color="default" variant="text"
                                                                :class="{ 'd-none': loading, 'hover-display': !loading }"
@@ -375,6 +386,7 @@ import { DateRange, DateRangeScene, type LocalizedDateRange, type TimeRangeAndDa
 import { AccountType, AccountCategory } from '@/core/account.ts';
 import { DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_DESKTOP } from '@/core/statistics.ts';
 import type { Account } from '@/models/account.ts';
+import { CreditCardRepaymentStatusSource, type CreditCardRepaymentStatusResponse } from '@/models/credit_card_repayment_status.ts';
 
 import { isNumber } from '@/lib/common.ts';
 import {
@@ -401,7 +413,9 @@ import {
     mdiDrag,
     mdiDotsVertical,
     mdiFolderPlusOutline,
-    mdiCallSplit
+    mdiCallSplit,
+    mdiCheckCircleOutline,
+    mdiUndo
 } from '@mdi/js';
 
 type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
@@ -646,6 +660,54 @@ function updateLastReconciledTime(account: Account): void {
                 snackbar.value?.showError(error);
             }
         });
+    });
+}
+
+function canMarkCreditCardRepayment(account: Account | null | undefined): boolean {
+    if (!account || account.category !== AccountCategory.CreditCard.type || account.creditCardIsEntityCard === false) {
+        return false;
+    }
+
+    return !!account.creditCardRepaymentReminderEnabled;
+}
+
+function getCreditCardRepaymentStatus(account: Account | null | undefined): CreditCardRepaymentStatusResponse | undefined {
+    if (!account) {
+        return undefined;
+    }
+
+    return accountsStore.creditCardRepaymentStatusMap[account.id];
+}
+
+function isCreditCardRepaymentManuallyPaid(account: Account | null | undefined): boolean {
+    const status = getCreditCardRepaymentStatus(account);
+
+    return !!status && status.paid && status.source === CreditCardRepaymentStatusSource.Manual;
+}
+
+function toggleCreditCardRepayment(account: Account): void {
+    const status = getCreditCardRepaymentStatus(account);
+    const isManual = isCreditCardRepaymentManuallyPaid(account);
+    const request = {
+        id: account.id,
+        scheduledDate: status?.scheduledDate
+    };
+
+    loading.value = true;
+
+    const promise = isManual
+        ? accountsStore.unmarkCreditCardRepaymentPaid(request)
+        : accountsStore.markCreditCardRepaymentPaid(request);
+
+    promise.then(() => {
+        loading.value = false;
+        snackbar.value?.showMessage(isManual ? 'Credit card repayment mark has been undone' : 'Credit card bill has been marked as repaid');
+    }).catch(error => {
+        loading.value = false;
+
+        if (error) {
+            snackbar.value?.showError(error);
+        }
     });
 }
 

@@ -19,9 +19,10 @@ import (
 type AccountsApi struct {
 	ApiUsingConfig
 	ApiUsingDuplicateChecker
-	accounts *services.AccountService
-	users    *services.UserService
-	icons    *services.UserCustomIconService
+	accounts                *services.AccountService
+	users                   *services.UserService
+	icons                   *services.UserCustomIconService
+	creditCardNotifications *services.CreditCardNotificationService
 }
 
 // Initialize an account api singleton instance
@@ -36,9 +37,10 @@ var (
 			},
 			duplicateChecker: duplicatechecker.Container,
 		},
-		accounts: services.Accounts,
-		users:    services.Users,
-		icons:    services.UserCustomIcons,
+		accounts:                services.Accounts,
+		users:                   services.Users,
+		icons:                   services.UserCustomIcons,
+		creditCardNotifications: services.CreditCardNotifications,
 	}
 )
 
@@ -98,6 +100,7 @@ func (a *AccountsApi) AccountListHandler(c *core.WebContext) (any, *errs.Error) 
 	}
 
 	sort.Sort(userFinalAccountResps)
+	a.fillCreditCardRepaymentStatuses(c, accounts, userFinalAccountResps)
 
 	return userFinalAccountResps, nil
 }
@@ -141,8 +144,191 @@ func (a *AccountsApi) AccountGetHandler(c *core.WebContext) (any, *errs.Error) {
 	}
 
 	sort.Sort(accountResp.SubAccounts)
+	a.fillCreditCardRepaymentStatuses(c, accountAndSubAccounts, models.AccountInfoResponseSlice{accountResp})
 
 	return accountResp, nil
+}
+
+func (a *AccountsApi) fillCreditCardRepaymentStatuses(c *core.WebContext, accounts []*models.Account, responses models.AccountInfoResponseSlice) {
+	if len(accounts) < 1 || len(responses) < 1 {
+		return
+	}
+
+	accountMap := make(map[int64]*models.Account, len(accounts))
+
+	for i := 0; i < len(accounts); i++ {
+		accountMap[accounts[i].AccountId] = accounts[i]
+	}
+
+	currentUnixTime := time.Now().Unix()
+
+	var fillResponses func(models.AccountInfoResponseSlice)
+	fillResponses = func(items models.AccountInfoResponseSlice) {
+		for i := 0; i < len(items); i++ {
+			response := items[i]
+			account := accountMap[response.Id]
+
+			if account != nil && account.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD &&
+				response.CreditCardRepaymentReminderEnabled != nil && *response.CreditCardRepaymentReminderEnabled {
+				status, err := a.creditCardNotifications.GetCurrentCreditCardRepaymentStatus(c, account, currentUnixTime)
+
+				if err == nil {
+					response.CreditCardRepaymentStatus = status
+				}
+			}
+
+			fillResponses(response.SubAccounts)
+		}
+	}
+
+	fillResponses(responses)
+}
+
+// CreditCardRepaymentStatusHandler returns the repayment status of the current or a given credit
+// card billing cycle for the current user
+func (a *AccountsApi) CreditCardRepaymentStatusHandler(c *core.WebContext) (any, *errs.Error) {
+	var request models.CreditCardRepaymentStatusGetRequest
+	err := c.ShouldBindQuery(&request)
+
+	if err != nil {
+		log.Warnf(c, "[accounts.CreditCardRepaymentStatusHandler] parse request failed, because %s", err.Error())
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+
+	uid := c.GetCurrentUid()
+	account, scheduledDate, apiError := a.getCreditCardRepaymentAccount(c, uid, request.Id, request.ScheduledDate)
+
+	if apiError != nil {
+		return nil, apiError
+	}
+
+	if scheduledDate > 0 {
+		status, err := a.creditCardNotifications.GetCreditCardRepaymentStatus(c, account, scheduledDate)
+
+		if err != nil {
+			log.Errorf(c, "[accounts.CreditCardRepaymentStatusHandler] failed to get repayment status for account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, uid, err.Error())
+			return nil, errs.ErrOperationFailed
+		}
+
+		if status == nil {
+			return nil, errs.ErrCreditCardRepaymentDateInvalid
+		}
+
+		return status, nil
+	}
+
+	status, err := a.creditCardNotifications.GetCurrentCreditCardRepaymentStatus(c, account, time.Now().Unix())
+
+	if err != nil {
+		log.Errorf(c, "[accounts.CreditCardRepaymentStatusHandler] failed to get current repayment status for account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
+	if status == nil {
+		return nil, errs.ErrCreditCardRepaymentDateInvalid
+	}
+
+	return status, nil
+}
+
+// CreditCardRepaymentPaidHandler marks a credit card billing cycle as manually repaid
+func (a *AccountsApi) CreditCardRepaymentPaidHandler(c *core.WebContext) (any, *errs.Error) {
+	var request models.CreditCardRepaymentStatusRequest
+	err := c.ShouldBindJSON(&request)
+
+	if err != nil {
+		log.Warnf(c, "[accounts.CreditCardRepaymentPaidHandler] parse request failed, because %s", err.Error())
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+
+	uid := c.GetCurrentUid()
+	account, scheduledDate, apiError := a.getCreditCardRepaymentAccount(c, uid, request.Id, request.ScheduledDate)
+
+	if apiError != nil {
+		return nil, apiError
+	}
+
+	status, err := a.creditCardNotifications.MarkCreditCardRepaymentPaid(c, account, scheduledDate, models.CREDIT_CARD_REPAYMENT_STATUS_SOURCE_MANUAL, time.Now().Unix())
+
+	if err != nil {
+		log.Errorf(c, "[accounts.CreditCardRepaymentPaidHandler] failed to mark repayment for account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
+	if status == nil {
+		return nil, errs.ErrCreditCardRepaymentDateInvalid
+	}
+
+	return status, nil
+}
+
+// CreditCardRepaymentUnpaidHandler removes a manual repayment mark from a credit card billing cycle
+func (a *AccountsApi) CreditCardRepaymentUnpaidHandler(c *core.WebContext) (any, *errs.Error) {
+	var request models.CreditCardRepaymentStatusRequest
+	err := c.ShouldBindJSON(&request)
+
+	if err != nil {
+		log.Warnf(c, "[accounts.CreditCardRepaymentUnpaidHandler] parse request failed, because %s", err.Error())
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+
+	uid := c.GetCurrentUid()
+	account, scheduledDate, apiError := a.getCreditCardRepaymentAccount(c, uid, request.Id, request.ScheduledDate)
+
+	if apiError != nil {
+		return nil, apiError
+	}
+
+	status, err := a.creditCardNotifications.UnmarkCreditCardRepaymentPaid(c, account, scheduledDate, time.Now().Unix())
+
+	if err != nil {
+		log.Errorf(c, "[accounts.CreditCardRepaymentUnpaidHandler] failed to unmark repayment for account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
+	if status == nil {
+		return nil, errs.ErrCreditCardRepaymentDateInvalid
+	}
+
+	return status, nil
+}
+
+func (a *AccountsApi) getCreditCardRepaymentAccount(c *core.WebContext, uid int64, accountId int64, scheduledDate int32) (*models.Account, int32, *errs.Error) {
+	account, err := a.accounts.GetAccountByAccountId(c, uid, accountId)
+
+	if err != nil {
+		log.Errorf(c, "[accounts.getCreditCardRepaymentAccount] failed to get account \"id:%d\" for user \"uid:%d\", because %s", accountId, uid, err.Error())
+		return nil, 0, errs.Or(err, errs.ErrAccountNotFound)
+	}
+
+	if account.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD || account.Extend == nil {
+		return nil, 0, errs.ErrCreditCardRepaymentReminderNotEnabled
+	}
+
+	if account.Extend.CreditCardIsEntityCard != nil && !*account.Extend.CreditCardIsEntityCard {
+		return nil, 0, errs.ErrCreditCardRepaymentReminderNotEnabled
+	}
+
+	if account.Extend.CreditCardRepaymentReminderEnabled == nil || !*account.Extend.CreditCardRepaymentReminderEnabled {
+		return nil, 0, errs.ErrCreditCardRepaymentReminderNotEnabled
+	}
+
+	if scheduledDate > 0 {
+		return account, scheduledDate, nil
+	}
+
+	currentStatus, err := a.creditCardNotifications.GetCurrentCreditCardRepaymentStatus(c, account, time.Now().Unix())
+
+	if err != nil {
+		log.Errorf(c, "[accounts.getCreditCardRepaymentAccount] failed to get current repayment cycle for account \"id:%d\" of user \"uid:%d\", because %s", accountId, uid, err.Error())
+		return nil, 0, errs.ErrOperationFailed
+	}
+
+	if currentStatus == nil {
+		return nil, 0, errs.ErrCreditCardRepaymentDateInvalid
+	}
+
+	return account, currentStatus.ScheduledDate, nil
 }
 
 // AccountCreateHandler saves a new account by request parameters for current user

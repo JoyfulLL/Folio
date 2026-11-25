@@ -43,4 +43,7 @@ var (
 	ErrAccountReshapeAccountCountInvalid               = NewNormalError(NormalSubcategoryAccount, 38, http.StatusBadRequest, "account reshape account count is invalid")
 	ErrAccountReshapeCategoryNotEquals                 = NewNormalError(NormalSubcategoryAccount, 39, http.StatusBadRequest, "account reshape categories are not equal")
 	ErrAccountReshapeSourceAccountInvalid              = NewNormalError(NormalSubcategoryAccount, 40, http.StatusBadRequest, "account reshape source account is invalid")
+	ErrCreditCardRepaymentReminderNotEnabled           = NewNormalError(NormalSubcategoryAccount, 41, http.StatusBadRequest, "credit card repayment reminder is not enabled")
+	ErrCreditCardRepaymentDateInvalid                  = NewNormalError(NormalSubcategoryAccount, 42, http.StatusBadRequest, "credit card repayment date is invalid")
+	ErrCreditCardRepaymentStatusNotFound               = NewNormalError(NormalSubcategoryAccount, 43, http.StatusBadRequest, "credit card repayment status is not found")
 )

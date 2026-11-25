@@ -96,6 +96,7 @@
                             <div class="nested-list-item-title">
                                 <span>{{ account.name }}</span>
                                 <div class="item-footer" v-if="account.comment">{{ account.comment }}</div>
+                                <div class="item-footer" v-if="getCreditCardRepaymentStatus(account)?.paid">{{ tt('pageSpecific.accountListPage.repaid') }}</div>
                             </div>
                             <div class="nested-list-item-after" v-if="account.type === AccountType.MultiSubAccounts.type">
                                 <span>{{ accountBalanceOrAvailableCredit(account, undefined, showAvailableCreditForCreditCard, showAccountBalance) }}</span>
@@ -106,7 +107,7 @@
                                 <f7-list-item class="no-sortable nested-list-item-child"
                                               :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id] }"
                                               :id="getAccountDomId(subAccount)"
-                                              :title="subAccount.name" :footer="subAccount.comment"
+                                              :title="subAccount.name" :footer="getSubAccountFooter(subAccount)"
                                               :after="showAvailableCreditForCreditCard && account.category === AccountCategory.CreditCard.type ? subAccountAvailableCredit(account, subAccount, showAccountBalance) : accountBalance(account, subAccount.id, showAccountBalance)"
                                               :link="!sortable ? '/transaction/list?accountIds=' + subAccount.id : null"
                                               :key="subAccount.id"
@@ -150,6 +151,10 @@
         <f7-actions close-by-outside-click close-on-escape :opened="showAccountMoreActionSheet" @actions:closed="showAccountMoreActionSheet = false">
             <f7-actions-group v-if="accountForMoreActionSheet && accountForMoreActionSheet.type === AccountType.SingleAccount.type">
                 <f7-actions-button @click="showReconciliationStatement(accountForMoreActionSheet)">{{ tt('Reconciliation Statement') }}</f7-actions-button>
+                <f7-actions-button @click="toggleCreditCardRepayment(accountForMoreActionSheet)"
+                                   v-if="canMarkCreditCardRepayment(accountForMoreActionSheet) && !getCreditCardRepaymentStatus(accountForMoreActionSheet)?.paid || isCreditCardRepaymentManuallyPaid(accountForMoreActionSheet)">
+                    {{ isCreditCardRepaymentManuallyPaid(accountForMoreActionSheet) ? tt('Undo') : tt('pageSpecific.accountListPage.markAsRepaid') }}
+                </f7-actions-button>
                 <f7-actions-button @click="updateLastReconciledTime(accountForMoreActionSheet)" v-if="useLastReconciledTime">{{ tt('Mark as Reconciled') }}</f7-actions-button>
             </f7-actions-group>
             <f7-actions-group v-if="accountForMoreActionSheet && accountForMoreActionSheet.type === AccountType.SingleAccount.type">
@@ -162,6 +167,10 @@
                                   v-show="showHidden || !subAccount.hidden">
                     <f7-actions-label>{{ subAccount.name }}</f7-actions-label>
                     <f7-actions-button @click="showReconciliationStatement(subAccount)">{{ tt('Reconciliation Statement') }}</f7-actions-button>
+                    <f7-actions-button @click="toggleCreditCardRepayment(subAccount)"
+                                       v-if="canMarkCreditCardRepayment(subAccount) && !getCreditCardRepaymentStatus(subAccount)?.paid || isCreditCardRepaymentManuallyPaid(subAccount)">
+                        {{ isCreditCardRepaymentManuallyPaid(subAccount) ? tt('Undo') : tt('pageSpecific.accountListPage.markAsRepaid') }}
+                    </f7-actions-button>
                     <f7-actions-button @click="updateLastReconciledTime(subAccount)" v-if="useLastReconciledTime">{{ tt('Mark as Reconciled') }}</f7-actions-button>
                     <f7-actions-button @click="moveAllTransactions(subAccount)">{{ tt('Move All Transactions') }}</f7-actions-button>
                     <f7-actions-button color="red" @click="showPasswordSheetForClearAllTransaction(subAccount)">{{ tt('Clear All Transactions') }}</f7-actions-button>
@@ -250,6 +259,7 @@ import { useAccountsStore } from '@/stores/account.ts';
 import { TextDirection } from '@/core/text.ts';
 import { AccountType, AccountCategory, CreditCardAmountDisplayType } from '@/core/account.ts';
 import type { Account, AccountShowingIds } from '@/models/account.ts';
+import { CreditCardRepaymentStatusSource, type CreditCardRepaymentStatusResponse } from '@/models/credit_card_repayment_status.ts';
 
 import { getCurrentUnixTime } from '@/lib/datetime.ts';
 import { getAccountIconType } from '@/lib/icon.ts';
@@ -289,6 +299,7 @@ const accountToDelete = ref<Account | null>(null);
 const accountToClearTransactions = ref<Account | null>(null);
 const currentPasswordForClearData = ref<string>('');
 const updatingLastReconciledTime = ref<boolean>(false);
+const updatingCreditCardRepaymentStatus = ref<boolean>(false);
 const clearingData = ref<boolean>(false);
 const showAccountMoreActionSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
@@ -421,6 +432,79 @@ function updateLastReconciledTime(account: Account | null): void {
         showAccountMoreActionSheet.value = false;
         accountForMoreActionSheet.value = null;
     });
+}
+
+function canMarkCreditCardRepayment(account: Account | null | undefined): boolean {
+    if (!account || account.category !== AccountCategory.CreditCard.type || account.creditCardIsEntityCard === false) {
+        return false;
+    }
+
+    return !!account.creditCardRepaymentReminderEnabled;
+}
+
+function getCreditCardRepaymentStatus(account: Account | null | undefined): CreditCardRepaymentStatusResponse | undefined {
+    if (!account) {
+        return undefined;
+    }
+
+    return accountsStore.creditCardRepaymentStatusMap[account.id];
+}
+
+function isCreditCardRepaymentManuallyPaid(account: Account | null | undefined): boolean {
+    const status = getCreditCardRepaymentStatus(account);
+
+    return !!status && status.paid && status.source === CreditCardRepaymentStatusSource.Manual;
+}
+
+function toggleCreditCardRepayment(account: Account | null): void {
+    if (!account) {
+        showAlert('An error occurred');
+        return;
+    }
+
+    const status = getCreditCardRepaymentStatus(account);
+    const isManual = isCreditCardRepaymentManuallyPaid(account);
+    const request = {
+        id: account.id,
+        scheduledDate: status?.scheduledDate
+    };
+
+    updatingCreditCardRepaymentStatus.value = true;
+    showLoading(() => updatingCreditCardRepaymentStatus.value);
+
+    const promise = isManual
+        ? accountsStore.unmarkCreditCardRepaymentPaid(request)
+        : accountsStore.markCreditCardRepaymentPaid(request);
+
+    promise.then(() => {
+        updatingCreditCardRepaymentStatus.value = false;
+        hideLoading();
+        showToast(isManual ? 'Credit card repayment mark has been undone' : 'Credit card bill has been marked as repaid');
+
+        showAccountMoreActionSheet.value = false;
+        accountForMoreActionSheet.value = null;
+    }).catch(error => {
+        updatingCreditCardRepaymentStatus.value = false;
+        hideLoading();
+
+        if (!error.processed) {
+            showToast(error.message || error);
+        }
+    });
+}
+
+function getSubAccountFooter(account: Account): string {
+    const parts: string[] = [];
+
+    if (account.comment) {
+        parts.push(account.comment);
+    }
+
+    if (getCreditCardRepaymentStatus(account)?.paid) {
+        parts.push(tt('pageSpecific.accountListPage.repaid'));
+    }
+
+    return parts.join(' · ');
 }
 
 function moveAllTransactions(account: Account | null): void {

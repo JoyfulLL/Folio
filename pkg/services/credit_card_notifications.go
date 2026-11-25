@@ -70,6 +70,7 @@ type creditCardNotificationPlanItem struct {
 	AccountId        int64
 	NotificationType models.CreditCardNotificationType
 	ScheduledDate    int32
+	StatementDate    int32
 	SendUnixTime     int64
 }
 
@@ -201,7 +202,24 @@ func (s *CreditCardNotificationService) planNotifications(c core.Context, db dat
 
 		planItems := s.buildNotificationPlans(account, currentUnixTime, minSendUnixTime, maxSendUnixTime)
 
+		if err := s.syncAutoRepaymentStatuses(c, db, account, planItems, currentUnixTime); err != nil {
+			log.Errorf(c, "[credit_card_notifications.planNotifications] failed to reconcile repayment status of account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, account.Uid, err.Error())
+		}
+
 		for j := 0; j < len(planItems); j++ {
+			if isCreditCardRepaymentNotificationType(planItems[j].NotificationType) {
+				isPaid, err := s.isCreditCardCyclePaid(c, db, account.Uid, account.AccountId, planItems[j].ScheduledDate)
+
+				if err != nil {
+					log.Errorf(c, "[credit_card_notifications.planNotifications] failed to check repayment status of account \"id:%d\" of user \"uid:%d\", because %s", account.AccountId, account.Uid, err.Error())
+					continue
+				}
+
+				if isPaid {
+					continue
+				}
+			}
+
 			added, err := s.addNotificationPlan(c, db, planItems[j], currentUnixTime, baselineDayStartUnixTime)
 
 			if err != nil {
@@ -269,7 +287,7 @@ func (s *CreditCardNotificationService) buildNotificationPlans(account *models.A
 	currentYear, currentMonth, _ := time.Unix(currentUnixTime, 0).In(location).Date()
 	firstStatementTime := time.Date(currentYear, currentMonth, statementDate, 0, 0, 0, 0, location)
 
-	addPlanItem := func(notificationType models.CreditCardNotificationType, eventDate time.Time, sendDate time.Time) {
+	addPlanItem := func(notificationType models.CreditCardNotificationType, eventDate time.Time, sendDate time.Time, statementDay int32) {
 		sendTime := time.Date(sendDate.Year(), sendDate.Month(), sendDate.Day(), hours, minutes, 0, 0, location)
 		sendUnixTime := sendTime.Unix()
 
@@ -282,15 +300,17 @@ func (s *CreditCardNotificationService) buildNotificationPlans(account *models.A
 			AccountId:        account.AccountId,
 			NotificationType: notificationType,
 			ScheduledDate:    utils.FormatUnixTimeToNumericYearMonthDay(eventDate.Unix(), location),
+			StatementDate:    statementDay,
 			SendUnixTime:     sendUnixTime,
 		})
 	}
 
 	for monthOffset := -creditCardNotificationPlanMonthsBefore; monthOffset <= creditCardNotificationPlanMonthsAfter; monthOffset++ {
 		statementTime := firstStatementTime.AddDate(0, monthOffset, 0)
+		statementDay := utils.FormatUnixTimeToNumericYearMonthDay(statementTime.Unix(), location)
 
 		if statementReminderEnabled {
-			addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_STATEMENT_REMINDER, statementTime, statementTime)
+			addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_STATEMENT_REMINDER, statementTime, statementTime, statementDay)
 		}
 
 		if statementEmailEnabled {
@@ -302,7 +322,7 @@ func (s *CreditCardNotificationService) buildNotificationPlans(account *models.A
 				statementEmailTime = statementTime.AddDate(0, 0, 1)
 			}
 
-			addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_STATEMENT_EMAIL, statementTime, statementEmailTime)
+			addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_STATEMENT_EMAIL, statementTime, statementEmailTime, statementDay)
 		}
 
 		if !repaymentReminderEnabled {
@@ -315,10 +335,10 @@ func (s *CreditCardNotificationService) buildNotificationPlans(account *models.A
 			continue
 		}
 
-		addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_REPAYMENT_DUE, repaymentTime, repaymentTime)
+		addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_REPAYMENT_DUE, repaymentTime, repaymentTime, statementDay)
 
 		if daysBeforeRepayment > 0 {
-			addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_REPAYMENT_ADVANCE, repaymentTime, repaymentTime.AddDate(0, 0, -daysBeforeRepayment))
+			addPlanItem(models.CREDIT_CARD_NOTIFICATION_TYPE_REPAYMENT_ADVANCE, repaymentTime, repaymentTime.AddDate(0, 0, -daysBeforeRepayment), statementDay)
 		}
 	}
 
@@ -476,6 +496,18 @@ func (s *CreditCardNotificationService) sendNotification(c core.Context, notific
 		log.Warnf(c, "[credit_card_notifications.sendNotification] credit card notification \"type:%s\" for account \"id:%d\" of user \"uid:%d\" is not sent, because the account is not a physical credit card", notification.NotificationType, notification.AccountId, notification.Uid)
 		s.cancelNotification(c, notification, currentUnixTime, "account is not a physical credit card")
 		return
+	}
+
+	if isCreditCardRepaymentNotificationType(notification.NotificationType) {
+		isPaid, err := s.isCreditCardCyclePaid(c, s.UserDataDB(notification.Uid), notification.Uid, notification.AccountId, notification.ScheduledDate)
+
+		if err != nil {
+			log.Errorf(c, "[credit_card_notifications.sendNotification] failed to check repayment status of account \"id:%d\" of user \"uid:%d\", because %s", notification.AccountId, notification.Uid, err.Error())
+		} else if isPaid {
+			log.Infof(c, "[credit_card_notifications.sendNotification] credit card notification \"type:%s\" for account \"id:%d\" of user \"uid:%d\" is not sent, because the billing cycle is already repaid", notification.NotificationType, notification.AccountId, notification.Uid)
+			s.cancelNotification(c, notification, currentUnixTime, creditCardRepaymentCancelledByPaidReason)
+			return
+		}
 	}
 
 	if !s.notificationStillScheduled(account, notification) {

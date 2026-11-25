@@ -17,8 +17,13 @@ import {
     type AccountDisplayBalance,
     type CategorizedAccount,
     type AccountShowingIds,
+    type AccountInfoResponse,
     Account
 } from '@/models/account.ts';
+import type {
+    CreditCardRepaymentStatusRequest,
+    CreditCardRepaymentStatusResponse
+} from '@/models/credit_card_repayment_status.ts';
 
 import { isArray, isEquals, arrayItemToObjectField } from '@/lib/common.ts';
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
@@ -37,6 +42,7 @@ export const useAccountsStore = defineStore('accounts', () => {
     const allAccounts = ref<Account[]>([]);
     const allAccountsMap = ref<Record<string, Account>>({});
     const allCategorizedAccountsMap = ref<Record<number, CategorizedAccount>>({});
+    const creditCardRepaymentStatusMap = ref<Record<string, CreditCardRepaymentStatusResponse>>({});
     const accountListStateInvalid = ref<boolean>(true);
 
     const allPlainAccounts = computed<Account[]>(() => {
@@ -159,6 +165,39 @@ export const useAccountsStore = defineStore('accounts', () => {
         }
 
         allCategorizedAccountsMap.value = getCategorizedAccountsMap(accounts);
+    }
+
+    function collectCreditCardRepaymentStatuses(accounts: AccountInfoResponse[]): void {
+        const statuses: Record<string, CreditCardRepaymentStatusResponse> = {};
+
+        const collect = (items: AccountInfoResponse[] | undefined): void => {
+            if (!items) {
+                return;
+            }
+
+            for (const item of items) {
+                if (item.creditCardRepaymentStatus) {
+                    statuses[item.id] = item.creditCardRepaymentStatus;
+                }
+
+                collect(item.subAccounts);
+            }
+        };
+
+        collect(accounts);
+        creditCardRepaymentStatusMap.value = statuses;
+    }
+
+    function setCreditCardRepaymentStatus(accountId: string, status: CreditCardRepaymentStatusResponse | null): void {
+        const statuses = { ...creditCardRepaymentStatusMap.value };
+
+        if (status) {
+            statuses[accountId] = status;
+        } else {
+            delete statuses[accountId];
+        }
+
+        creditCardRepaymentStatusMap.value = statuses;
     }
 
     function addAccountToAccountList(currentAccount: Account): void {
@@ -361,6 +400,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         allAccounts.value = [];
         allAccountsMap.value = {};
         allCategorizedAccountsMap.value = {};
+        creditCardRepaymentStatusMap.value = {};
         accountListStateInvalid.value = true;
     }
 
@@ -1149,6 +1189,7 @@ export const useAccountsStore = defineStore('accounts', () => {
                     updateAccountListInvalidState(false);
                 }
 
+                collectCreditCardRepaymentStatuses(data.result);
                 const accounts = Account.sortAccounts(Account.ofMulti(data.result), settingsStore.accountCategoryDisplayOrders);
 
                 if (force && data.result && isEquals(allAccounts.value, accounts)) {
@@ -1301,6 +1342,58 @@ export const useAccountsStore = defineStore('accounts', () => {
                     reject({ error: error.response.data });
                 } else if (!error.processed) {
                     reject({ message: 'Unable to update last reconciled time' });
+                } else {
+                    reject(error);
+                }
+            });
+        });
+    }
+
+    function markCreditCardRepaymentPaid(request: CreditCardRepaymentStatusRequest): Promise<CreditCardRepaymentStatusResponse> {
+        return new Promise((resolve, reject) => {
+            services.markCreditCardRepaymentPaid(request).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'Unable to mark credit card repayment as paid' });
+                    return;
+                }
+
+                setCreditCardRepaymentStatus(request.id, data.result);
+                resolve(data.result);
+            }).catch(error => {
+                logger.error('failed to mark credit card repayment as paid', error);
+
+                if (error.response && error.response.data && error.response.data.errorMessage) {
+                    reject({ error: error.response.data });
+                } else if (!error.processed) {
+                    reject({ message: 'Unable to mark credit card repayment as paid' });
+                } else {
+                    reject(error);
+                }
+            });
+        });
+    }
+
+    function unmarkCreditCardRepaymentPaid(request: CreditCardRepaymentStatusRequest): Promise<CreditCardRepaymentStatusResponse> {
+        return new Promise((resolve, reject) => {
+            services.unmarkCreditCardRepaymentPaid(request).then(response => {
+                const data = response.data;
+
+                if (!data || !data.success || !data.result) {
+                    reject({ message: 'Unable to undo credit card repayment mark' });
+                    return;
+                }
+
+                setCreditCardRepaymentStatus(request.id, data.result);
+                resolve(data.result);
+            }).catch(error => {
+                logger.error('failed to undo credit card repayment mark', error);
+
+                if (error.response && error.response.data && error.response.data.errorMessage) {
+                    reject({ error: error.response.data });
+                } else if (!error.processed) {
+                    reject({ message: 'Unable to undo credit card repayment mark' });
                 } else {
                     reject(error);
                 }
@@ -1526,6 +1619,7 @@ export const useAccountsStore = defineStore('accounts', () => {
         allAccounts,
         allAccountsMap,
         allCategorizedAccountsMap,
+        creditCardRepaymentStatusMap,
         accountListStateInvalid,
         // computed states
         allPlainAccounts,
@@ -1557,6 +1651,8 @@ export const useAccountsStore = defineStore('accounts', () => {
         getAccount,
         saveAccount,
         updateAccountLastReconciledTime,
+        markCreditCardRepaymentPaid,
+        unmarkCreditCardRepaymentPaid,
         changeAccountDisplayOrder,
         updateAccountDisplayOrders,
         hideAccount,
