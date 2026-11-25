@@ -65,13 +65,21 @@ export function getUserAppLockState(): ApplicationLockState | null {
         return null;
     }
 
-    const appLockState = JSON.parse(data);
+    let appLockState: ApplicationLockState;
+
+    try {
+        appLockState = JSON.parse(data) as ApplicationLockState;
+    } catch (ex) {
+        logger.warn('app lock state in session storage is invalid', ex);
+        sessionStorage.removeItem(appLockStateSessionStorageKey);
+        return null;
+    }
 
     if (!appLockState || !appLockState.username || !appLockState.secret) {
         return null;
     }
 
-    return appLockState as ApplicationLockState;
+    return appLockState;
 }
 
 export function unlockTokenByWebAuthn(credentialId: string, userName: string, userSecret: string): boolean {
@@ -234,9 +242,14 @@ export function getWebAuthnCredentialId(): string | undefined {
         return undefined;
     }
 
-    const webauthnConfig = JSON.parse(webauthnConfigData) as WebAuthnConfig;
-
-    return webauthnConfig.credentialId;
+    try {
+        const webauthnConfig = JSON.parse(webauthnConfigData) as WebAuthnConfig;
+        return webauthnConfig.credentialId;
+    } catch (ex) {
+        logger.warn('webauthn config in local storage is invalid', ex);
+        localStorage.removeItem(webauthnConfigLocalStorageKey);
+        return undefined;
+    }
 }
 
 export function saveWebAuthnConfig(credentialId: string): void {
@@ -258,7 +271,13 @@ export function getCurrentUserInfo(): UserBasicInfo | null {
         return null;
     }
 
-    return JSON.parse(data) as UserBasicInfo;
+    try {
+        return JSON.parse(data) as UserBasicInfo;
+    } catch (ex) {
+        logger.warn('user info in local storage is invalid', ex);
+        localStorage.removeItem(userInfoLocalStorageKey);
+        return null;
+    }
 }
 
 export function updateCurrentUserInfo(user: UserBasicInfo): void {
@@ -290,17 +309,23 @@ export function getUserTransactionDraft(): TransactionDraft | null {
         return null;
     }
 
-    if (isEnableApplicationLock()) {
-        const appLockState = getUserAppLockState();
+    try {
+        if (isEnableApplicationLock()) {
+            const appLockState = getUserAppLockState();
 
-        if (!appLockState) {
-            return null;
+            if (!appLockState) {
+                return null;
+            }
+
+            data = getDecryptedToken(data, appLockState);
         }
 
-        data = getDecryptedToken(data, appLockState);
+        return JSON.parse(data) as TransactionDraft;
+    } catch (ex) {
+        logger.warn('transaction draft in local storage is invalid', ex);
+        localStorage.removeItem(transactionDraftLocalStorageKey);
+        return null;
     }
-
-    return JSON.parse(data) as TransactionDraft;
 }
 
 export function updateUserTransactionDraft(transaction?: TransactionDraft | null): void {

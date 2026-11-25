@@ -33,7 +33,14 @@ interface LatestExchangeRates {
 
 function getExchangeRatesFromLocalStorage(): LatestExchangeRates {
     const storageData = localStorage.getItem(exchangeRatesLocalStorageKey) || '{}';
-    return JSON.parse(storageData) as LatestExchangeRates;
+
+    try {
+        return JSON.parse(storageData) as LatestExchangeRates;
+    } catch (ex) {
+        logger.warn('exchange rates in local storage is invalid', ex);
+        localStorage.removeItem(exchangeRatesLocalStorageKey);
+        return {};
+    }
 }
 
 function getExchangeRatesRawDataFromLocalStorage(): string | null {
