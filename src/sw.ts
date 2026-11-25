@@ -206,6 +206,10 @@ const DEFAULT_TRANSACTION_PICTURE_CACHE_MAX_AGE_MILLISECONDS: number = 30 * 24 *
 const DEFAULT_MAP_CACHE_MAX_ENTRIES: number = 1000;
 const DEFAULT_MAP_CACHE_MAX_AGE_MILLISECONDS: number = 30 * 24 * 60 * 60 * 1000;
 
+const DEFAULT_CODE_CACHE_MAX_ENTRIES: number = 200;
+const DEFAULT_CODE_CACHE_MAX_AGE_MILLISECONDS: number = 30 * 24 * 60 * 60 * 1000;
+const DEFAULT_CODE_CACHE_NETWORK_TIMEOUT_SECONDS: number = 3;
+
 const mapCacheConfig: MapCacheConfig = {
     enabled: false,
     patterns: [],
@@ -227,28 +231,40 @@ const customIconCacheConfig: AuthenticatedImageCacheConfig = {
     imageRequestStripTokenPlugin: new AuthenticatedImageRequestStripTokenPlugin()
 };
 
+/** Evicts stale HTML/CSS/JS from the code cache by age and count, replacing the old "delete the whole cache on activate" approach. See the activate handler below. **/
+const codeCacheExpirationPlugin = new DynamicExpirationPlugin(DEFAULT_CODE_CACHE_MAX_ENTRIES, DEFAULT_CODE_CACHE_MAX_AGE_MILLISECONDS);
+
 self.skipWaiting();
 clientsClaim();
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-/** CSS/JS/HTML are intentionally excluded from the precache manifest and served from the runtime code cache below. That cache has a fixed name and CacheFirst never revalidates it, so a new build can strand an iOS standalone PWA on the previous HTML/CSS forever (clearing Safari cache or re-adding the home-screen icon does not reset it). Drop the code cache whenever a new service worker activates, so every deploy re-fetches fresh HTML and hashed assets. The precache (assets cache) is untouched. **/
+/**
+ * HTML/CSS/JS are served from a runtime code cache with a fixed name.
+ *
+ * The previous implementation deleted this entire cache on every activate. Combined with
+ * skipWaiting()/clientsClaim() that meant a freshly activated worker could wipe the cache
+ * while the *current* page was still fetching hashed assets referenced by its HTML. The
+ * browser then requested old, already-removed js/css chunk names -> 404 -> blank screen.
+ * That race is exactly what made a fresh deploy white-screen only sometimes.
+ *
+ * New approach: never wipe the code cache on activate. Hashed asset names are immutable, so
+ * keeping old entries is safe; stale entries are reclaimed gradually by codeCacheExpirationPlugin
+ * (age + count bound) instead of all at once. Document navigations use NetworkFirst with a
+ * short timeout so an offline/slow server falls back to cache quickly instead of hanging.
+ * cleanupOutdatedCaches() above still handles genuine old precache bundles.
+ **/
 self.addEventListener('activate', (event: ExtendableEvent) => {
-    event.waitUntil((async (): Promise<void> => {
-        const cacheNames: string[] = await caches.keys();
-        await Promise.all(
-            cacheNames
-                .filter(cacheName => cacheName === SW_CODE_CACHE_NAME)
-                .map(cacheName => caches.delete(cacheName))
-        );
-    })());
+    event.waitUntil(Promise.resolve());
 });
 
-/** The standalone PWA start_url ('./') does not match the HTML extension routes below, so its navigation used to fall through to the browser HTTP cache and could keep serving a stale HTML that references an old CSS bundle. Always revalidate document navigations against the network. **/
+/** Document navigations (including standalone PWA start_url './') revalidate against the network with a short timeout, then fall back to cache. The timeout prevents a slow/unreachable server from leaving the page blank. **/
 registerRoute(
     ({ request }) => request.mode === 'navigate',
     new NetworkFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        networkTimeoutSeconds: DEFAULT_CODE_CACHE_NETWORK_TIMEOUT_SECONDS,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
@@ -270,6 +286,8 @@ registerRoute(
     /.*\/(mobile|mobile\/|desktop|desktop\/)$/,
     new NetworkFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        networkTimeoutSeconds: DEFAULT_CODE_CACHE_NETWORK_TIMEOUT_SECONDS,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
@@ -277,6 +295,8 @@ registerRoute(
     /.*\/(mobile|mobile\/)#!\//,
     new NetworkFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        networkTimeoutSeconds: DEFAULT_CODE_CACHE_NETWORK_TIMEOUT_SECONDS,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
@@ -284,6 +304,8 @@ registerRoute(
     /.*\/(desktop|desktop\/)#\//,
     new NetworkFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        networkTimeoutSeconds: DEFAULT_CODE_CACHE_NETWORK_TIMEOUT_SECONDS,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
@@ -291,6 +313,8 @@ registerRoute(
     /.*\/(index\.html|mobile\.html|desktop\.html)/,
     new NetworkFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        networkTimeoutSeconds: DEFAULT_CODE_CACHE_NETWORK_TIMEOUT_SECONDS,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
@@ -298,6 +322,7 @@ registerRoute(
     /.*\/css\/.*\.css/,
     new CacheFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
@@ -305,6 +330,7 @@ registerRoute(
     /.*\/js\/.*\.js/,
     new CacheFirst({
         cacheName: SW_CODE_CACHE_NAME,
+        plugins: [codeCacheExpirationPlugin]
     })
 );
 
