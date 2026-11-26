@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Ödenmemiş",
+            "availableBalance": "Kullanılabilir",
+            "markAsRepaid": "Ödendi olarak işaretle",
+            "repaid": "Ödendi"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Kredi kartı ekstresi ödendi olarak işaretlendi",
+    "Credit card repayment mark has been undone": "Kredi kartı ödeme işareti geri alındı",
+    "Unable to mark credit card repayment as paid": "Kredi kartı ödemesi ödendi olarak işaretlenemedi",
+    "Unable to undo credit card repayment mark": "Kredi kartı ödeme işareti geri alınamadı",
     "OK": "Tamam",
     "Cancel": "İptal",
     "Operation": "İşlem",

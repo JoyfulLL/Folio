@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Ожидает оплаты",
+            "availableBalance": "Доступно",
+            "markAsRepaid": "Отметить как погашенный",
+            "repaid": "Погашено"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Счёт по кредитной карте отмечен как погашенный",
+    "Credit card repayment mark has been undone": "Отметка о погашении кредитной карты отменена",
+    "Unable to mark credit card repayment as paid": "Не удалось отметить погашение кредитной карты",
+    "Unable to undo credit card repayment mark": "Не удалось отменить отметку о погашении кредитной карты",
     "OK": "ОК",
     "Cancel": "Отмена",
     "Operation": "Операция",

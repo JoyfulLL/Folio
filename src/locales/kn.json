@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "ಬಾಕಿ",
+            "availableBalance": "ಲಭ್ಯ",
+            "markAsRepaid": "ಮರುಪಾವತಿಯಾಗಿ ಗುರುತಿಸಿ",
+            "repaid": "ಮರುಪಾವತಿಯಾಗಿದೆ"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್ ಬಿಲ್ ಅನ್ನು ಮರುಪಾವತಿಯಾಗಿ ಗುರುತಿಸಲಾಗಿದೆ",
+    "Credit card repayment mark has been undone": "ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್ ಮರುಪಾವತಿ ಗುರುತನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ",
+    "Unable to mark credit card repayment as paid": "ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್ ಮರುಪಾವತಿಯಾಗಿ ಗುರುತಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ",
+    "Unable to undo credit card repayment mark": "ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್ ಮರುಪಾವತಿ ಗುರುತನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ",
     "OK": "ಸರಿ",
     "Cancel": "ರದ್ದು",
     "Operation": "ಕಾರ್ಯ",

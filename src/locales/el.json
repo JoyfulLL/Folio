@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Εκκρεμεί",
+            "availableBalance": "Διαθέσιμο",
+            "markAsRepaid": "Σήμανση ως εξοφλημένο",
+            "repaid": "Εξοφλήθηκε"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Ο λογαριασμός της πιστωτικής κάρτας σημειώθηκε ως εξοφλημένος",
+    "Credit card repayment mark has been undone": "Η σήμανση εξόφλησης της πιστωτικής κάρτας αναιρέθηκε",
+    "Unable to mark credit card repayment as paid": "Δεν είναι δυνατή η σήμανση της εξόφλησης της πιστωτικής κάρτας",
+    "Unable to undo credit card repayment mark": "Δεν είναι δυνατή η αναίρεση της σήμανσης εξόφλησης της πιστωτικής κάρτας",
     "OK": "OK",
     "Cancel": "Ακύρωση",
     "Operation": "Ενέργεια",

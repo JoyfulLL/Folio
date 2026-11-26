@@ -1576,14 +1576,14 @@
         "accountListPage": {
             "outstandingBalance": "बकाया",
             "availableBalance": "उपलब्ध",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "markAsRepaid": "भुगतान किया हुआ चिह्नित करें",
+            "repaid": "भुगतान किया हुआ"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "क्रेडिट कार्ड बिल को भुगतान किया हुआ चिह्नित किया गया",
+    "Credit card repayment mark has been undone": "क्रेडिट कार्ड भुगतान चिह्न को समाप्त किया गया",
+    "Unable to mark credit card repayment as paid": "क्रेडिट कार्ड भुगतान को भुगतान किया हुआ चिह्नित करने में असमर्थ",
+    "Unable to undo credit card repayment mark": "क्रेडिट कार्ड भुगतान चिह्न को समाप्त करने में असमर्थ",
     "OK": "ठीक है",
     "Cancel": "रद्द करें",
     "Operation": "कार्य",

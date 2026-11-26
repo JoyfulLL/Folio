@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Openstaand",
+            "availableBalance": "Beschikbaar",
+            "markAsRepaid": "Markeren als terugbetaald",
+            "repaid": "Terugbetaald"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "De creditcardrekening is gemarkeerd als terugbetaald",
+    "Credit card repayment mark has been undone": "De terugbetalingsmarkering van de creditcard is ongedaan gemaakt",
+    "Unable to mark credit card repayment as paid": "Kan de terugbetaling van de creditcard niet als betaald markeren",
+    "Unable to undo credit card repayment mark": "Kan de terugbetalingsmarkering van de creditcard niet ongedaan maken",
     "OK": "OK",
     "Cancel": "Annuleren",
     "Operation": "Bewerking",

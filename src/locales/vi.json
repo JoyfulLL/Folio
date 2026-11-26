@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Chưa thanh toán",
+            "availableBalance": "Khả dụng",
+            "markAsRepaid": "Đánh dấu là đã trả",
+            "repaid": "Đã trả"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Hóa đơn thẻ tín dụng đã được đánh dấu là đã trả",
+    "Credit card repayment mark has been undone": "Đã hoàn tác đánh dấu thanh toán thẻ tín dụng",
+    "Unable to mark credit card repayment as paid": "Không thể đánh dấu thanh toán thẻ tín dụng",
+    "Unable to undo credit card repayment mark": "Không thể hoàn tác đánh dấu thanh toán thẻ tín dụng",
     "OK": "OK",
     "Cancel": "Hủy",
     "Operation": "Thao tác",

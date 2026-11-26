@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Ausstehend",
+            "availableBalance": "Verfügbar",
+            "markAsRepaid": "Als zurückgezahlt markieren",
+            "repaid": "Zurückgezahlt"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Kreditkartenrechnung wurde als zurückgezahlt markiert",
+    "Credit card repayment mark has been undone": "Rückzahlungsmarkierung der Kreditkarte wurde aufgehoben",
+    "Unable to mark credit card repayment as paid": "Kreditkartenrückzahlung konnte nicht als bezahlt markiert werden",
+    "Unable to undo credit card repayment mark": "Rückzahlungsmarkierung der Kreditkarte konnte nicht aufgehoben werden",
     "OK": "OK",
     "Cancel": "Abbrechen",
     "Operation": "Vorgang",

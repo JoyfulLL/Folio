@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "未精算額",
+            "availableBalance": "利用可能額",
+            "markAsRepaid": "返済済みにする",
+            "repaid": "返済済み"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "クレジットカードの請求書を返済済みにしました",
+    "Credit card repayment mark has been undone": "クレジットカードの返済済みマークを取り消しました",
+    "Unable to mark credit card repayment as paid": "クレジットカードの返済済み設定に失敗しました",
+    "Unable to undo credit card repayment mark": "クレジットカードの返済済みマークの取り消しに失敗しました",
     "OK": "OK",
     "Cancel": "キャンセル",
     "Operation": "操作",

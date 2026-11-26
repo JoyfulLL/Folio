@@ -1576,14 +1576,14 @@
         "accountListPage": {
             "outstandingBalance": "Do spłaty",
             "availableBalance": "Dostępne",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "markAsRepaid": "Oznacz jako spłacone",
+            "repaid": "Spłacone"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Wyciąg z karty kredytowej został oznaczony jako spłacony",
+    "Credit card repayment mark has been undone": "Cofnięto oznaczenie spłaty karty kredytowej",
+    "Unable to mark credit card repayment as paid": "Nie udało się oznaczyć spłaty karty kredytowej",
+    "Unable to undo credit card repayment mark": "Nie udało się cofnąć oznaczenia spłaty karty kredytowej",
     "OK": "OK",
     "Cancel": "Anuluj",
     "Operation": "Operacja",

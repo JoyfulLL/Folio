@@ -1576,14 +1576,14 @@
         "accountListPage": {
             "outstandingBalance": "Dlžná suma",
             "availableBalance": "Dostupné",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "markAsRepaid": "Označiť ako splatené",
+            "repaid": "Splatené"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Výpis z kreditnej karty bol označený ako splatený",
+    "Credit card repayment mark has been undone": "Označenie splatenia kreditnej karty bolo zrušené",
+    "Unable to mark credit card repayment as paid": "Nepodarilo sa označiť splatenie kreditnej karty",
+    "Unable to undo credit card repayment mark": "Nepodarilo sa zrušiť označenie splatenia kreditnej karty",
     "OK": "OK",
     "Cancel": "Zrušiť",
     "Operation": "Akcia",
