@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "Neporavnano",
+            "availableBalance": "Na voljo",
+            "markAsRepaid": "Označi kot plačano",
+            "repaid": "Plačano"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "Račun za kreditno kartico je bil označen kot plačan",
+    "Credit card repayment mark has been undone": "Oznaka plačila kreditne kartice je bila razveljavljena",
+    "Unable to mark credit card repayment as paid": "Ni mogoče označiti plačila kreditne kartice",
+    "Unable to undo credit card repayment mark": "Ni mogoče razveljaviti oznake plačila kreditne kartice",
     "OK": "V redu",
     "Cancel": "Prekliči",
     "Operation": "Operacija",

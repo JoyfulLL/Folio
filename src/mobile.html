@@ -10,6 +10,32 @@
     <meta name="apple-mobile-web-app-title" content="Folio"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     <meta name="theme-color" content="#f6f6f8">
+    <script>
+        (function () {
+            var dark = false;
+
+            try {
+                var settings = JSON.parse(localStorage.getItem('folio_app_settings') || '{}');
+                var theme = settings.theme;
+
+                if (theme === 'dark') {
+                    dark = true;
+                } else if (theme === 'light') {
+                    dark = false;
+                } else {
+                    dark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                }
+            } catch (e) {
+                dark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            }
+
+            if (dark) {
+                document.documentElement.style.setProperty('--folio-status-bar-bg', '#121212');
+                document.documentElement.style.setProperty('--folio-boot-color', '#e3e3e6');
+                document.querySelector('meta[name=theme-color]').setAttribute('content', '#121212');
+            }
+        })();
+    </script>
     <meta name="format-detection" content="telephone=no"/>
     <meta name="description" content="Folio is a lightweight, self-hosted personal finance app.">
     <title>Folio</title>
@@ -75,13 +101,13 @@
         <strong>We're sorry but Folio doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <style>
-        .folio-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f6f6f8;color:#3c3c43;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+        .folio-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--folio-status-bar-bg, #f6f6f8);color:var(--folio-boot-color, #3c3c43);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
         .folio-boot-logo{width:56px;height:56px;border-radius:14px}
         .folio-boot-spinner{width:32px;height:32px;border:3px solid rgba(239,118,36,.2);border-top-color:#ef7624;border-radius:50%;animation:folio-boot-spin .8s linear infinite}
         @keyframes folio-boot-spin{to{transform:rotate(360deg)}}
         .folio-boot-name{font-size:18px;font-weight:600;letter-spacing:.5px}
         .folio-boot-hint{font-size:13px;opacity:.55}
-        .folio-boot.is-lite{display:block;background:#f6f6f8;pointer-events:none}
+        .folio-boot.is-lite{display:block;background:var(--folio-status-bar-bg, #f6f6f8);pointer-events:none}
         .folio-boot.is-lite .folio-boot-logo,.folio-boot.is-lite .folio-boot-spinner,.folio-boot.is-lite .folio-boot-name,.folio-boot.is-lite .folio-boot-hint{display:none}
         .folio-boot.is-lite::after{content:'';position:absolute;top:0;left:0;width:30%;height:2px;background:#ef7624;animation:folio-boot-bar 1.2s ease-in-out infinite}
         @keyframes folio-boot-bar{0%{transform:translateX(-100%)}100%{transform:translateX(333%)}}

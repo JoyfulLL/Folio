@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "미정산",
+            "availableBalance": "사용 가능",
+            "markAsRepaid": "상환 완료로 표시",
+            "repaid": "상환 완료"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "신용카드 청구서가 상환 완료로 표시되었습니다",
+    "Credit card repayment mark has been undone": "신용카드 상환 표시가 취소되었습니다",
+    "Unable to mark credit card repayment as paid": "신용카드 상환 완료 표시에 실패했습니다",
+    "Unable to undo credit card repayment mark": "신용카드 상환 표시 취소에 실패했습니다",
     "OK": "확인",
     "Cancel": "취소",
     "Operation": "작업",

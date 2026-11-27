@@ -1,6 +1,13 @@
 package models
 
 // TransactionTagIndex represents transaction and transaction tag relation stored in database
+//
+// Note: there is deliberately no UNIQUE index on (uid, transaction_id, tag_id).
+// Removing a tag soft-deletes the existing row in place, and re-adding the same
+// tag inserts a new row. A unique index on either the plain tuple or one
+// including "deleted" would break that add/remove/add cycle, because repeated
+// removals leave more than one soft-deleted row. Uniqueness of the active
+// association is enforced in the service layer instead.
 type TransactionTagIndex struct {
 	TagIndexId      int64 `xorm:"PK"`
 	Uid             int64 `xorm:"INDEX(IDX_transaction_tag_index_uid_deleted_tag_id_transaction_id) INDEX(IDX_transaction_tag_index_uid_deleted_transaction_time_tag_id) INDEX(IDX_transaction_tag_index_uid_deleted_transaction_id)"`

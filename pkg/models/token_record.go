@@ -6,8 +6,11 @@ import "github.com/mayswind/ezbookkeeping/pkg/core"
 const TokenMaxUserAgentLength = 255
 
 // TokenRecord represents token data stored in database
+//
+// Note: do not embed core.TokenRecord here. xorm maps an embedded interface to a
+// phantom column named after the interface, and the getters below already
+// satisfy the contract.
 type TokenRecord struct {
-	core.TokenRecord
 	Uid              int64          `xorm:"PK INDEX(IDX_token_record_uid_type_expired_time) INDEX(IDX_token_record_expired_time)"`
 	UserTokenId      int64          `xorm:"PK"`
 	TokenType        core.TokenType `xorm:"INDEX(IDX_token_record_uid_type_expired_time) TINYINT NOT NULL"`
@@ -18,6 +21,8 @@ type TokenRecord struct {
 	ExpiredUnixTime  int64          `xorm:"INDEX(IDX_token_record_uid_type_expired_time) INDEX(IDX_token_record_expired_time)"`
 	LastSeenUnixTime int64
 }
+
+var _ core.TokenRecord = (*TokenRecord)(nil)
 
 // MCPTokenContext represents the context data of an MCP token
 type MCPTokenContext struct {

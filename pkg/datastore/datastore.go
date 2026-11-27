@@ -50,6 +50,49 @@ func (s *DataStore) SyncStructs(beans ...any) error {
 	return err
 }
 
+// GetTableNames returns all distinct physical table names across all database shards
+func (s *DataStore) GetTableNames() ([]string, error) {
+	names := make([]string, 0)
+	seen := make(map[string]bool)
+
+	for _, database := range s.databases {
+		xormDatabase, ok := database.(*XOrmDatabase)
+		if !ok {
+			return nil, errs.ErrDatabaseOperationFailed
+		}
+
+		metas, err := xormDatabase.engineGroup.DBMetas()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, meta := range metas {
+			if seen[meta.Name] {
+				continue
+			}
+
+			seen[meta.Name] = true
+			names = append(names, meta.Name)
+		}
+	}
+
+	return names, nil
+}
+
+// GetTableName returns the physical table name mapped from the given bean
+func (s *DataStore) GetTableName(bean any) (string, error) {
+	if len(s.databases) < 1 {
+		return "", errs.ErrDatabaseIsNull
+	}
+
+	xormDatabase, ok := s.databases[0].(*XOrmDatabase)
+	if !ok {
+		return "", errs.ErrDatabaseOperationFailed
+	}
+
+	return xormDatabase.engineGroup.TableName(bean), nil
+}
+
 // NewDataStore returns a new data storage by a series of database
 func NewDataStore(databases ...Database) (*DataStore, error) {
 	if len(databases) < 1 {

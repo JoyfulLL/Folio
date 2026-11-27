@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "நிலுவை",
+            "availableBalance": "கிடைக்கும்",
+            "markAsRepaid": "திருப்பிச் செலுத்தியதாகக் குறிக்க",
+            "repaid": "திருப்பிச் செலுத்தப்பட்டது"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "கடன் அட்டைக் கணக்கு திருப்பிச் செலுத்தியதாகக் குறிக்கப்பட்டது",
+    "Credit card repayment mark has been undone": "கடன் அட்டைத் திருப்பிச் செலுத்தும் குறி நீக்கப்பட்டது",
+    "Unable to mark credit card repayment as paid": "கடன் அட்டைத் திருப்பிச் செலுத்தலைக் குறிக்க முடியவில்லை",
+    "Unable to undo credit card repayment mark": "கடன் அட்டைத் திருப்பிச் செலுத்தும் குறியை நீக்க முடியவில்லை",
     "OK": "சரி",
     "Cancel": "ரத்து",
     "Operation": "செயல்",

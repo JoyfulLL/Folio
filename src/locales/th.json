@@ -1574,16 +1574,16 @@
     },
     "pageSpecific": {
         "accountListPage": {
-            "outstandingBalance": "Outstanding",
-            "availableBalance": "Available",
-            "markAsRepaid": "Mark as Repaid",
-            "repaid": "Repaid"
+            "outstandingBalance": "ค้างชำระ",
+            "availableBalance": "ใช้ได้",
+            "markAsRepaid": "ทำเครื่องหมายว่าชำระแล้ว",
+            "repaid": "ชำระแล้ว"
         }
     },
-    "Credit card bill has been marked as repaid": "Credit card bill has been marked as repaid",
-    "Credit card repayment mark has been undone": "Credit card repayment mark has been undone",
-    "Unable to mark credit card repayment as paid": "Unable to mark credit card repayment as paid",
-    "Unable to undo credit card repayment mark": "Unable to undo credit card repayment mark",
+    "Credit card bill has been marked as repaid": "ทำเครื่องหมายบัตรเครดิตว่าชำระแล้วแล้ว",
+    "Credit card repayment mark has been undone": "ยกเลิกการทำเครื่องหมายชำระบัตรเครดิตแล้ว",
+    "Unable to mark credit card repayment as paid": "ไม่สามารถทำเครื่องหมายชำระบัตรเครดิตได้",
+    "Unable to undo credit card repayment mark": "ไม่สามารถยกเลิกการทำเครื่องหมายชำระบัตรเครดิตได้",
     "OK": "ตกลง",
     "Cancel": "ยกเลิก",
     "Operation": "การดำเนินการ",
